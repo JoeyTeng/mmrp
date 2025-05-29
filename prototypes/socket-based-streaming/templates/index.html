@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Video Player with FPS</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            border: 1px solid white;
+            width: 50%;
+            /* Center 50% of the screen */
+            height: auto;
+            /* Maintain aspect ratio */
+        }
+
+        #fpsDisplay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="videoCanvas"></canvas>
+    <div id="fpsDisplay">FPS: Calculating...</div> <!-- FPS Display -->
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io(); // Connect to the WebSocket server
+        const canvas = document.getElementById("videoCanvas");
+        const ctx = canvas.getContext("2d");
+        const fpsDisplay = document.getElementById("fpsDisplay");
+
+        let lastFrameTime = null; // To store the timestamp of the last rendered frame
+        let frameCount = 0;       // Count the number of frames received
+
+        // Start the video stream when the page loads
+        socket.emit("start_stream");
+
+        // Listen for new frames from the server
+        socket.on("frame", (frameData) => {
+            const image = new Image();
+
+            // Convert the binary frame data to a Base64 image
+            image.src = `data:image/png;base64,${btoa(
+                new Uint8Array(frameData).reduce((data, byte) => data + String.fromCharCode(byte), "")
+            )}`;
+
+            image.onload = () => {
+                // Render the image on the canvas
+                canvas.width = image.width;
+                canvas.height = image.height;
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                // Calculate FPS
+                const currentTime = performance.now(); // Get the current timestamp in milliseconds
+                if (lastFrameTime !== null) {
+                    const delta = currentTime - lastFrameTime; // Time difference between frames
+                    const fps = 1000 / delta; // Calculate frames per second
+                    fpsDisplay.textContent = `FPS: ${fps.toFixed(2)}`; // Display FPS to 2 decimal places
+                }
+                lastFrameTime = currentTime;
+
+                // Count frames for debugging or logging
+                frameCount++;
+            };
+        });
+    </script>
+</body>
+
+</html>

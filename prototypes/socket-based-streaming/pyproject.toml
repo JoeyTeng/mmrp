@@ -1,0 +1,12 @@
+[project]
+name = "socket-based-streaming"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "flask>=3.1.1",
+    "flask-socketio>=5.5.1",
+    "numpy>=2.2.6",
+    "opencv-python-headless>=4.11.0.86",
+]
