@@ -4,6 +4,7 @@ html, body {
   font-family: 'Arial', sans-serif;
   background-color: #f0f8ff;
   color: #111;
+  box-sizing: border-box;
   height: 100%;
 }
 
