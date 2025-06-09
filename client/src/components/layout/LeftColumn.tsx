@@ -2,7 +2,7 @@ import TopLeftCard from '../cards/TopLeftCard';
 
 const LeftColumn = () => {
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+    <div className='flex flex-col flex-1'>
       <TopLeftCard />
     </div>
   );
