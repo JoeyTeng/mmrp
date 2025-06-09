@@ -1,6 +1,6 @@
 const ParameterConfiguration = () => {
   return (
-    <div style={{ flex: 1, border: '1px solid #444' }}>
+    <div style={{ flex: 1, border: '1px solid #444' , height: '100%'}}>
       <div className='header'>
         Configure Parameters
       </div>
