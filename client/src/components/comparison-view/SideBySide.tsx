@@ -77,29 +77,27 @@ const SideBySide = () => {
     return (
         <div
             ref={containerRef}
-            className={`${
-            isFullscreen ? 'relative h-screen w-full bg-black' : ''
-            } flex flex-col justify-center items-center`}
+            className={`relative ${isFullscreen ? 'h-screen' : 'h-full'} w-full flex flex-col`}
         >
-        <div className='flex justify-center items-center p-2'>
+        <div className='flex flex-1 justify-center items-center'>
             <video
             ref={videoARef}
             src='/example-video.mp4'
-            className='w-1/2 h-full object-contain bg-black border-t-2 border-b-2 border-l-2 border-gray-700'
+            className='w-1/2 h-full object-contain bg-red'
             />
             <video
             ref={videoBRef}
             src='/example-video-filter.mp4'
-            className='w-1/2 h-full object-contain bg-black border-t-2 border-b-2 border-r-2 border-gray-700'
+            className='w-1/2 h-full object-contain bg-red'
             />
         </div>
 
         {/* Controls */}
         <div
             className={`${
-            isFullscreen ? 'absolute bottom-0 left-0 w-full z-50' : ''
+                isFullscreen ? 'absolute bottom-0 left-0 z-50' : ''
             } flex items-center justify-between bg-white px-4 py-3 border-t border-gray-300 w-full`}
-        >
+            >
             <button onClick={handlePlayPause} className='text-gray-800 hover:text-black cursor-pointer'>
             {isPlaying ? <PauseIcon size={24} /> : <PlayIcon size={24} />}
             </button>

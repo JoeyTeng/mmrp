@@ -11,9 +11,7 @@ const ComparisonView = () => {
     <div className='flex flex-col flex-1 relative border border-gray-900 rounded-md overflow-hidden bg-gray-100'>
       <div className='flex items-center justify-between bg-gray-700 px-4 py-2 border-b border-gray-300 font-semibold text-white'>
         <div className='flex items-center gap-2'>
-          <MenuDropdown
-            onSelect={setView}
-          />
+          <MenuDropdown onSelect={setView} />
           <span>{view} View</span>
         </div>
       </div>
