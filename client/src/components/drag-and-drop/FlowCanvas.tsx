@@ -69,22 +69,21 @@ const initialEdges: Edge[] = [
   },
 ];
 
-
 export default function FlowCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-    useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (event.key === 'Delete' || event.key === 'Backspace') {
         setNodes((nds) => nds.filter((node) => !node.selected)); // keep only unselected nodes
         setEdges((eds) => eds.filter((edge) => !edge.selected)); // keep only unselected edges
-        }
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [setNodes, setEdges]);
+  }, [setNodes, setEdges]);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -93,61 +92,58 @@ export default function FlowCanvas() {
 
   const { screenToFlowPosition } = useReactFlow();
 
-const onDragOver = useCallback((event: React.DragEvent) => {
-  event.preventDefault();
-  event.dataTransfer.dropEffect = 'move';
-}, []);
-
-const onDrop = useCallback(
-  (event: React.DragEvent) => {
+  const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+  }, []);
 
-    const nodeData = event.dataTransfer.getData('application/reactflow');
-    if (!nodeData) return;
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
 
-    const raw = event.dataTransfer.getData('application/reactflow');
-    if (!raw) return;
+      const nodeData = event.dataTransfer.getData('application/reactflow');
+      if (!nodeData) return;
 
-    const { type, label } = JSON.parse(nodeData);
+      const raw = event.dataTransfer.getData('application/reactflow');
+      if (!raw) return;
 
-    const position = screenToFlowPosition({
-      x: event.clientX,
-      y: event.clientY,
-    });
+      const { type, label } = JSON.parse(nodeData);
 
-    const newNode = {
-      id: `${+new Date()}`,
-      type,
-      position,
-      data: { label: `${label}` },
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
-    };
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
 
-    setNodes((nds) => [...nds, newNode]);
-  },
-  [screenToFlowPosition, setNodes]
-);
+      const newNode = {
+        id: `${+new Date()}`,
+        type,
+        position,
+        data: { label: `${label}` },
+        sourcePosition: Position.Right,
+        targetPosition: Position.Left,
+      };
 
+      setNodes((nds) => [...nds, newNode]);
+    },
+    [screenToFlowPosition, setNodes]
+  );
 
   return (
-    
-      <div style={{ width: '100%', height: '100%', border: '1px solid #444' }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          fitView
-          style={{ width: '100%', height: '100%' }}
-        >
-          <Controls />
-          <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-        </ReactFlow>
-      </div>
-   
+    <div style={{ width: '100%', height: '100%', border: '1px solid #444' }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        fitView
+        style={{ width: '100%', height: '100%' }}
+      >
+        <Controls />
+        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+      </ReactFlow>
+    </div>
   );
 }

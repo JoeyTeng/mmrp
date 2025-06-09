@@ -9,7 +9,7 @@ export default function SidebarItem({ label, type }: SidebarItemProps) {
   const onDragStart = (event: React.DragEvent) => {
     const nodeData = JSON.stringify({ type, label });
     event.dataTransfer.setData('application/reactflow', nodeData);
-    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.effectAllowed = 'copy';
   };
 
   return (
