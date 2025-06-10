@@ -6,18 +6,18 @@ import TopNavBar from '@/components/layout/TopNavBar';
 
 export default function Home() {
   return (
-     <main className="h-screen w-screen flex flex-col overflow-hidden">
+     <main className='h-screen w-screen flex flex-col overflow-hidden'>
       <TopNavBar />
 
       {/* rest of screen */}
-      <div className="flex flex-1">
-        <div className="flex flex-col flex-3 gap-0.5">
-          <div className="flex flex-1 gap-0.5">
+      <div className='flex flex-1'>
+        <div className='flex flex-col flex-3 gap-0.5'>
+          <div className='flex flex-1 gap-0.5'>
             <LeftColumn />
             <CenterColumn />
             <RightColumn />
           </div>
-          <div className="flex flex-1">
+          <div className='flex flex-1'>
             <DragAndDropArea />
           </div>
         </div>

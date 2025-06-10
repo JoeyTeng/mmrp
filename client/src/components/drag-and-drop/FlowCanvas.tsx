@@ -129,7 +129,7 @@ export default function FlowCanvas() {
   );
 
   return (
-    <div className="w-full h-full overflow-hidden bg-gray-100">
+    <div className='w-full h-full overflow-hidden bg-gray-100'>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -139,7 +139,7 @@ export default function FlowCanvas() {
         onDragOver={onDragOver}
         onDrop={onDrop}
         fitView
-        className="w-full h-full"
+        className='w-full h-full'
       >
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
