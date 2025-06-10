@@ -5,25 +5,21 @@ import SideBar from '@/components/drag-and-drop/SideBar'
 
 const DragAndDropArea = () => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        height: '50vh',
-        width: '100vw',
-        overflow: 'hidden',
-      }}
-    >
-      <div style={{ flex: 1, borderRight: '1px solid #ccc' }}>
+    <div className='flex h-[50vh] w-screen overflow-hidden'>
+      {/* Sidebar */}
+      <div className='flex-1 border-gray-300'>
         <SideBar />
       </div>
-      <div style={{ flex: 2.5, borderRight: '1px solid #ccc', minWidth: 0 }}>
+
+      {/* Flow Canvas */}
+      <div className='flex-[2.5] min-w-0'>
         <ReactFlowProvider>
           <FlowCanvas />
         </ReactFlowProvider>
       </div>
 
-      {/* Right column: Parameter config */}
-      <div style={{ flex: 1 }}>
+      {/* Parameter Configuration */}
+      <div className='flex-1'>
         <ParameterConfiguration />
       </div>
     </div>

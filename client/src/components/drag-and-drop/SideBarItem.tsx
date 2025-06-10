@@ -16,14 +16,7 @@ export default function SidebarItem({ label, type }: SidebarItemProps) {
     <div
       draggable
       onDragStart={onDragStart}
-      style={{
-        padding: '8px',
-        marginBottom: '4px',
-        border: '1px solid #ccc',
-        backgroundColor: 'white',
-        borderRadius: '4px',
-        cursor: 'grab',
-      }}
+      className='p-2 mb-1 border border-gray-300 bg-gray-50 rounded cursor-grab'
     >
       {label}
     </div>

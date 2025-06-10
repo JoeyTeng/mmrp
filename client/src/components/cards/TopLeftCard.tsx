@@ -1,10 +1,10 @@
 const TopLeftCard = () => {
   return (
-    <div style={{ flex: 1, border: '1px solid #444' }}>
-      <div className="header">
+    <div className='flex-1 border border-gray-900 rounded-md overflow-hidden bg-white'>
+      <div className='bg-gray-700 text-white font-semibold px-4 py-2 border-b border-gray-300'>
         Load and Restore Pipelines
       </div>
-      <div style={{ padding: '10px' }}>
+      <div className='p-3'>
         {/* Top left content */}
       </div>
     </div>
