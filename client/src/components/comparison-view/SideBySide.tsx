@@ -12,7 +12,7 @@ const SideBySide = () => {
     const [progress, setProgress] = useState(0);
     const [duration, setDuration] = useState(0);
 
-    // play/pause
+    // Play/pause the video
     const handlePlayPause = () => {
         if (!videoARef.current || !videoBRef.current) return;
 
@@ -37,21 +37,11 @@ const SideBySide = () => {
     };
 
     // Update timeline of video live
-    useEffect(() => {
-        const video = videoARef.current;
-        if (!video) return;
-
-        const handleTimeUpdate = () => {
-            setProgress(video.currentTime);
-            setDuration(video.duration || 0);
-        };
-
-        video.addEventListener('timeupdate', handleTimeUpdate);
-
-        return () => {
-            video.removeEventListener('timeupdate', handleTimeUpdate);
-        };
-    }, [isPlaying]);
+    const handleTimeUpdate = () => {
+        if (!videoARef.current || !videoBRef.current) return;
+        setProgress(videoARef.current.currentTime);
+        setDuration(videoARef.current.duration || 0);
+    };
 
     // Update full screen state to handle container height
     useEffect(() => {
@@ -88,6 +78,7 @@ const SideBySide = () => {
             ref={videoARef}
             src='/example-video.mp4'
             className='w-1/2 h-full object-contain bg-red'
+            onTimeUpdate={handleTimeUpdate}
             />
             <video
             ref={videoBRef}
