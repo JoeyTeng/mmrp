@@ -2,8 +2,8 @@ import ComparisonMetrics from '../cards/ComparisonMetrics';
 
 const RightColumn = () => {
   return (
-     <div style={{ height: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', flex: 1 }}>
+     <div className='h-full flex flex-col flex-1'>
+      <div className='flex flex-1'>
         <ComparisonMetrics />
       </div>
     </div>

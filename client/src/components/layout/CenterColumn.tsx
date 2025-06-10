@@ -2,7 +2,7 @@ import ComparisonView from '@/components/cards/ComparisonView';
 
 const CenterColumn = () => {
   return (
-    <div style={{ flex: 2.5, display: 'flex', flexDirection: 'column' }}>
+    <div className='flex flex-col flex-[2.5]'>
       <ComparisonView />
     </div>
   );
