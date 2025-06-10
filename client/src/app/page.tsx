@@ -6,25 +6,23 @@ import TopNavBar from '@/components/layout/TopNavBar';
 
 export default function Home() {
   return (
-    <main style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <TopNavBar />
-      
-      <div style={{ display: 'flex', flex: 1 }}>
+     <main style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ height: '50px' }}>
+        <TopNavBar />
+      </div>
 
+      {/* rest of screen */}
+      <div style={{ display: 'flex', flex: 1 }}>
         <div style={{ flex: 3, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', flex: 1 }}>
             <LeftColumn />
             <CenterColumn />
+            <RightColumn />
           </div>
-          <div style={{ display: 'flex', flex: 1.25 }}>
+          <div style={{ display: 'flex', flex: 1 }}>
             <DragAndDropArea />
           </div>
         </div>
-
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <RightColumn />
-        </div>
-        
       </div>
     </main>
   );

@@ -1,15 +1,31 @@
+import FlowCanvas from '@/components/drag-and-drop/FlowCanvas';
+import { ReactFlowProvider } from '@xyflow/react';
+import ParameterConfiguration from '@/components/drag-and-drop/ParameterConfiguration';
+import SideBar from '@/components/drag-and-drop/SideBar'
+
 const DragAndDropArea = () => {
   return (
     <div
       style={{
-        flex: 1,
-        border: '1px solid #444',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        height: '50vh',
+        width: '100vw',
+        overflow: 'hidden',
       }}
     >
-      Drag and Drop Area
+      <div style={{ flex: 1, borderRight: '1px solid #ccc' }}>
+        <SideBar />
+      </div>
+      <div style={{ flex: 2.5, borderRight: '1px solid #ccc', minWidth: 0 }}>
+        <ReactFlowProvider>
+          <FlowCanvas />
+        </ReactFlowProvider>
+      </div>
+
+      {/* Right column: Parameter config */}
+      <div style={{ flex: 1 }}>
+        <ParameterConfiguration />
+      </div>
     </div>
   );
 };
