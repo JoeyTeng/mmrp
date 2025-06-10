@@ -30,6 +30,16 @@ npm run build
 npm run start
 ```
 
+### Changes to Dependencies
+<!-- Please list newly added dependencies and state the reason. Also highlight removed dependencies & upgrades. -->
+
+```diff
++ "@headlessui/react": "^2.2.4"  # UI template, maintained by Tailwind CSS, MIT License https://github.com/tailwindlabs/headlessui
++ "lucide-react": "^0.513.0"  # SVG icons, MIT License https://lucide.dev/guide/
+- "@tailwindcss/postcss": "^4"
++ "@tailwindcss/postcss": "^4.1.8"  # upgrade to a newer version, automatic bump
+```
+
 ### Misc.
 <!-- Other parts you want to highlight -->
 
