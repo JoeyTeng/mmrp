@@ -4,10 +4,13 @@ import { Menu, MenuButton, MenuItems, MenuItem, Transition } from '@headlessui/r
 import { Menu as MenuIcon } from 'lucide-react';
 import { Fragment } from 'react';
 
-const viewOptions = ['Side-by-Side', 'Interleaving Frames'];
+export enum viewOptions {
+    SideBySide = 'Side-by-Side',
+    Interleaving = 'Interleaving Frames'
+}
 
 interface MenuDropdownProps {
-  onSelect: (view: string) => void;
+  onSelect: (view: viewOptions) => void;
 }
 
 const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
@@ -31,20 +34,20 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
                     Select view:
                 </div>
                 <div className='py-1'>
-                    {viewOptions.map((opt) => (
-                    <MenuItem key={opt} as={Fragment}>
-                        {({ active }) => (
-                        <button
-                            type='button'
-                            onClick={() => onSelect(opt)}
-                            className={`${
-                            active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
-                            } block w-full px-4 py-2 text-sm cursor-pointer`}
-                        >
-                            {opt}
-                        </button>
-                        )}
-                    </MenuItem>
+                    {Object.entries(viewOptions).map(([opt, key]) => (
+                        <MenuItem key={opt} as={Fragment}>
+                            {({ active }) => (
+                            <button
+                                type='button'
+                                onClick={() => onSelect(key)}
+                                className={`${
+                                active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                                } block w-full px-4 py-2 text-sm cursor-pointer text-left`}
+                            >
+                                {key}
+                            </button>
+                            )}
+                        </MenuItem>
                     ))}
                 </div>
             </MenuItems>

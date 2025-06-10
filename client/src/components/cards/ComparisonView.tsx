@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import SideBySide from '../comparison-view/SideBySide';
-import MenuDropdown from '../comparison-view/MenuDropdown';
+import MenuDropdown, { viewOptions } from '../comparison-view/MenuDropdown';
 
 const ComparisonView = () => {
-  const [view, setView] = useState('Side-by-Side');
+  const [view, setView] = useState(viewOptions.SideBySide);
 
   return (
     <div className='flex flex-col flex-1 relative border border-gray-900 rounded-md overflow-hidden bg-gray-100'>
@@ -16,8 +16,8 @@ const ComparisonView = () => {
         </div>
       </div>
 
-      {view === 'Side-by-Side' && <SideBySide />}
-      {view === 'Interleaving Frames' && (
+      {view === viewOptions.SideBySide && <SideBySide />}
+      {view === viewOptions.Interleaving && (
         <div className='h-full w-full'>
         </div>
       )}
