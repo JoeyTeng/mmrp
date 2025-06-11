@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { Node } from '@xyflow/react';
-import { moduleRegistry } from '../modules/modulesRegistry';
+import { moduleRegistry } from '@/components/modules/modulesRegistry';
 import { Info } from 'lucide-react';
 
 type ParamsValue = string | number | string[];

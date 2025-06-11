@@ -11,7 +11,7 @@ import {
 } from '@xyflow/react';
 import ParameterConfiguration from '@/components/drag-and-drop/ParameterConfiguration';
 import SideBar from '@/components/drag-and-drop/SideBar';
-import { moduleRegistry } from '../modules/modulesRegistry';
+import { moduleRegistry } from '@/components/modules/modulesRegistry';
 import { useCallback, useState } from 'react';
 
 type ParamsValue = string | number | string[];

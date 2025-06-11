@@ -15,7 +15,7 @@ import {
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
-import { moduleRegistry } from '../modules/modulesRegistry';
+import { moduleRegistry } from '@/components/modules/modulesRegistry';
 
 type ParamsValue = string | number | string[];
 
