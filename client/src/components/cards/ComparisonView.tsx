@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import SideBySide from '../comparison-view/SideBySide';
 import MenuDropdown, { viewOptions } from '../comparison-view/MenuDropdown';
+import InterleavingFrames from '../comparison-view/InterleavingFrames';
 
 const ComparisonView = () => {
   const [view, setView] = useState(viewOptions.SideBySide);
@@ -17,10 +18,7 @@ const ComparisonView = () => {
       </div>
 
       {view === viewOptions.SideBySide && <SideBySide />}
-      {view === viewOptions.Interleaving && (
-        <div className='h-full w-full'>
-        </div>
-      )}
+      {view === viewOptions.Interleaving && <InterleavingFrames />}
     </div>
   );
 
