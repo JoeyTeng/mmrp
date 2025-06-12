@@ -119,12 +119,6 @@ export default function ParameterConfiguration({
       </div>
       <div className='p-2.5'>
         {Object.entries(params).map(([key, value]) => {
-          // Shared label
-          const labelEl = (
-            <label htmlFor={key} className='block mb-1 font-medium'>
-              {key}
-            </label>
-          );
 
           const moduleRegistryVal = moduleRegistry[label].params[key];
           // 1) string[]
