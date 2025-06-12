@@ -9,11 +9,11 @@ export default function Sidebar() {
       <div className='p-3 overflow-y-auto h-full'>
         <div className='flex flex-wrap gap-2'>
           <SidebarItem label='Source' type='input' />
-          <SidebarItem label='Denoise' type='process' />
-          <SidebarItem label='Encode' type='process' />
-          <SidebarItem label='Decode' type='process' />
-          <SidebarItem label='UpSample' type='process' />
-          <SidebarItem label='DownSample' type='process' />
+          <SidebarItem label='Denoise' type='default' />
+          <SidebarItem label='Encode' type='default' />
+          <SidebarItem label='Decode' type='default' />
+          <SidebarItem label='UpSample' type='default' />
+          <SidebarItem label='DownSample' type='default' />
           <SidebarItem label='Result' type='output' />
         </div>
       </div>

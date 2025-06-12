@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useCallback, useEffect } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import React, { useCallback, useRef } from 'react';
+import { OnEdgesChange, OnNodesChange, useReactFlow } from '@xyflow/react';
 import {
   ReactFlow,
   Background,
   Controls,
-  useNodesState,
-  useEdgesState,
   addEdge,
   Connection,
   BackgroundVariant,
@@ -17,73 +15,52 @@ import {
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
+import {
+  ParamValueType,
+  getInitialNodeParamValue,
+  moduleRegistry,
+} from '@/components/modules/modulesRegistry';
 
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'input',
-    position: { x: 50, y: 100 },
-    data: { label: 'Source' },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
-  },
-  {
-    id: '2',
-    position: { x: 220, y: 100 },
-    data: { label: 'Downsample' },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
-  },
-  {
-    id: '3',
-    position: { x: 400, y: 100 },
-    data: { label: 'Denoise' },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
-  },
-  {
-    id: '4',
-    type: 'output',
-    position: { x: 600, y: 100 },
-    data: { label: 'Result' },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
-  },
-];
+type NodeData = {
+  label: string;
+  params: Record<string, ParamValueType>;
+};
 
-const initialEdges: Edge[] = [
-  {
-    id: 'e1-2',
-    source: '1',
-    target: '2',
-  },
-  {
-    id: 'e2-3',
-    source: '2',
-    target: '3',
-  },
-  {
-    id: 'e3-4',
-    source: '3',
-    target: '4',
-  },
-];
+type FlowCanvasProps = {
+  nodes: Node<NodeData>[];
+  edges: Edge[];
+  onNodesChange: OnNodesChange<Node<NodeData>>;
+  onEdgesChange: OnEdgesChange;
+  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData>[]>>;
+  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  onSelectNode: (id: string | null) => void;
+};
 
-export default function FlowCanvas() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+export default function FlowCanvas({
+  nodes,
+  edges,
+  onNodesChange,
+  onEdgesChange,
+  setNodes,
+  setEdges,
+  onSelectNode,
+}: FlowCanvasProps) {
+  const paneRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Delete' || event.key === 'Backspace') {
-        setNodes((nds) => nds.filter((node) => !node.selected)); // keep only unselected nodes
-        setEdges((eds) => eds.filter((edge) => !edge.selected)); // keep only unselected edges
+  const handlePaneClick = () => {
+    paneRef.current?.focus();
+  };
+
+  const handlePaneKeyDown = useCallback(
+    (evt: React.KeyboardEvent) => {
+      if (evt.key === 'Delete' || evt.key === 'Backspace') {
+        setNodes((nds) => nds.filter((n) => !n.selected));
+        setEdges((eds) => eds.filter((e) => !e.selected));
+        evt.preventDefault();
       }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [setNodes, setEdges]);
+    },
+    [setNodes, setEdges]
+  );
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -104,9 +81,6 @@ export default function FlowCanvas() {
       const nodeData = event.dataTransfer.getData('application/reactflow');
       if (!nodeData) return;
 
-      const raw = event.dataTransfer.getData('application/reactflow');
-      if (!raw) return;
-
       const { type, label } = JSON.parse(nodeData);
 
       const position = screenToFlowPosition({
@@ -114,11 +88,16 @@ export default function FlowCanvas() {
         y: event.clientY,
       });
 
+      const moduleParams = moduleRegistry[label];
+      const defaultParams = moduleParams
+        ? getInitialNodeParamValue(moduleParams.params)
+        : {};
+
       const newNode = {
         id: `${+new Date()}`,
         type,
         position,
-        data: { label: `${label}` },
+        data: { label: `${label}`, params: defaultParams },
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
       };
@@ -129,7 +108,13 @@ export default function FlowCanvas() {
   );
 
   return (
-    <div className='w-full h-full overflow-hidden bg-gray-100'>
+    <div
+      className='w-full h-full overflow-hidden bg-gray-100'
+      ref={paneRef}
+      tabIndex={0} // make this div focusable
+      onClick={handlePaneClick}
+      onKeyDown={handlePaneKeyDown}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -138,6 +123,9 @@ export default function FlowCanvas() {
         onConnect={onConnect}
         onDragOver={onDragOver}
         onDrop={onDrop}
+        onSelectionChange={({ nodes: selected }) =>
+          onSelectNode(selected.length ? selected[0].id : null)
+        }
         fitView
         className='w-full h-full'
       >
