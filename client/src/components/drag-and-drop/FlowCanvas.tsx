@@ -15,13 +15,15 @@ import {
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
-import { moduleRegistry } from '@/components/modules/modulesRegistry';
-
-type ParamsValue = string | number | string[];
+import {
+  ParamValueType,
+  getInitialNodeParamValue,
+  moduleRegistry,
+} from '@/components/modules/modulesRegistry';
 
 type NodeData = {
   label: string;
-  params: Record<string, ParamsValue>;
+  params: Record<string, ParamValueType>;
 };
 
 type FlowCanvasProps = {
@@ -29,7 +31,7 @@ type FlowCanvasProps = {
   edges: Edge[];
   onNodesChange: OnNodesChange<Node<NodeData>>;
   onEdgesChange: OnEdgesChange;
-  setNodes: React.Dispatch<React.SetStateAction<Node<any>[]>>;
+  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onSelectNode: (id: string | null) => void;
 };
@@ -79,9 +81,6 @@ export default function FlowCanvas({
       const nodeData = event.dataTransfer.getData('application/reactflow');
       if (!nodeData) return;
 
-      const raw = event.dataTransfer.getData('application/reactflow');
-      if (!raw) return;
-
       const { type, label } = JSON.parse(nodeData);
 
       const position = screenToFlowPosition({
@@ -90,13 +89,15 @@ export default function FlowCanvas({
       });
 
       const moduleParams = moduleRegistry[label];
-      const defaultParams = moduleParams?.params ?? {};
+      const defaultParams = moduleParams
+        ? getInitialNodeParamValue(moduleParams.params)
+        : {};
 
       const newNode = {
         id: `${+new Date()}`,
         type,
         position,
-        data: { label: `${label}`, params: { ...defaultParams } },
+        data: { label: `${label}`, params: defaultParams },
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
       };

@@ -11,14 +11,16 @@ import {
 } from '@xyflow/react';
 import ParameterConfiguration from '@/components/drag-and-drop/ParameterConfiguration';
 import SideBar from '@/components/drag-and-drop/SideBar';
-import { moduleRegistry } from '@/components/modules/modulesRegistry';
+import {
+  ParamValueType,
+  moduleRegistry,
+  getInitialNodeParamValue,
+} from '@/components/modules/modulesRegistry';
 import { useCallback, useState } from 'react';
-
-type ParamsValue = string | number | string[];
 
 type NodeData = {
   label: string;
-  params: Record<string, ParamsValue>;
+  params: Record<string, ParamValueType>; // constraint to ensure there's only one value
 };
 
 const initialNodes: Node<NodeData>[] = [
@@ -26,7 +28,10 @@ const initialNodes: Node<NodeData>[] = [
     id: '1',
     type: 'input',
     position: { x: 50, y: 100 },
-    data: { label: 'Source', params: { ...moduleRegistry.Source.params } },
+    data: {
+      label: 'Source',
+      params: getInitialNodeParamValue(moduleRegistry.Source.params),
+    },
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
   },
@@ -35,7 +40,7 @@ const initialNodes: Node<NodeData>[] = [
     position: { x: 220, y: 100 },
     data: {
       label: 'DownSample',
-      params: { ...moduleRegistry.DownSample.params },
+      params: getInitialNodeParamValue(moduleRegistry.DownSample.params),
     },
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
@@ -43,7 +48,10 @@ const initialNodes: Node<NodeData>[] = [
   {
     id: '3',
     position: { x: 400, y: 100 },
-    data: { label: 'Denoise', params: { ...moduleRegistry.Denoise.params } },
+    data: {
+      label: 'Denoise',
+      params: getInitialNodeParamValue(moduleRegistry.Denoise.params),
+    },
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
   },
@@ -51,7 +59,10 @@ const initialNodes: Node<NodeData>[] = [
     id: '4',
     type: 'output',
     position: { x: 600, y: 100 },
-    data: { label: 'Result', params: { ...moduleRegistry.Result.params } },
+    data: {
+      label: 'Result',
+      params: getInitialNodeParamValue(moduleRegistry.Result.params),
+    },
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
   },
@@ -81,7 +92,7 @@ const DragAndDropArea = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const updateParam = useCallback(
-    (key: string, value: string | number | string[]) => {
+    (key: string, value: ParamValueType) => {
       setNodes((nds) =>
         nds.map((n) =>
           n.id === selectedId

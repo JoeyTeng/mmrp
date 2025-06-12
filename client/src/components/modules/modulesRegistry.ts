@@ -1,5 +1,9 @@
-type ModuleConfig = {
-  params: Record<string, string | number | string[]>;
+export type ParamOptionType = string | number | string[];
+
+export type ParamValueType = string | number;
+
+export type ModuleConfig = {
+  params: Record<string, ParamOptionType>;
 };
 
 export const moduleRegistry: Record<string, ModuleConfig> = {
@@ -11,3 +15,18 @@ export const moduleRegistry: Record<string, ModuleConfig> = {
   DownSample: { params: { factor: 2 } },
   Result: { params: { path: 'out.mp4' } },
 };
+
+/** Function that gets a single initial value for a param**/
+
+export function getInitialNodeParamValue(
+  moduleConfig: Record<string, ParamOptionType>
+): Record<string, ParamValueType> {
+  return Object.fromEntries(
+    Object.entries(moduleConfig).map(([k, v]) => [
+      k,
+      Array.isArray(v)
+        ? (v[0] as ParamValueType) // first option as default
+        : (v as ParamValueType), // or keep the primitive
+    ])
+  ) as Record<string, ParamValueType>;
+}

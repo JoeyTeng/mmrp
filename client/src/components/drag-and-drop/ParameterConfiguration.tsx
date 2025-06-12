@@ -2,15 +2,95 @@
 
 import React from 'react';
 import type { Node } from '@xyflow/react';
-import { moduleRegistry } from '@/components/modules/modulesRegistry';
+import {
+  ParamValueType,
+  moduleRegistry,
+} from '@/components/modules/modulesRegistry';
 import { Info } from 'lucide-react';
 
-type ParamsValue = string | number | string[];
-
 type ParameterConfigurationProps = {
-  node?: Node<{ label: string; params: Record<string, ParamsValue> }> | null;
-  onChange: (key: string, value: ParamsValue) => void;
+  node?: Node<{ label: string; params: Record<string, ParamValueType> }> | null;
+  onChange: (key: string, value: ParamValueType) => void;
 };
+
+function renderSelectInput(
+  moduleRegistryVal: string[],
+  key: string,
+  value: ParamValueType,
+  onChange: (key: string, value: ParamValueType) => void
+) {
+  const options = moduleRegistryVal;
+  // value should be a single string
+  const selected = typeof value === 'string' ? value : '';
+
+  return (
+    <div key={key} className='mb-4'>
+      <label htmlFor={key} className='block mb-1 font-medium'>
+        {key}
+      </label>
+      <select
+        id={key}
+        value={selected}
+        className='w-full p-1.5 rounded bg-gray-100'
+        onChange={(e) => {
+          const selected = Array.from(
+            e.currentTarget.selectedOptions,
+            (o) => o.value
+          );
+          onChange(key, selected[0] ?? '');
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function renderNumberInput(
+  key: string,
+  value: ParamValueType,
+  onChange: (key: string, value: ParamValueType) => void
+) {
+  return (
+    <div key={key} className='mb-4'>
+      <label htmlFor={key} className='block mb-1 font-medium'>
+        {key}
+      </label>
+      <input
+        id={key}
+        type='number'
+        value={typeof value === 'number' ? value : ''}
+        onChange={(e) => onChange(key, Number(e.currentTarget.value))}
+        className='w-full p-1.5 rounded bg-gray-100'
+      />
+    </div>
+  );
+}
+
+function renderTextInput(
+  key: string,
+  value: ParamValueType,
+  onChange: (key: string, value: ParamValueType) => void
+) {
+  return (
+    <div key={key} className='mb-4'>
+      <label htmlFor={key} className='block mb-1 font-medium'>
+        {key}
+      </label>
+      <input
+        id={key}
+        type='text'
+        value={value}
+        onChange={(e) => onChange(key, e.currentTarget.value)}
+        className='w-full p-1.5 rounded bg-gray-100'
+      />
+    </div>
+  );
+}
 
 export default function ParameterConfiguration({
   node,
@@ -46,70 +126,19 @@ export default function ParameterConfiguration({
             </label>
           );
 
-          const moduleRegistryVal = (
-            moduleRegistry[label].params as Record<
-              string,
-              string | number | string[]
-            >
-          )[key];
+          const moduleRegistryVal = moduleRegistry[label].params[key];
           // 1) string[]
           if (Array.isArray(moduleRegistryVal)) {
-            const options = moduleRegistryVal as string[];
-            const selected = Array.isArray(value) ? (value as string[]) : [];
-            return (
-              <div key={key} className='mb-4'>
-                {labelEl}
-                <select
-                  id={key}
-                  value={selected}
-                  className='w-full p-1.5 rounded bg-gray-100'
-                  onChange={(e) => {
-                    const selected = Array.from(
-                      e.currentTarget.selectedOptions,
-                      (opt) => opt.value
-                    );
-                    onChange(key, selected);
-                  }}
-                >
-                  {options.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            );
+            return renderSelectInput(moduleRegistryVal, key, value, onChange);
           }
 
           // 2) number
           if (typeof value === 'number') {
-            return (
-              <div key={key} className='mb-4'>
-                {labelEl}
-                <input
-                  id={key}
-                  type='number'
-                  value={value}
-                  onChange={(e) => onChange(key, Number(e.currentTarget.value))}
-                  className='w-full p-1.5 rounded bg-gray-100'
-                />
-              </div>
-            );
+            return renderNumberInput(key, value, onChange);
           }
 
           // 3) string
-          return (
-            <div key={key} className='mb-4'>
-              {labelEl}
-              <input
-                id={key}
-                type='text'
-                value={value}
-                onChange={(e) => onChange(key, e.currentTarget.value)}
-                className='w-full p-1.5 rounded bg-gray-100'
-              />
-            </div>
-          );
+          return renderTextInput(key, value, onChange);
         })}
       </div>
     </div>
