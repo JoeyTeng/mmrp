@@ -10,6 +10,7 @@ import {
   Connection,
   BackgroundVariant,
   Position,
+  MarkerType,
   type Node,
   type Edge,
 } from '@xyflow/react';
@@ -22,18 +23,24 @@ import {
 } from '@/components/modules/modulesRegistry';
 import FlowNode, { NodeData } from '@/components/drag-and-drop/FlowNode';
 
-const nodeTypes = {
-  inputNode: FlowNode,
-  processNode: FlowNode,
-  outputNode: FlowNode,
+export enum NodeType {
+  InputNode = 'inputNode',
+  ProcessNode = 'processNode',
+  OutputNode = 'outputNode',
+}
+
+export const nodeTypes = {
+  [NodeType.InputNode]: FlowNode,
+  [NodeType.ProcessNode]: FlowNode,
+  [NodeType.OutputNode]: FlowNode,
 };
 
 type FlowCanvasProps = {
-  nodes: Node<NodeData>[];
+  nodes: Node<NodeData, NodeType>[];
   edges: Edge[];
-  onNodesChange: OnNodesChange<Node<NodeData>>;
+  onNodesChange: OnNodesChange<Node<NodeData, NodeType>>;
   onEdgesChange: OnEdgesChange;
-  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData>[]>>;
+  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onSelectNode: (id: string | null) => void;
 };
@@ -83,7 +90,8 @@ export default function FlowCanvas({
       const nodeData = event.dataTransfer.getData('application/reactflow');
       if (!nodeData) return;
 
-      const { type, label } = JSON.parse(nodeData);
+      const { type: typeValueStr, label } = JSON.parse(nodeData);
+      const type = typeValueStr as NodeType;
 
       const position = screenToFlowPosition({
         x: event.clientX,
@@ -129,6 +137,14 @@ export default function FlowCanvas({
         onSelectionChange={({ nodes: selected }) =>
           onSelectNode(selected.length ? selected[0].id : null)
         }
+        defaultEdgeOptions={{
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 20,
+            height: 20,
+            className: '#000',
+          },
+        }}
         fitView
         className='w-full h-full'
       >

@@ -18,12 +18,13 @@ import {
 } from '@/components/modules/modulesRegistry';
 import { useCallback, useState } from 'react';
 import { NodeData } from '@/components/drag-and-drop/FlowNode';
+import { NodeType } from '@/components/drag-and-drop/FlowCanvas';
 
-const initialNodes: Node<NodeData>[] = [
+const initialNodes: Node<NodeData, NodeType>[] = [
   {
     id: '1',
-    type: 'inputNode',
-    position: { x: 50, y: 100 },
+    type: NodeType.InputNode,
+    position: { x: 0, y: 100 },
     data: {
       label: 'Source',
       params: getInitialNodeParamValue(moduleRegistry.Source.params),
@@ -31,7 +32,7 @@ const initialNodes: Node<NodeData>[] = [
   },
   {
     id: '2',
-    type: 'processNode',
+    type: NodeType.ProcessNode,
     position: { x: 220, y: 100 },
     data: {
       label: 'DownSample',
@@ -40,7 +41,7 @@ const initialNodes: Node<NodeData>[] = [
   },
   {
     id: '3',
-    type: 'processNode',
+    type: NodeType.ProcessNode,
     position: { x: 400, y: 100 },
     data: {
       label: 'Denoise',
@@ -49,7 +50,7 @@ const initialNodes: Node<NodeData>[] = [
   },
   {
     id: '4',
-    type: 'outputNode',
+    type: NodeType.OutputNode,
     position: { x: 600, y: 100 },
     data: {
       label: 'Result',

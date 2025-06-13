@@ -1,8 +1,9 @@
 'use client';
+import { NodeType } from '@/components/drag-and-drop/FlowCanvas';
 
 type SidebarItemProps = {
   label: string;
-  type: string;
+  type: NodeType;
 };
 
 export default function SidebarItem({ label, type }: SidebarItemProps) {
