@@ -141,8 +141,7 @@ export default function FlowCanvas({
           markerEnd: {
             type: MarkerType.ArrowClosed,
             width: 20,
-            height: 20,
-            className: '#000',
+            height: 20
           },
         }}
         fitView
