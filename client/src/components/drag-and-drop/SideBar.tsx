@@ -8,13 +8,13 @@ export default function Sidebar() {
       </div>
       <div className='p-3 overflow-y-auto h-full'>
         <div className='flex flex-wrap gap-2'>
-          <SidebarItem label='Source' type='input' />
-          <SidebarItem label='Denoise' type='default' />
-          <SidebarItem label='Encode' type='default' />
-          <SidebarItem label='Decode' type='default' />
-          <SidebarItem label='UpSample' type='default' />
-          <SidebarItem label='DownSample' type='default' />
-          <SidebarItem label='Result' type='output' />
+          <SidebarItem label='Source' type='inputNode' />
+          <SidebarItem label='Denoise' type='processNode' />
+          <SidebarItem label='Encode' type='processNode' />
+          <SidebarItem label='Decode' type='processNode' />
+          <SidebarItem label='UpSample' type='processNode' />
+          <SidebarItem label='DownSample' type='processNode' />
+          <SidebarItem label='Result' type='outputNode' />
         </div>
       </div>
     </div>

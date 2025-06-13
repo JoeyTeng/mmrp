@@ -20,10 +20,12 @@ import {
   getInitialNodeParamValue,
   moduleRegistry,
 } from '@/components/modules/modulesRegistry';
+import FlowNode, { NodeData } from './FlowNode';
 
-type NodeData = {
-  label: string;
-  params: Record<string, ParamValueType>;
+const nodeTypes = {
+  inputNode: FlowNode,
+  processNode: FlowNode,
+  outputNode: FlowNode,
 };
 
 type FlowCanvasProps = {
@@ -116,6 +118,7 @@ export default function FlowCanvas({
       onKeyDown={handlePaneKeyDown}
     >
       <ReactFlow
+        nodeTypes={nodeTypes}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}

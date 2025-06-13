@@ -17,54 +17,44 @@ import {
   getInitialNodeParamValue,
 } from '@/components/modules/modulesRegistry';
 import { useCallback, useState } from 'react';
-
-type NodeData = {
-  label: string;
-  params: Record<string, ParamValueType>; // constraint to ensure there's only one value
-};
+import { NodeData } from '../drag-and-drop/FlowNode';
 
 const initialNodes: Node<NodeData>[] = [
   {
     id: '1',
-    type: 'input',
+    type: 'inputNode',
     position: { x: 50, y: 100 },
     data: {
       label: 'Source',
       params: getInitialNodeParamValue(moduleRegistry.Source.params),
     },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
   },
   {
     id: '2',
+    type: 'processNode',
     position: { x: 220, y: 100 },
     data: {
       label: 'DownSample',
       params: getInitialNodeParamValue(moduleRegistry.DownSample.params),
     },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
   },
   {
     id: '3',
+    type: 'processNode',
     position: { x: 400, y: 100 },
     data: {
       label: 'Denoise',
       params: getInitialNodeParamValue(moduleRegistry.Denoise.params),
     },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
   },
   {
     id: '4',
-    type: 'output',
+    type: 'outputNode',
     position: { x: 600, y: 100 },
     data: {
       label: 'Result',
       params: getInitialNodeParamValue(moduleRegistry.Result.params),
     },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
   },
 ];
 
