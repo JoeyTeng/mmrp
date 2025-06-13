@@ -1,65 +1,139 @@
 'use client';
-import { Handle, Node, NodeProps, Position, useReactFlow } from '@xyflow/react';
-import { ParamValueType } from '../modules/modulesRegistry';
-import { Trash } from 'lucide-react';
 
-export type NodeData = {
-  label: string;
-  params: Record<string, ParamValueType>; // constraint to ensure there's only one value
+import React from 'react';
+import type { Node } from '@xyflow/react';
+import {
+  ParamValueType,
+  moduleRegistry,
+} from '@/components/modules/modulesRegistry';
+import { Info } from 'lucide-react';
+
+type ParameterConfigurationProps = {
+  node?: Node<{ label: string; params: Record<string, ParamValueType> }> | null;
+  onChange: (key: string, value: ParamValueType) => void;
 };
 
-type CustomNode = Node<NodeData>;
-
-export default function FlowNode({
-  id,
-  type,
-  data: { label, params },
-  selected,
-}: NodeProps<CustomNode>) {
-  const { deleteElements } = useReactFlow();
-
-  const MAX_VISIBLE = 4; //default no of params visible in node
+function renderSelectInput(
+  moduleRegistryVal: string[],
+  key: string,
+  value: ParamValueType,
+  onChange: (key: string, value: ParamValueType) => void
+) {
+  const options = moduleRegistryVal;
+  // value should be a single string
+  const selected = typeof value === 'string' ? value : '';
 
   return (
-    <div
-      className={`w-40 bg-white rounded-lg overflow-hidden text-sm ${
-        selected ? 'border-2 border-black-100' : 'border border-gray-300'
-      }`}
-    >
-      <div className='px-3 py-1 font-semibold text-gray-800 flex justify-between align-center'>
-        {label}
-        <Trash
-          size={14}
-          onClick={(e) => {
-            e.stopPropagation(); //prevent the container’s onClick
-            deleteElements({ nodes: [{ id }] });
-          }}
-        />
-      </div>
-      <div className='border-t border-gray-300' />
-      <div className='px-3 py-1 space-y-1'>
-        {/* by default show the first 4 params */}
-        {Object.entries(params)
-          .slice(0, MAX_VISIBLE)
-          .map(([key, value]) => (
-            <div key={key} className='flex justify-between'>
-              <span className='font-medium text-gray-500'>{key}</span>
-              <span className='text-gray-600 max-w-[55%] truncate break-words'>
-                {String(value)}
-              </span>
-            </div>
-          ))}
-        {Object.entries.length > MAX_VISIBLE && (
-          <div className='text-center text-gray-300'>…</div>
-        )}
-      </div>
-      {type !== 'inputNode' ? (
-        <Handle type='target' position={Position.Left} />
-      ) : null}
+    <div key={key} className='mb-4'>
+      <label htmlFor={key} className='block mb-1 font-medium'>
+        {key}
+      </label>
+      <select
+        id={key}
+        value={selected}
+        className='w-full p-1.5 rounded bg-gray-100'
+        onChange={(e) => {
+          const selected = Array.from(
+            e.currentTarget.selectedOptions,
+            (o) => o.value
+          );
+          onChange(key, selected[0] ?? '');
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
-      {type !== 'outputNode' ? (
-        <Handle type='source' position={Position.Right} />
-      ) : null}
+function renderNumberInput(
+  key: string,
+  value: ParamValueType,
+  onChange: (key: string, value: ParamValueType) => void
+) {
+  return (
+    <div key={key} className='mb-4'>
+      <label htmlFor={key} className='block mb-1 font-medium'>
+        {key}
+      </label>
+      <input
+        id={key}
+        type='number'
+        value={typeof value === 'number' ? value : ''}
+        onChange={(e) => onChange(key, Number(e.currentTarget.value))}
+        className='w-full p-1.5 rounded bg-gray-100'
+      />
+    </div>
+  );
+}
+
+function renderTextInput(
+  key: string,
+  value: ParamValueType,
+  onChange: (key: string, value: ParamValueType) => void
+) {
+  return (
+    <div key={key} className='mb-4'>
+      <label htmlFor={key} className='block mb-1 font-medium'>
+        {key}
+      </label>
+      <input
+        id={key}
+        type='text'
+        value={value}
+        onChange={(e) => onChange(key, e.currentTarget.value)}
+        className='w-full p-1.5 rounded bg-gray-100'
+      />
+    </div>
+  );
+}
+
+export default function ParameterConfiguration({
+  node,
+  onChange,
+}: ParameterConfigurationProps) {
+  if (!node) {
+    return (
+      <div className='flex-1 border border-gray-700 h-full bg-white'>
+        <div className='bg-gray-700 text-white font-semibold px-4 py-2 border-b border-gray-300'>
+          Select a node to configure
+        </div>
+        <div className='flex justify-evenly gap-2.5'>
+          <Info size={16} className='text-gray-500' />
+          <span>select pipeline module to edit parameters</span>
+        </div>
+      </div>
+    );
+  }
+
+  const { label, params } = node.data;
+
+  return (
+    <div className='flex-1 border border-gray-900 rounded-md overflow-y-auto bg-white h-full'>
+      <div className='bg-gray-700 text-white font-semibold px-4 py-2 border-b border-gray-300'>
+        {label} Parameters
+      </div>
+      <div className='p-2.5'>
+        {Object.entries(params).map(([key, value]) => {
+          const moduleRegistryVal = moduleRegistry[label].params[key];
+          // 1) string[]
+          if (Array.isArray(moduleRegistryVal)) {
+            return renderSelectInput(moduleRegistryVal, key, value, onChange);
+          }
+
+          // 2) number
+          if (typeof value === 'number') {
+            return renderNumberInput(key, value, onChange);
+          }
+
+          // 3) string
+          return renderTextInput(key, value, onChange);
+        })}
+      </div>
     </div>
   );
 }
