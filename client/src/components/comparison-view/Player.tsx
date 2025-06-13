@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { PauseIcon, PlayIcon, StepBack, StepForward, Volume2, VolumeX, Maximize } from 'lucide-react';
 
 type Props = {
@@ -32,6 +32,16 @@ const Player = forwardRef<PlayerHandle, Props>(({
     handleTimeUpdate,
   }));
 
+  useEffect(() => {
+    const mainVideo = videoRefs[0].current;
+    if (!mainVideo) return;
+    const onEnded = () => setIsPlaying(false);
+    mainVideo.addEventListener('ended', onEnded);
+    return () => {
+      mainVideo.removeEventListener('ended', onEnded);
+    };
+  }, [videoRefs]);
+
   const handleTimeUpdate = () => {
     const mainVideo = videoRefs[0].current;
     if (mainVideo) {
@@ -41,12 +51,26 @@ const Player = forwardRef<PlayerHandle, Props>(({
   };
 
   const handlePlayPause = () => {
-    videoRefs.forEach((ref) => {
-      const video = ref.current;
-      if (!video) return;
-      isPlaying ? video.pause() : video.play();
-    });
-    setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      videoRefs.forEach(ref => ref.current?.pause());
+      setIsPlaying(false);
+    } else {
+      videoRefs.forEach(ref => {
+        const video = ref.current;
+        if (!video) return;
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => setIsPlaying(true))
+            .catch((error) => {
+              console.warn('Play was interrupted:', error);
+              setIsPlaying(false);
+            });
+        } else {
+          setIsPlaying(!video.paused && !video.ended && video.readyState > 2);
+        }
+      });
+    }
   };
 
   const toggleMute = () => {
