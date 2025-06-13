@@ -1,3 +1,5 @@
+import VideoQualityMetrics from '../comparison-metrics/VideoQualityMetrics';
+
 const ComparisonMetrics = () => {
   return (
     <div className='flex-1 border border-gray-900 rounded-md overflow-hidden bg-white'>
@@ -5,7 +7,7 @@ const ComparisonMetrics = () => {
         Comparison Metrics
       </div>
       <div className='p-3'>
-        {/* Top left content */}
+        <VideoQualityMetrics />
       </div>
     </div>
   );
