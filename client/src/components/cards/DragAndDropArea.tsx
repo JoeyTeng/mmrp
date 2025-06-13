@@ -17,7 +17,7 @@ import {
   getInitialNodeParamValue,
 } from '@/components/modules/modulesRegistry';
 import { useCallback, useState } from 'react';
-import { NodeData } from '../drag-and-drop/FlowNode';
+import { NodeData } from '@/components/drag-and-drop/FlowNode';
 
 const initialNodes: Node<NodeData>[] = [
   {

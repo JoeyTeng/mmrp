@@ -20,7 +20,7 @@ import {
   getInitialNodeParamValue,
   moduleRegistry,
 } from '@/components/modules/modulesRegistry';
-import FlowNode, { NodeData } from './FlowNode';
+import FlowNode, { NodeData } from '@/components/drag-and-drop/FlowNode';
 
 const nodeTypes = {
   inputNode: FlowNode,

@@ -1,6 +1,6 @@
 'use client'
 import { Handle, Node, NodeProps, Position, useReactFlow } from '@xyflow/react';
-import { ParamValueType } from '../modules/modulesRegistry';
+import { ParamValueType } from '@/components/modules/modulesRegistry';
 import { Trash } from 'lucide-react';
 
 export type NodeData = { 
