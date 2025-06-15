@@ -11,6 +11,7 @@ import {
   BackgroundVariant,
   Position,
   MarkerType,
+  getOutgoers,
   type Node,
   type Edge,
 } from '@xyflow/react';
@@ -76,7 +77,7 @@ export default function FlowCanvas({
     [setEdges]
   );
 
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -117,6 +118,27 @@ export default function FlowCanvas({
     [screenToFlowPosition, setNodes]
   );
 
+  const isValidConnection = useCallback(
+    (connection: Connection) => {
+      const nodes = getNodes();
+      const edges = getEdges();
+      const target = nodes.find((node) => node.id == connection.target);
+      if (target.id == connection.source) return false;
+      const hasCycle = (node, visited = new Set()) => {
+        if (visited.has(node.id)) return false;
+        visited.add(node);
+
+        for (let i of getOutgoers(node, nodes, edges)) {
+          if (i.id == connection.source || hasCycle(i, visited)) {
+            return true;
+          }
+        }
+      };
+      return !hasCycle(target);
+    },
+    [getNodes, getEdges]
+  );
+
   return (
     <div
       className='w-full h-full overflow-hidden bg-gray-100'
@@ -129,6 +151,7 @@ export default function FlowCanvas({
         nodeTypes={nodeTypes}
         nodes={nodes}
         edges={edges}
+        isValidConnection={isValidConnection}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -141,7 +164,7 @@ export default function FlowCanvas({
           markerEnd: {
             type: MarkerType.ArrowClosed,
             width: 20,
-            height: 20
+            height: 20,
           },
         }}
         fitView
