@@ -10,28 +10,34 @@ import {
   Connection,
   BackgroundVariant,
   Position,
+  MarkerType,
+  getOutgoers,
   type Node,
   type Edge,
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
 import {
-  ParamValueType,
   getInitialNodeParamValue,
   moduleRegistry,
 } from '@/components/modules/modulesRegistry';
+import FlowNode, {
+  NodeData,
+  NodeType,
+} from '@/components/drag-and-drop/FlowNode';
 
-type NodeData = {
-  label: string;
-  params: Record<string, ParamValueType>;
+const nodeTypes = {
+  [NodeType.InputNode]: FlowNode,
+  [NodeType.ProcessNode]: FlowNode,
+  [NodeType.OutputNode]: FlowNode,
 };
 
 type FlowCanvasProps = {
-  nodes: Node<NodeData>[];
+  nodes: Node<NodeData, NodeType>[];
   edges: Edge[];
-  onNodesChange: OnNodesChange<Node<NodeData>>;
+  onNodesChange: OnNodesChange<Node<NodeData, NodeType>>;
   onEdgesChange: OnEdgesChange;
-  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData>[]>>;
+  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onSelectNode: (id: string | null) => void;
 };
@@ -67,7 +73,7 @@ export default function FlowCanvas({
     [setEdges]
   );
 
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -81,7 +87,8 @@ export default function FlowCanvas({
       const nodeData = event.dataTransfer.getData('application/reactflow');
       if (!nodeData) return;
 
-      const { type, label } = JSON.parse(nodeData);
+      const { type: typeValueStr, label } = JSON.parse(nodeData);
+      const type = typeValueStr as NodeType;
 
       const position = screenToFlowPosition({
         x: event.clientX,
@@ -107,6 +114,27 @@ export default function FlowCanvas({
     [screenToFlowPosition, setNodes]
   );
 
+  const isValidConnection = useCallback(
+    (connection: Connection) => {
+      const nodes = getNodes();
+      const edges = getEdges();
+      const target = nodes.find((node) => node.id == connection.target);
+      if (target.id == connection.source) return false;
+      const hasCycle = (node, visited = new Set()) => {
+        if (visited.has(node.id)) return false;
+        visited.add(node);
+
+        for (const i of getOutgoers(node, nodes, edges)) {
+          if (i.id == connection.source || hasCycle(i, visited)) {
+            return true;
+          }
+        }
+      };
+      return !hasCycle(target);
+    },
+    [getNodes, getEdges]
+  );
+
   return (
     <div
       className='w-full h-full overflow-hidden bg-gray-100'
@@ -116,8 +144,10 @@ export default function FlowCanvas({
       onKeyDown={handlePaneKeyDown}
     >
       <ReactFlow
+        nodeTypes={nodeTypes}
         nodes={nodes}
         edges={edges}
+        isValidConnection={isValidConnection}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -126,6 +156,13 @@ export default function FlowCanvas({
         onSelectionChange={({ nodes: selected }) =>
           onSelectNode(selected.length ? selected[0].id : null)
         }
+        defaultEdgeOptions={{
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 20,
+            height: 20,
+          },
+        }}
         fitView
         className='w-full h-full'
       >

@@ -7,7 +7,7 @@ export type ModuleConfig = {
 };
 
 export const moduleRegistry: Record<string, ModuleConfig> = {
-  Source: { params: { path: '', format: 'mp4' } },
+  Source: { params: { path: 'example-video-filter.mp4', format: 'mp4' } },
   Denoise: { params: { strength: 0.5 } },
   Encode: { params: { bitrate: 1000, codec: ['h264'] } },
   Decode: { params: { codec: ['h264', 'AV1'] } },

@@ -113,13 +113,12 @@ export default function ParameterConfiguration({
   const { label, params } = node.data;
 
   return (
-    <div className='flex-1 border border-gray-900 rounded-md overflow-hidden bg-white h-full'>
+    <div className='flex-1 border border-gray-900 rounded-md overflow-y-auto bg-white h-full'>
       <div className='bg-gray-700 text-white font-semibold px-4 py-2 border-b border-gray-300'>
         {label} Parameters
       </div>
       <div className='p-2.5'>
         {Object.entries(params).map(([key, value]) => {
-
           const moduleRegistryVal = moduleRegistry[label].params[key];
           // 1) string[]
           if (Array.isArray(moduleRegistryVal)) {
