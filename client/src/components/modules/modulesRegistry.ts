@@ -7,19 +7,19 @@ export type ModuleConfig = {
 };
 
 export const moduleRegistry: Record<string, ModuleConfig> = {
-  Source: { params: { path: '', format: 'mp4' } },
+  Source: { params: { path: "example-video-filter.mp4", format: "mp4" } },
   Denoise: { params: { strength: 0.5 } },
-  Encode: { params: { bitrate: 1000, codec: ['h264'] } },
-  Decode: { params: { codec: ['h264', 'AV1'] } },
+  Encode: { params: { bitrate: 1000, codec: ["h264"] } },
+  Decode: { params: { codec: ["h264", "AV1"] } },
   UpSample: { params: { factor: 2 } },
   DownSample: { params: { factor: 2 } },
-  Result: { params: { path: 'out.mp4' } },
+  Result: { params: { path: "out.mp4" } },
 };
 
 /** Function that gets a single initial value for a param**/
 
 export function getInitialNodeParamValue(
-  moduleConfig: Record<string, ParamOptionType>
+  moduleConfig: Record<string, ParamOptionType>,
 ): Record<string, ParamValueType> {
   return Object.fromEntries(
     Object.entries(moduleConfig).map(([k, v]) => [
@@ -27,6 +27,6 @@ export function getInitialNodeParamValue(
       Array.isArray(v)
         ? (v[0] as ParamValueType) // first option as default
         : (v as ParamValueType), // or keep the primitive
-    ])
+    ]),
   ) as Record<string, ParamValueType>;
 }

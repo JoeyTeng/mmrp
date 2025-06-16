@@ -1,0 +1,6 @@
+# Ignore artifacts:
+build
+coverage
+# Plus everything in `.gitignore` and `.eslintignore`.
+# Ignore binaries:
+public/*.mp4

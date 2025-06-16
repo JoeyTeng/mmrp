@@ -1,89 +1,83 @@
-'use client';
+"use client";
 
-import FlowCanvas from '@/components/drag-and-drop/FlowCanvas';
+import FlowCanvas from "@/components/drag-and-drop/FlowCanvas";
 import {
   ReactFlowProvider,
   type Node,
   type Edge,
-  Position,
   useNodesState,
   useEdgesState,
-} from '@xyflow/react';
-import ParameterConfiguration from '@/components/drag-and-drop/ParameterConfiguration';
-import SideBar from '@/components/drag-and-drop/SideBar';
+} from "@xyflow/react";
+import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
+import SideBar from "@/components/drag-and-drop/SideBar";
 import {
   ParamValueType,
   moduleRegistry,
   getInitialNodeParamValue,
+<<<<<<< pipeline-to-json
 } from '@/components/modules/modulesRegistry';
 import { useCallback, useState } from 'react';
 import { dumpPipelineToJson } from '@/utils/pipelineSerializer';
+=======
+} from "@/components/modules/modulesRegistry";
+import { useCallback, useState } from "react";
+import { NodeData, NodeType } from "@/components/drag-and-drop/FlowNode";
+>>>>>>> main
 
-type NodeData = {
-  label: string;
-  params: Record<string, ParamValueType>; // constraint to ensure there's only one value
-};
-
-const initialNodes: Node<NodeData>[] = [
+const initialNodes: Node<NodeData, NodeType>[] = [
   {
-    id: '1',
-    type: 'input',
-    position: { x: 50, y: 100 },
+    id: "1",
+    type: NodeType.InputNode,
+    position: { x: 0, y: 100 },
     data: {
-      label: 'Source',
+      label: "Source",
       params: getInitialNodeParamValue(moduleRegistry.Source.params),
     },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
   },
   {
-    id: '2',
+    id: "2",
+    type: NodeType.ProcessNode,
     position: { x: 220, y: 100 },
     data: {
-      label: 'DownSample',
+      label: "DownSample",
       params: getInitialNodeParamValue(moduleRegistry.DownSample.params),
     },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
   },
   {
-    id: '3',
+    id: "3",
+    type: NodeType.ProcessNode,
     position: { x: 400, y: 100 },
     data: {
-      label: 'Denoise',
+      label: "Denoise",
       params: getInitialNodeParamValue(moduleRegistry.Denoise.params),
     },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
   },
   {
-    id: '4',
-    type: 'output',
+    id: "4",
+    type: NodeType.OutputNode,
     position: { x: 600, y: 100 },
     data: {
-      label: 'Result',
+      label: "Result",
       params: getInitialNodeParamValue(moduleRegistry.Result.params),
     },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
   },
 ];
 
 const initialEdges: Edge[] = [
   {
-    id: 'e1-2',
-    source: '1',
-    target: '2',
+    id: "e1-2",
+    source: "1",
+    target: "2",
   },
   {
-    id: 'e2-3',
-    source: '2',
-    target: '3',
+    id: "e2-3",
+    source: "2",
+    target: "3",
   },
   {
-    id: 'e3-4',
-    source: '3',
-    target: '4',
+    id: "e3-4",
+    source: "3",
+    target: "4",
   },
 ];
 
@@ -101,11 +95,11 @@ const DragAndDropArea = () => {
                 ...n,
                 data: { ...n.data, params: { ...n.data.params, [key]: value } },
               }
-            : n
-        )
+            : n,
+        ),
       );
     },
-    [selectedId]
+    [selectedId, setNodes],
   );
 
   const handleConfirm = () => {
@@ -116,14 +110,14 @@ const DragAndDropArea = () => {
   };
 
   return (
-    <div className='flex h-[50vh] w-screen overflow-hidden'>
+    <div className="flex h-[50vh] w-screen overflow-hidden">
       {/* Sidebar */}
-      <div className='flex-1 border-gray-300'>
+      <div className="flex-1 border-gray-300">
         <SideBar />
       </div>
 
       {/* Flow Canvas */}
-      <div className='flex-[2.5] min-w-0'>
+      <div className="flex-[2.5] min-w-0">
         <ReactFlowProvider>
           <FlowCanvas
             nodes={nodes}
@@ -139,7 +133,7 @@ const DragAndDropArea = () => {
       </div>
 
       {/* Parameter Configuration */}
-      <div className='flex-1'>
+      <div className="flex-1">
         <ParameterConfiguration
           node={nodes.find((n) => n.id === selectedId)}
           onChange={updateParam}

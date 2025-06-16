@@ -1,0 +1,3 @@
+cd client
+echo "Running formatter with lint-staged..."
+npx lint-staged
