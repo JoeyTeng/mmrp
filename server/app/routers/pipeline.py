@@ -54,7 +54,7 @@ def get_execution_order(modules: List[PipelineModule]):
             if indegree[dependent_id] == 0:
                 queue.append(dependent_id)
 
-    remaining_with_deps = [mid for mid, deg in indegree.items() if deg > 0]
+    remaining_with_deps = [module_id for module_id, degree in indegree.items() if degree > 0]
     if remaining_with_deps:
         raise ValueError(f"Pipeline contains a cycle involving module IDs: {remaining_with_deps}")
 
