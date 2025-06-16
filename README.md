@@ -18,7 +18,7 @@ npm run start
 
 ## Backend
 
-### 1. Create and Activate Virtual Environment `mmrp_env` using uv
+### 1. Create and activate virtual environment using uv
 
 - **Python 3.13.x** should be installed (check python --version)
 - **uv** should be installed (https://docs.astral.sh/uv/getting-started/installation/)
