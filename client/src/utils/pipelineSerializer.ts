@@ -1,6 +1,10 @@
-import { Node, Edge } from '@xyflow/react';
-import { ParamValueType } from '@/components/modules/modulesRegistry';
-import { PipelineModule, PipelineParameter, PipelineRequest } from '@/types/pipeline';
+import { Node, Edge } from "@xyflow/react";
+import { ParamValueType } from "@/components/modules/modulesRegistry";
+import {
+  PipelineModule,
+  PipelineParameter,
+  PipelineRequest,
+} from "@/types/pipeline";
 
 type NodeData = {
   label: string;
@@ -9,7 +13,7 @@ type NodeData = {
 
 export function dumpPipelineToJson(
   nodes: Node<NodeData>[],
-  edges: Edge[]
+  edges: Edge[],
 ): PipelineRequest {
   const nodeIdMap = new Map<string, number>();
   let currentId = 1;
@@ -29,10 +33,12 @@ export function dumpPipelineToJson(
   const modules: PipelineModule[] = nodes.map((node) => {
     const numericId = nodeIdMap.get(node.id)!;
     const upstreamIds = (sourceMap.get(node.id) || []).map(
-      (srcId) => nodeIdMap.get(srcId)!
+      (srcId) => nodeIdMap.get(srcId)!,
     );
 
-    const parameters: PipelineParameter[] = Object.entries(node.data.params).map(([key, value]) => ({
+    const parameters: PipelineParameter[] = Object.entries(
+      node.data.params,
+    ).map(([key, value]) => ({
       [key]: value,
     }));
 
@@ -45,7 +51,7 @@ export function dumpPipelineToJson(
   });
 
   return {
-    source: './file',
+    source: "./file",
     modules,
   };
 }
