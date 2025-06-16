@@ -26,21 +26,24 @@ def process_pipeline(request: PipelineRequest):
 def get_execution_order(modules: List[PipelineModule]):
     # Map module id → module
     module_map: Dict[int, PipelineModule] = {mod.id: mod for mod in modules}
+    all_module_ids = set(module_map.keys())
 
     # Build the dependency graph (adjacency list of dependent ids)
     graph = defaultdict(list)
 
     # Tracks how many dependecies each module has
-    indegree = {mod.id: len(mod.source or []) for mod in modules}
+    indegree = {mod.id: len(mod.source) for mod in modules}
 
     for mod in modules:
         if mod.source:
             for dep_id in mod.source:
+                if dep_id not in all_module_ids:
+                    raise ValueError(f"Pipeline contains an invalid reference: {dep_id}")
                 graph[dep_id].append(mod.id)
 
     # Start with modules that have no dependencies
-    queue = deque([module_id for module_id, degree in indegree.items() if degree == 0])
-    execution_order = []
+    queue: deque[int] = deque([module_id for module_id, degree in indegree.items() if degree == 0])
+    execution_order: list[PipelineModule] = []
 
     while queue:
         current_id = queue.popleft()
@@ -51,7 +54,8 @@ def get_execution_order(modules: List[PipelineModule]):
             if indegree[dependent_id] == 0:
                 queue.append(dependent_id)
 
-    if len(execution_order) != len(modules):
-        raise ValueError("Pipeline contains a cycle or invalid references")
+    remaining_with_deps = [mid for mid, deg in indegree.items() if deg > 0]
+    if remaining_with_deps:
+        raise ValueError(f"Pipeline contains a cycle involving module IDs: {remaining_with_deps}")
 
     return execution_order
