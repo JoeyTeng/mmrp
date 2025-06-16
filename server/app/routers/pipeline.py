@@ -27,20 +27,19 @@ def get_execution_order(modules: List[PipelineModule]):
     # Map module id → module
     module_map: Dict[int, PipelineModule] = {mod.id: mod for mod in modules}
 
-    # Build the dependency graph
+    # Build the dependency graph (adjacency list of dependent ids)
     graph = defaultdict(list)
-    indegree = defaultdict(int)
+
+    # Tracks how many dependecies each module has
+    indegree = {mod.id: len(mod.source or []) for mod in modules}
 
     for mod in modules:
         if mod.source:
             for dep_id in mod.source:
                 graph[dep_id].append(mod.id)
-                indegree[mod.id] += 1
-        else:
-            indegree.setdefault(mod.id, 0)
 
     # Start with modules that have no dependencies
-    queue = deque([mid for mid, deg in indegree.items() if deg == 0])
+    queue = deque([module_id for module_id, degree in indegree.items() if degree == 0])
     execution_order = []
 
     while queue:

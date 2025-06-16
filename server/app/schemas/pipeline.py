@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import List, Optional
 
 class PipelineParameter(BaseModel):
     key: str
@@ -8,9 +7,9 @@ class PipelineParameter(BaseModel):
 class PipelineModule(BaseModel):
     id: int
     name: str
-    source: Optional[List[int]] = None
-    parameters: List[PipelineParameter]
+    source: list[int]   # list of preceding module(s)
+    parameters: list[PipelineParameter]
 
 class PipelineRequest(BaseModel):
     video: str
-    modules: List[PipelineModule]
+    modules: list[PipelineModule]
