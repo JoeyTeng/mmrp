@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
-from .routers import pipeline
+from app.routers import pipeline
 
 app = FastAPI()
 

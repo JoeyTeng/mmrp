@@ -31,49 +31,10 @@ npm run start
 
 ## Backend
 
-### 1. Create and activate virtual environment using uv
-
-- **Python 3.13.x** should be installed (check python --version)
-- **uv** should be installed (https://docs.astral.sh/uv/getting-started/installation/)
-
-#### Windows
-```sh
-cd server
-
-# create virtual environment
-uv venv .venv
-
-# activate environment
-.venv\Scripts\activate
-
-# deactivate once you are done
-deactivate
-```
-
-#### Linux, Mac
-```sh
-cd server
-
-# create virtual environment
-uv venv .venv
-
-# activate environment
-source .venv/bin/activate
-
-# deactivate once you are done
-deactivate
-```
-
-### 2. Run Server 
+### How to Run
 
 ```sh
 cd server
 
-# activate environment
-
-# install dependencies
-uv pip install -r requirements.txt
-
-# run server
-uvicorn app.main:app --reload
+uv run uvicorn main:app --reload
 ```
