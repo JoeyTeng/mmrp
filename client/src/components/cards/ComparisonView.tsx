@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import SideBySide from '../comparison-view/SideBySide';
-import MenuDropdown, { viewOptions } from '../comparison-view/MenuDropdown';
-import InterleavingFrames from '../comparison-view/InterleavingFrames';
+import { useState } from "react";
+import SideBySide from "../comparison-view/SideBySide";
+import MenuDropdown, { viewOptions } from "../comparison-view/MenuDropdown";
+import InterleavingFrames from "../comparison-view/InterleavingFrames";
 
 const ComparisonView = () => {
   const [view, setView] = useState(viewOptions.SideBySide);
 
   return (
-    <div className='flex flex-col flex-1 relative border border-gray-900 rounded-md overflow-hidden bg-gray-100'>
-      <div className='flex items-center justify-between bg-gray-700 px-4 py-2 border-b border-gray-300 font-semibold text-white'>
-        <div className='flex items-center gap-2'>
+    <div className="flex flex-col flex-1 relative border border-gray-900 rounded-md overflow-hidden bg-gray-100">
+      <div className="flex items-center justify-between bg-gray-700 px-4 py-2 border-b border-gray-300 font-semibold text-white">
+        <div className="flex items-center gap-2">
           <MenuDropdown onSelect={setView} />
           <span>{view} View</span>
         </div>
@@ -21,7 +21,6 @@ const ComparisonView = () => {
       {view === viewOptions.Interleaving && <InterleavingFrames />}
     </div>
   );
-
 };
 
 export default ComparisonView;

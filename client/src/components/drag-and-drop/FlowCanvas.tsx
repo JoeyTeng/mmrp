@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useCallback, useRef } from 'react';
-import { OnEdgesChange, OnNodesChange, useReactFlow } from '@xyflow/react';
+import React, { useCallback, useRef } from "react";
+import { OnEdgesChange, OnNodesChange, useReactFlow } from "@xyflow/react";
 import {
   ReactFlow,
   Background,
@@ -14,17 +14,17 @@ import {
   getOutgoers,
   type Node,
   type Edge,
-} from '@xyflow/react';
+} from "@xyflow/react";
 
-import '@xyflow/react/dist/style.css';
+import "@xyflow/react/dist/style.css";
 import {
   getInitialNodeParamValue,
   moduleRegistry,
-} from '@/components/modules/modulesRegistry';
+} from "@/components/modules/modulesRegistry";
 import FlowNode, {
   NodeData,
   NodeType,
-} from '@/components/drag-and-drop/FlowNode';
+} from "@/components/drag-and-drop/FlowNode";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
@@ -59,32 +59,32 @@ export default function FlowCanvas({
 
   const handlePaneKeyDown = useCallback(
     (evt: React.KeyboardEvent) => {
-      if (evt.key === 'Delete' || evt.key === 'Backspace') {
+      if (evt.key === "Delete" || evt.key === "Backspace") {
         setNodes((nds) => nds.filter((n) => !n.selected));
         setEdges((eds) => eds.filter((e) => !e.selected));
         evt.preventDefault();
       }
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges],
   );
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    [setEdges],
   );
 
   const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'copy';
+    event.dataTransfer.dropEffect = "copy";
   }, []);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      const nodeData = event.dataTransfer.getData('application/reactflow');
+      const nodeData = event.dataTransfer.getData("application/reactflow");
       if (!nodeData) return;
 
       const { type: typeValueStr, label } = JSON.parse(nodeData);
@@ -111,7 +111,7 @@ export default function FlowCanvas({
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [screenToFlowPosition, setNodes]
+    [screenToFlowPosition, setNodes],
   );
 
   const isValidConnection = useCallback(
@@ -132,12 +132,12 @@ export default function FlowCanvas({
       };
       return !hasCycle(target);
     },
-    [getNodes, getEdges]
+    [getNodes, getEdges],
   );
 
   return (
     <div
-      className='w-full h-full overflow-hidden bg-gray-100'
+      className="w-full h-full overflow-hidden bg-gray-100"
       ref={paneRef}
       tabIndex={0} // make this div focusable
       onClick={handlePaneClick}
@@ -164,7 +164,7 @@ export default function FlowCanvas({
           },
         }}
         fitView
-        className='w-full h-full'
+        className="w-full h-full"
       >
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
