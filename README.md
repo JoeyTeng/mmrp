@@ -16,3 +16,25 @@ Please install the precommit hooks for automatic linting and formatting:
 cd client
 npm install
 ```
+
+
+## Frontend
+
+### How to Run
+
+```sh
+cd client
+npm install
+npm run build
+npm run start
+```
+
+## Backend
+
+### How to Run
+
+```sh
+cd server
+
+uv run uvicorn main:app --reload
+```
