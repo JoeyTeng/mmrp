@@ -139,11 +139,7 @@ export default function FlowCanvas({
 
   return (
     <div
-<<<<<<< pipeline-to-json
-      className='w-full h-full overflow-hidden bg-gray-100 relative'
-=======
-      className="w-full h-full overflow-hidden bg-gray-100"
->>>>>>> main
+      className="w-full h-full overflow-hidden bg-gray-100 relative"
       ref={paneRef}
       tabIndex={0} // make this div focusable
       onClick={handlePaneClick}
@@ -175,10 +171,10 @@ export default function FlowCanvas({
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>
-      <div className='absolute bottom-4 right-4 z-10'>
+      <div className="absolute bottom-4 right-4 z-10">
         <button
           onClick={onConfirm}
-          className='bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-700 transition cursor-pointer'
+          className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-700 transition cursor-pointer"
         >
           Confirm
         </button>

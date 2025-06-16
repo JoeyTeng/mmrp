@@ -14,15 +14,10 @@ import {
   ParamValueType,
   moduleRegistry,
   getInitialNodeParamValue,
-<<<<<<< pipeline-to-json
-} from '@/components/modules/modulesRegistry';
-import { useCallback, useState } from 'react';
-import { dumpPipelineToJson } from '@/utils/pipelineSerializer';
-=======
 } from "@/components/modules/modulesRegistry";
 import { useCallback, useState } from "react";
 import { NodeData, NodeType } from "@/components/drag-and-drop/FlowNode";
->>>>>>> main
+import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 
 const initialNodes: Node<NodeData, NodeType>[] = [
   {
