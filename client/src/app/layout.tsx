@@ -1,15 +1,17 @@
-import './globals.css';
+import "./globals.css";
 
 export const metadata = {
-  title: 'Multimedia Research Pipeline',
+  title: "Multimedia Research Pipeline",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

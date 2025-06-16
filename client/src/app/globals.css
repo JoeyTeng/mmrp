@@ -1,18 +1,18 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 /* To prevent seeing a caret when clicking anywhere in the page */
 * {
   user-select: none;
   -webkit-user-select: none;
   outline: none;
-  caret-color: transparent;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   background-color: #f0f8ff;
   color: #111;
   height: 100%;

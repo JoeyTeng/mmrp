@@ -1,145 +1,170 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import React, { useCallback, useRef } from "react";
+import { OnEdgesChange, OnNodesChange, useReactFlow } from "@xyflow/react";
 import {
   ReactFlow,
   Background,
   Controls,
-  useNodesState,
-  useEdgesState,
   addEdge,
   Connection,
   BackgroundVariant,
   Position,
+  MarkerType,
+  getOutgoers,
   type Node,
   type Edge,
-} from '@xyflow/react';
+} from "@xyflow/react";
 
-import '@xyflow/react/dist/style.css';
+import "@xyflow/react/dist/style.css";
+import {
+  getInitialNodeParamValue,
+  moduleRegistry,
+} from "@/components/modules/modulesRegistry";
+import FlowNode, {
+  NodeData,
+  NodeType,
+} from "@/components/drag-and-drop/FlowNode";
 
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'input',
-    position: { x: 50, y: 100 },
-    data: { label: 'Source' },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
-  },
-  {
-    id: '2',
-    position: { x: 220, y: 100 },
-    data: { label: 'Downsample' },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
-  },
-  {
-    id: '3',
-    position: { x: 400, y: 100 },
-    data: { label: 'Denoise' },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
-  },
-  {
-    id: '4',
-    type: 'output',
-    position: { x: 600, y: 100 },
-    data: { label: 'Result' },
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
-  },
-];
+const nodeTypes = {
+  [NodeType.InputNode]: FlowNode,
+  [NodeType.ProcessNode]: FlowNode,
+  [NodeType.OutputNode]: FlowNode,
+};
 
-const initialEdges: Edge[] = [
-  {
-    id: 'e1-2',
-    source: '1',
-    target: '2',
-  },
-  {
-    id: 'e2-3',
-    source: '2',
-    target: '3',
-  },
-  {
-    id: 'e3-4',
-    source: '3',
-    target: '4',
-  },
-];
+type FlowCanvasProps = {
+  nodes: Node<NodeData, NodeType>[];
+  edges: Edge[];
+  onNodesChange: OnNodesChange<Node<NodeData, NodeType>>;
+  onEdgesChange: OnEdgesChange;
+  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
+  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  onSelectNode: (id: string | null) => void;
+};
 
-export default function FlowCanvas() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+export default function FlowCanvas({
+  nodes,
+  edges,
+  onNodesChange,
+  onEdgesChange,
+  setNodes,
+  setEdges,
+  onSelectNode,
+}: FlowCanvasProps) {
+  const paneRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Delete' || event.key === 'Backspace') {
-        setNodes((nds) => nds.filter((node) => !node.selected)); // keep only unselected nodes
-        setEdges((eds) => eds.filter((edge) => !edge.selected)); // keep only unselected edges
+  const handlePaneClick = () => {
+    paneRef.current?.focus();
+  };
+
+  const handlePaneKeyDown = useCallback(
+    (evt: React.KeyboardEvent) => {
+      if (evt.key === "Delete" || evt.key === "Backspace") {
+        setNodes((nds) => nds.filter((n) => !n.selected));
+        setEdges((eds) => eds.filter((e) => !e.selected));
+        evt.preventDefault();
       }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [setNodes, setEdges]);
+    },
+    [setNodes, setEdges],
+  );
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    [setEdges],
   );
 
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'copy';
+    event.dataTransfer.dropEffect = "copy";
   }, []);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      const nodeData = event.dataTransfer.getData('application/reactflow');
+      const nodeData = event.dataTransfer.getData("application/reactflow");
       if (!nodeData) return;
 
-      const raw = event.dataTransfer.getData('application/reactflow');
-      if (!raw) return;
-
-      const { type, label } = JSON.parse(nodeData);
+      const { type: typeValueStr, label } = JSON.parse(nodeData);
+      const type = typeValueStr as NodeType;
 
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
 
+      const moduleParams = moduleRegistry[label];
+      const defaultParams = moduleParams
+        ? getInitialNodeParamValue(moduleParams.params)
+        : {};
+
       const newNode = {
         id: `${+new Date()}`,
         type,
         position,
-        data: { label: `${label}` },
+        data: { label: `${label}`, params: defaultParams },
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
       };
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [screenToFlowPosition, setNodes]
+    [screenToFlowPosition, setNodes],
+  );
+
+  const isValidConnection = useCallback(
+    (connection: Connection) => {
+      const nodes = getNodes();
+      const edges = getEdges();
+      const target = nodes.find((node) => node.id == connection.target);
+      if (target.id == connection.source) return false;
+      const hasCycle = (node, visited = new Set()) => {
+        if (visited.has(node.id)) return false;
+        visited.add(node);
+
+        for (const i of getOutgoers(node, nodes, edges)) {
+          if (i.id == connection.source || hasCycle(i, visited)) {
+            return true;
+          }
+        }
+      };
+      return !hasCycle(target);
+    },
+    [getNodes, getEdges],
   );
 
   return (
-    <div className='w-full h-full overflow-hidden bg-gray-100'>
+    <div
+      className="w-full h-full overflow-hidden bg-gray-100"
+      ref={paneRef}
+      tabIndex={0} // make this div focusable
+      onClick={handlePaneClick}
+      onKeyDown={handlePaneKeyDown}
+    >
       <ReactFlow
+        nodeTypes={nodeTypes}
         nodes={nodes}
         edges={edges}
+        isValidConnection={isValidConnection}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onDragOver={onDragOver}
         onDrop={onDrop}
+        onSelectionChange={({ nodes: selected }) =>
+          onSelectNode(selected.length ? selected[0].id : null)
+        }
+        defaultEdgeOptions={{
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 20,
+            height: 20,
+          },
+        }}
         fitView
-        className='w-full h-full'
+        className="w-full h-full"
       >
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
