@@ -1,5 +1,5 @@
 'use client';
-import { NodeType } from '@/components/drag-and-drop/FlowCanvas';
+import { NodeType } from '@/components/drag-and-drop/FlowNode';
 
 type SidebarItemProps = {
   label: string;

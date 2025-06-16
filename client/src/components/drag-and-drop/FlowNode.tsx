@@ -2,7 +2,12 @@
 import { Handle, Node, NodeProps, Position, useReactFlow } from '@xyflow/react';
 import { ParamValueType } from '@/components/modules/modulesRegistry';
 import { Trash } from 'lucide-react';
-import { NodeType } from '@/components/drag-and-drop/FlowCanvas';
+
+export enum NodeType {
+  InputNode = 'inputNode',
+  ProcessNode = 'processNode',
+  OutputNode = 'outputNode',
+}
 
 export type NodeData = {
   label: string;

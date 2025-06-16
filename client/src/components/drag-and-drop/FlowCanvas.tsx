@@ -18,19 +18,15 @@ import {
 
 import '@xyflow/react/dist/style.css';
 import {
-  ParamValueType,
   getInitialNodeParamValue,
   moduleRegistry,
 } from '@/components/modules/modulesRegistry';
-import FlowNode, { NodeData } from '@/components/drag-and-drop/FlowNode';
+import FlowNode, {
+  NodeData,
+  NodeType,
+} from '@/components/drag-and-drop/FlowNode';
 
-export enum NodeType {
-  InputNode = 'inputNode',
-  ProcessNode = 'processNode',
-  OutputNode = 'outputNode',
-}
-
-export const nodeTypes = {
+const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
   [NodeType.ProcessNode]: FlowNode,
   [NodeType.OutputNode]: FlowNode,
@@ -128,7 +124,7 @@ export default function FlowCanvas({
         if (visited.has(node.id)) return false;
         visited.add(node);
 
-        for (let i of getOutgoers(node, nodes, edges)) {
+        for (const i of getOutgoers(node, nodes, edges)) {
           if (i.id == connection.source || hasCycle(i, visited)) {
             return true;
           }
