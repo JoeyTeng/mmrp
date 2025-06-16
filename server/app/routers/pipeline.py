@@ -17,8 +17,8 @@ def process_pipeline(request: PipelineRequest):
     #   Get video frames
     #
     ordered_modules = get_execution_order(request.modules)
-    # 
-    #   Process each frame in order 
+    #
+    #   Process each frame in order
     #
     return [mod.name for mod in ordered_modules]
 
@@ -38,11 +38,15 @@ def get_execution_order(modules: List[PipelineModule]):
         if mod.source:
             for dep_id in mod.source:
                 if dep_id not in all_module_ids:
-                    raise ValueError(f"Pipeline contains an invalid reference: {dep_id}")
+                    raise ValueError(
+                        f"Pipeline contains an invalid reference: {dep_id}"
+                    )
                 graph[dep_id].append(mod.id)
 
     # Start with modules that have no dependencies
-    queue: deque[int] = deque([module_id for module_id, degree in indegree.items() if degree == 0])
+    queue: deque[int] = deque(
+        [module_id for module_id, degree in indegree.items() if degree == 0]
+    )
     execution_order: list[PipelineModule] = []
 
     while queue:
@@ -54,8 +58,12 @@ def get_execution_order(modules: List[PipelineModule]):
             if indegree[dependent_id] == 0:
                 queue.append(dependent_id)
 
-    remaining_with_deps = [module_id for module_id, degree in indegree.items() if degree > 0]
+    remaining_with_deps = [
+        module_id for module_id, degree in indegree.items() if degree > 0
+    ]
     if remaining_with_deps:
-        raise ValueError(f"Pipeline contains a cycle involving module IDs: {remaining_with_deps}")
+        raise ValueError(
+            f"Pipeline contains a cycle involving module IDs: {remaining_with_deps}"
+        )
 
     return execution_order
