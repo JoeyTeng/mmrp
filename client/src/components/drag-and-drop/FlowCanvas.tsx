@@ -117,12 +117,12 @@ export default function FlowCanvas({
   );
 
   const isValidConnection = useCallback(
-    (connection: Connection) => {
-      const nodes = getNodes();
+    (connection: Connection | Edge) => {
+      const nodes: Node[] = getNodes();
       const edges = getEdges();
       const target = nodes.find((node) => node.id == connection.target);
-      if (target.id == connection.source) return false;
-      const hasCycle = (node, visited = new Set()) => {
+      if (!target || target.id == connection.source) return false;
+      const hasCycle = (node: Node, visited = new Set()) => {
         if (visited.has(node.id)) return false;
         visited.add(node);
 
