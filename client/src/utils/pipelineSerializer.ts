@@ -33,7 +33,7 @@ export function dumpPipelineToJson(
     return {
       id: numericId,
       name: node.data.label,
-      source: upstreamIds.length > 0 ? upstreamIds : [],
+      source: upstreamIds,
       parameters,
     };
   });
