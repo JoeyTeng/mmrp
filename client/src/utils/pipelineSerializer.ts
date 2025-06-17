@@ -39,7 +39,7 @@ export function dumpPipelineToJson(
   });
 
   return {
-    source: "./file",
+    video: "./file",
     modules,
   };
 }

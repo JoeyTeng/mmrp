@@ -12,6 +12,6 @@ export type PipelineModule = {
 };
 
 export type PipelineRequest = {
-  source: string;
+  video: string;
   modules: PipelineModule[];
 };
