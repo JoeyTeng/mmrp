@@ -5,9 +5,9 @@ export type PipelineParameter = {
 };
 
 export type PipelineModule = {
-  id: number | string;
+  id: number;
   name: string;
-  source: number[] | null;
+  source: number[];
   parameters: PipelineParameter[];
 };
 

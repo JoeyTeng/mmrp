@@ -1,27 +1,15 @@
 import { Node, Edge } from "@xyflow/react";
-import { ParamValueType } from "@/components/modules/modulesRegistry";
 import {
   PipelineModule,
   PipelineParameter,
   PipelineRequest,
 } from "@/types/pipeline";
-
-type NodeData = {
-  label: string;
-  params: Record<string, ParamValueType>;
-};
+import { NodeData } from "@/components/drag-and-drop/FlowNode";
 
 export function dumpPipelineToJson(
   nodes: Node<NodeData>[],
   edges: Edge[],
 ): PipelineRequest {
-  const nodeIdMap = new Map<string, number>();
-  let currentId = 1;
-
-  nodes.forEach((node) => {
-    nodeIdMap.set(node.id, currentId++);
-  });
-
   const sourceMap = new Map<string, string[]>();
   edges.forEach((edge) => {
     if (!sourceMap.has(edge.target)) {
@@ -31,9 +19,9 @@ export function dumpPipelineToJson(
   });
 
   const modules: PipelineModule[] = nodes.map((node) => {
-    const numericId = nodeIdMap.get(node.id)!;
-    const upstreamIds = (sourceMap.get(node.id) || []).map(
-      (srcId) => nodeIdMap.get(srcId)!,
+    const numericId = Number.parseInt(node.id);
+    const upstreamIds = (sourceMap.get(node.id) || []).map((srcId) =>
+      Number.parseInt(srcId),
     );
 
     const parameters: PipelineParameter[] = Object.entries(
@@ -45,7 +33,7 @@ export function dumpPipelineToJson(
     return {
       id: numericId,
       name: node.data.label,
-      source: upstreamIds.length > 0 ? upstreamIds : null,
+      source: upstreamIds.length > 0 ? upstreamIds : [],
       parameters,
     };
   });
