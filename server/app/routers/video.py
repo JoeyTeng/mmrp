@@ -11,7 +11,7 @@ router = APIRouter(
 # Send a mp4 video to the frontend
 @router.get("/{video_name}")
 def get_video(video_name: str):
-    video_path = Path(__file__).resolve().parent.parent.parent / "assets" / f"{video_name}.mp4"
+    video_path = Path(__file__).resolve().parent.parent.parent.parent / "client" / "public" / f"{video_name}.mp4"
 
     if not video_path.exists():
         raise FileNotFoundError(f"Video not found: {video_path}")
