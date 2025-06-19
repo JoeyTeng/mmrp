@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.24..3.31)
 project(simple-video-processor VERSION 1.0.0 LANGUAGES CXX)
 
 # Specify the library target
-add_library(simple-video-processor SHARED simple-video-processor.cpp)
+add_library(simple-video-processor SHARED simple-video-processor.cpp simple-video-processor-impl.cpp)
 add_executable(simple-video-processor-app main.cpp)
 
 target_link_libraries(simple-video-processor-app PRIVATE simple-video-processor)
