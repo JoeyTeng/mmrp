@@ -10,6 +10,18 @@ add_executable(simple-video-processor-app main.cpp)
 
 target_link_libraries(simple-video-processor-app PRIVATE simple-video-processor)
 
+target_compile_options(simple-video-processor PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/W4>  # MSVC warning level 4
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic>  # GCC/Clang warnings
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-g>  # Debug info
+)
+
+target_compile_options(simple-video-processor-app PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/W4>  # MSVC warning level 4
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic>  # GCC/Clang warnings
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-g>  # Debug info
+)
+
 # Define the library's properties
 set_target_properties(simple-video-processor PROPERTIES
     VERSION ${PROJECT_VERSION}
