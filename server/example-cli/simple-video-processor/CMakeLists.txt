@@ -10,32 +10,23 @@ add_executable(simple-video-processor-app main.cpp)
 
 target_link_libraries(simple-video-processor-app PRIVATE simple-video-processor)
 
-target_compile_options(simple-video-processor PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>  # MSVC warning level 4
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic>  # GCC/Clang warnings
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-g>  # Debug info
-)
+foreach (target simple-video-processor simple-video-processor-app)
+    target_compile_options(${target} PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4>  # MSVC warning level 4
+        $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Release>>:/O2>  # MSVC O2 for Release
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic>  # GCC/Clang warnings
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-g>  # Debug info
+        $<$<AND:$<NOT:$<CXX_COMPILER_ID:MSVC>>,$<CONFIG:Release>>:-O3>  # GCC/Clang O3 for Release
+        $<$<AND:$<NOT:$<CXX_COMPILER_ID:MSVC>>,$<CONFIG:Release>>:-march=native>  # GCC/Clang native instruction (SIMD) for Release
+    )
 
-target_compile_options(simple-video-processor-app PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>  # MSVC warning level 4
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic>  # GCC/Clang warnings
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-g>  # Debug info
-)
-
-# Define the library's properties
-set_target_properties(simple-video-processor PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION 1
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED ON
-)
-
-set_target_properties(simple-video-processor-app PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION 1
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED ON
-)
+    set_target_properties(${target} PROPERTIES
+        VERSION ${PROJECT_VERSION}
+        SOVERSION 1
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED ON
+    )
+endforeach()
 
 # Platform-specific settings
 if(WIN32)

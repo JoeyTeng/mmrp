@@ -162,7 +162,8 @@ process_video(const ContextT context, const Config &src, const Config &dest,
               std::uint8_t *const pYUV, std::uint8_t *const pYUVDest,
               FILE *const file_read, FILE *const file_save, std::size_t frames,
               bool verbose, std::ostream &log_output) {
-  std::chrono::steady_clock::duration total_time;
+  std::chrono::steady_clock::duration total_time =
+      std::chrono::steady_clock::duration::zero();
   std::size_t total_frame_processed = 0;
   double timestamp = 0.0;
   std::ostringstream log_oss;
