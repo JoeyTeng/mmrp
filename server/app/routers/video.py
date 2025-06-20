@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pathlib import Path
+from app.utils.shared_functionality import get_video_path
 
 router = APIRouter(
     prefix="/video",
@@ -14,7 +15,7 @@ def get_video(video_name: str):
     if "output" in video_name:
         video_path = Path(__file__).resolve().parent.parent.parent / "output" / f"{video_name}.mp4"
     else:
-        video_path = Path(__file__).resolve().parent.parent.parent.parent / "client" / "public" / f"{video_name}.mp4"
+        video_path = get_video_path(video_name)
 
     if not video_path.exists():
         raise FileNotFoundError(f"Video not found: {video_path}")
