@@ -1,6 +1,9 @@
+from dataclasses import dataclass
 from typing import Literal, Optional, Any
+import numpy as np
 
 # Definition of module parameters
+@dataclass
 class ParameterDefinition:
     name: str
     type: Literal["int", "float", "str", "bool"]
@@ -19,4 +22,7 @@ class ModuleBase:
         return []
 
     def process(self, input_data, parameters: dict):
+        raise NotImplementedError
+    
+    def process_frame(self, frame: np.ndarray, parameters: dict) -> np.ndarray:
         raise NotImplementedError

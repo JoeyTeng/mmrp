@@ -10,13 +10,21 @@ class Resize(ModuleBase):
             ParameterDefinition(
                 name="scale_factor",
                 type="int",
-                default=50,
+                default=100,
                 required=False,
                 min=1,
                 max=200
             )
         ]
     
+    # Process a single frame
+    def process_frame(self, frame, parameters):
+        factor = int(parameters.get("scale_factor"))
+        height, width = frame.shape[:2]
+        new_size = (int(width * factor / 100), int(height * factor / 100))
+        return cv2.resize(frame, new_size, interpolation=cv2.INTER_AREA)
+    
+    # Process the entire video
     def process(self, input_data, parameters):
         resize_factor = int(parameters.get("scale_factor"))
         output_path = Path(__file__).resolve().parent.parent.parent / "output" / f"resize_{resize_factor}.mp4"

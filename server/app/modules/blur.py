@@ -20,10 +20,29 @@ class Blur(ModuleBase):
                 type="str",
                 default="gaussian",
                 required=False,
-                options=["gaussian", "median", "bilateral"]
+                choices=["gaussian", "median", "bilateral"]
             )
         ]
     
+    # Process a single frame
+    def process_frame(self, frame, parameters):
+        kernel_size = int(parameters.get("kernel_size"))
+        method = parameters.get("method")
+        # Ensure kernel size is odd
+        if kernel_size % 2 == 0:
+            kernel_size += 1
+        # Differentiate between different blur methods
+        match method:
+            case "gaussian":
+                return cv2.GaussianBlur(frame, (kernel_size, kernel_size), 0)
+            case "median":
+                return cv2.medianBlur(frame, kernel_size)
+            case "bilateral":
+                return cv2.bilateralFilter(frame, d=kernel_size, sigmaColor=75, sigmaSpace=75)
+            case _:
+                raise ValueError(f"Unsupported blur method: {method}")
+
+    # Process the entire video
     def process(self, input_data, parameters):
         kernel_size = int(parameters.get("kernel_size", 5))
         method = parameters.get("method", "gaussian")

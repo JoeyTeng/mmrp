@@ -3,6 +3,7 @@ import pkgutil
 from fastapi import APIRouter
 from typing import Type
 from app.modules.base_module import ModuleBase
+from app.schemas.module import ModuleParameter, Module
 import app.modules as module_pkg
 
 router = APIRouter(
@@ -30,6 +31,35 @@ def load_modules():
 
 
 # Returns all modules and their parameters
-@router.get("/")
+@router.get("/", response_model=list[Module])
 def get_all_modules():
-    return list(registry.keys())
+    module_list = []
+
+    for i, (name, module) in enumerate(registry.items()):
+        instance = module()
+        parameters = instance.get_parameters()
+        print(parameters)
+
+        param_models = [
+            ModuleParameter(
+                name=p.name,
+                type=p.type,
+                description=p.description,
+                default=p.default,
+                min=p.min,
+                max=p.max,
+                choices=p.choices,
+                required=p.required
+            )
+            for p in parameters
+        ]
+
+        module_list.append(
+            Module(
+                id=i,
+                name=name,
+                parameters=param_models
+            )
+        )
+
+    return module_list
