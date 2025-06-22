@@ -18,7 +18,7 @@ class Colorspace(ModuleBase):
     
     # Process a single frame
     def process_frame(self, frame, parameters):
-        color_mode = parameters.get("colorspace")
+        color_mode: str = parameters.get("colorspace", "rgb")
         # Differentiate between different color modes
         match color_mode:
             case "ycrcb":
@@ -34,7 +34,7 @@ class Colorspace(ModuleBase):
     
     # Process the entire video
     def process(self, input_data, parameters):
-        color_mode = parameters.get("colorspace")
+        color_mode: str = parameters.get("colorspace", "ycrcb")
         
         match color_mode:
             case "ycrcb":
@@ -44,12 +44,14 @@ class Colorspace(ModuleBase):
 
     # Transform video to YCrCb
     def ycrcb(self, video_path):
-        output_path = Path(__file__).resolve().parent.parent.parent / "output" / "ycrcb.mp4"
+        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / "ycrcb.mp4")
 
-        cap = cv2.VideoCapture(video_path)
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-        out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, size)
+        cap: cv2.VideoCapture = cv2.VideoCapture(video_path)
+        fps: float = cap.get(cv2.CAP_PROP_FPS)
+        size: tuple[int, int] = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*'mp4v')
+        out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, size)
 
         # Process frames
         while True:

@@ -2,7 +2,7 @@ import importlib
 import pkgutil
 from fastapi import APIRouter
 from typing import Type
-from app.modules.base_module import ModuleBase
+from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.schemas.module import ModuleParameter, Module
 import app.modules as module_pkg
 
@@ -36,9 +36,8 @@ def get_all_modules():
     module_list = []
 
     for i, (name, module) in enumerate(registry.items()):
-        instance = module()
-        parameters = instance.get_parameters()
-        print(parameters)
+        instance: ModuleBase = module()
+        parameters: list[ParameterDefinition] = instance.get_parameters()
 
         param_models = [
             ModuleParameter(

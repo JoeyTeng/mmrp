@@ -26,8 +26,8 @@ class Blur(ModuleBase):
     
     # Process a single frame
     def process_frame(self, frame, parameters):
-        kernel_size = int(parameters.get("kernel_size"))
-        method = parameters.get("method")
+        kernel_size: int = int(parameters.get("kernel_size", 5))
+        method: str = parameters.get("method", "gaussian")
         # Ensure kernel size is odd
         if kernel_size % 2 == 0:
             kernel_size += 1
@@ -44,20 +44,22 @@ class Blur(ModuleBase):
 
     # Process the entire video
     def process(self, input_data, parameters):
-        kernel_size = int(parameters.get("kernel_size", 5))
-        method = parameters.get("method", "gaussian")
+        kernel_size: int = int(parameters.get("kernel_size", 5))
+        method: str = parameters.get("method", "gaussian")
 
         # Ensure kernel size is odd and >= 1
         if kernel_size % 2 == 0:
             kernel_size += 1
 
-        output_path = Path(__file__).resolve().parent.parent.parent / "output" / f"blur_{method}.mp4"
+        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"blur_{method}.mp4") 
 
-        cap = cv2.VideoCapture(input_data)
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
+        cap: cv2.VideoCapture = cv2.VideoCapture(input_data)
+        fps: float = cap.get(cv2.CAP_PROP_FPS)
+        width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*'mp4v')
+        out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
         while cap.isOpened():
             ret, frame = cap.read()

@@ -6,6 +6,7 @@ from collections import defaultdict, deque
 from app.schemas.pipeline import PipelineRequest, PipelineModule
 from app.routers.module import registry
 from app.utils.shared_functionality import get_video_path
+from server.app.modules.base_module import ModuleBase
 
 router = APIRouter(
     prefix="/pipeline",
@@ -18,25 +19,26 @@ router = APIRouter(
 def process_pipeline(request: PipelineRequest):
     try:
         # Get video, pipeline modules and path
-        selected_video = request.video
-        modules = request.modules
-        ordered_modules = get_execution_order(modules)
-        video_path = get_video_path(selected_video)
+        selected_video: str = request.video
+        modules: list[PipelineModule] = request.modules
+        ordered_modules: list[PipelineModule] = get_execution_order(modules)
+        video_path: str = str(get_video_path(selected_video))
 
         # Read video frames
-        cap = cv2.VideoCapture(video_path)
-        fps = cap.get(cv2.CAP_PROP_FPS)
+        cap: cv2.VideoCapture = cv2.VideoCapture(video_path)
+        fps: float = cap.get(cv2.CAP_PROP_FPS)
 
         # Video writer
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*'mp4v')
         output_path = Path(__file__).resolve().parent.parent.parent / "output" / f"{selected_video}_output.mp4"
         out = None
 
         # Track module instances and parameters
-        module_map = {m.id: (registry[m.name](), {p.key: p.value for p in m.parameters}) for m in modules}
+        module_map: dict[int, tuple[ModuleBase, dict[str, str]]] = {
+            m.id: (registry[m.name](), {p.key: p.value for p in m.parameters}) for m in modules}
 
         # Identify end modules (no children)
-        end_modules = {m.id for m in modules} - {d for m in modules for d in (m.source or [])}
+        end_modules: set[int] = {m.id for m in modules} - {d for m in modules for d in (m.source or [])}
 
         # Process and write frames
         while True:
@@ -48,7 +50,7 @@ def process_pipeline(request: PipelineRequest):
 
             # Write frames in correct order (taking the source of the module as input frame)
             for mod in ordered_modules:
-                mod_id = mod.id
+                mod_id: int = mod.id
                 mod_instance, params = module_map[mod_id]
                 input_frames = [frame_cache[src_id] for src_id in (modules[mod_id].source or [0])]
                 
@@ -63,7 +65,8 @@ def process_pipeline(request: PipelineRequest):
                     if out is None:
                         out_height, out_width = out_frame.shape[:2]
                         output_path.parent.mkdir(parents=True, exist_ok=True)
-                        out = cv2.VideoWriter(output_path, fourcc, fps, (out_width, out_height))
+                        out_path: str = str(output_path)
+                        out = cv2.VideoWriter(out_path, fourcc, fps, (out_width, out_height))
                     out.write(out_frame)
 
         return True

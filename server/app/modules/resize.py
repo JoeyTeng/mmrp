@@ -19,29 +19,30 @@ class Resize(ModuleBase):
     
     # Process a single frame
     def process_frame(self, frame, parameters):
-        factor = int(parameters.get("scale_factor"))
+        factor: int = int(parameters.get("scale_factor", 100))
         height, width = frame.shape[:2]
-        new_size = (int(width * factor / 100), int(height * factor / 100))
+        new_size: tuple[int, int] = (int(width * factor / 100), int(height * factor / 100))
         return cv2.resize(frame, new_size, interpolation=cv2.INTER_AREA)
     
     # Process the entire video
     def process(self, input_data, parameters):
-        resize_factor = int(parameters.get("scale_factor"))
-        output_path = Path(__file__).resolve().parent.parent.parent / "output" / f"resize_{resize_factor}.mp4"
+        resize_factor: int = int(parameters.get("scale_factor", 100))
+        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"resize_{resize_factor}.mp4")
 
         # Capture video
-        cap = cv2.VideoCapture(input_data)
-        fps = cap.get(cv2.CAP_PROP_FPS)
+        cap: cv2.VideoCapture = cv2.VideoCapture(input_data)
+        fps: float = cap.get(cv2.CAP_PROP_FPS)
 
         # Calculate new dimensions
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        new_width = int(width * resize_factor / 100)
-        new_height = int(height * resize_factor / 100)
-        dim = (new_width, new_height)
+        width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        new_width: int = int(width * resize_factor / 100)
+        new_height: int = int(height * resize_factor / 100)
+        dim: tuple[int, int] = (new_width, new_height)
 
         # Video writer
-        out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, dim)
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*'mp4v')
+        out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, dim)
 
         # Process frames
         while True:
