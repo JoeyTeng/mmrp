@@ -1,7 +1,7 @@
 import importlib
 import pkgutil
 from fastapi import APIRouter
-from typing import Type
+from typing import Type, Any
 from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.schemas.module import ModuleParameter, Module
 import app.modules as module_pkg
@@ -32,12 +32,12 @@ def load_modules():
 
 # Returns all modules and their parameters
 @router.get("/", response_model=list[Module])
-def get_all_modules():
-    module_list = []
+def get_all_modules() -> list[Module]:
+    module_list: list[Module] = []
 
     for i, (name, module) in enumerate(registry.items()):
         instance: ModuleBase = module()
-        parameters: list[ParameterDefinition] = instance.get_parameters()
+        parameters: list[ParameterDefinition[Any]] = instance.get_parameters()
 
         param_models = [
             ModuleParameter(

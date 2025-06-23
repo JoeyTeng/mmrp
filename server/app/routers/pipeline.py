@@ -105,7 +105,7 @@ def get_execution_order(modules: List[PipelineModule]):
     all_module_ids = set(module_map.keys())
 
     # Build the dependency graph (adjacency list of dependent ids)
-    graph = defaultdict(list)
+    graph: defaultdict[int, list[int]] = defaultdict(list)
 
     # Tracks how many dependecies each module has
     indegree = {mod.id: len(mod.source) for mod in modules}

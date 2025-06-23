@@ -24,13 +24,13 @@ class ModuleBase(ABC):
     name: str
     
     @abstractmethod
-    def get_parameters(self) -> list[ParameterDefinition]:
+    def get_parameters(self) -> list[ParameterDefinition[Any]]:
         return []
 
     @abstractmethod
-    def process(self, input_data, parameters: dict):
+    def process(self, input_data: str, parameters: dict[str, Any]) -> None:
         raise NotImplementedError
     
     @abstractmethod
-    def process_frame(self, frame: np.ndarray, parameters: dict) -> np.ndarray:
+    def process_frame(self, frame: np.ndarray, parameters: dict[str, Any]) -> np.ndarray:
         raise NotImplementedError

@@ -3,13 +3,14 @@ import typing
 from pathlib import Path
 from app.utils.shared_functionality import as_context
 from app.modules.base_module import ModuleBase, ParameterDefinition
+import numpy as np
 
 class Colorspace(ModuleBase):
     name = "colorspace"
 
     @typing.override
     # Get the parameters for the colorspace module
-    def get_parameters(self):
+    def get_parameters(self) -> list[ParameterDefinition[typing.Any]]:
         return [
             ParameterDefinition(
                 name="colorspace",
@@ -22,7 +23,7 @@ class Colorspace(ModuleBase):
     
     @typing.override
     # Process a single frame
-    def process_frame(self, frame, parameters):
+    def process_frame(self, frame: np.ndarray, parameters: dict[str, typing.Any]) -> np.ndarray:
         color_mode: str = parameters.get("colorspace", "rgb")
         # Differentiate between different color modes
         match color_mode:
@@ -39,7 +40,7 @@ class Colorspace(ModuleBase):
     
     @typing.override
     # Process the entire video
-    def process(self, input_data, parameters):
+    def process(self, input_data: str, parameters: dict[str, typing.Any]) -> None:
         colorspace: str = parameters.get("colorspace", "rgb")
         output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"colorspace_{colorspace}.mp4")
 

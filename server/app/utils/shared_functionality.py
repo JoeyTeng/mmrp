@@ -3,7 +3,7 @@ import typing
 import contextlib
 
 # Get path of input video    
-def get_video_path(video):
+def get_video_path(video: str) -> Path:
     return Path(__file__).resolve().parent.parent.parent.parent / "client" / "public" / f"{video}.mp4"
 
 # Context manager for video capture and video writer

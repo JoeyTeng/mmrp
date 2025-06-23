@@ -3,13 +3,14 @@ import typing
 from pathlib import Path
 from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.utils.shared_functionality import as_context
+import numpy as np
 
 class Resize(ModuleBase):
     name = "resize"
 
     @typing.override
     # Get the parameters for the resize module
-    def get_parameters(self):
+    def get_parameters(self) -> list[ParameterDefinition[typing.Any]]:
         return [
             ParameterDefinition(
                 name="scale_factor",
@@ -22,7 +23,7 @@ class Resize(ModuleBase):
     
     @typing.override
     # Process a single frame
-    def process_frame(self, frame, parameters):
+    def process_frame(self, frame: np.ndarray, parameters: dict[str, typing.Any]) -> np.ndarray:
         factor: int = int(parameters.get("scale_factor", 100))
         height, width = frame.shape[:2]
         new_size: tuple[int, int] = (int(width * factor / 100), int(height * factor / 100))
@@ -30,7 +31,7 @@ class Resize(ModuleBase):
     
     @typing.override
     # Process the entire video
-    def process(self, input_data, parameters):
+    def process(self, input_data: str, parameters: dict[str, typing.Any]) -> None:
         resize_factor: int = int(parameters.get("scale_factor", 100))
         output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"resize_{resize_factor}.mp4")
 
@@ -64,4 +65,4 @@ class Resize(ModuleBase):
         # Release the video capture and writer
         cap.release()
         out.release()
-        return output_path
+        

@@ -3,13 +3,14 @@ import typing
 from pathlib import Path
 from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.utils.shared_functionality import as_context
+import numpy as np
 
 class Blur(ModuleBase):
     name = "blur"
 
     @typing.override
     # Get the parameters for the blur module
-    def get_parameters(self):
+    def get_parameters(self) -> list[ParameterDefinition[typing.Any]]:
         return [
             ParameterDefinition(
                 name="kernel_size",
@@ -28,7 +29,7 @@ class Blur(ModuleBase):
     
     @typing.override
     # Process a single frame
-    def process_frame(self, frame, parameters):
+    def process_frame(self, frame: np.ndarray, parameters: dict[str, typing.Any]) -> np.ndarray:
         kernel_size: int = int(parameters.get("kernel_size", 5))
         method: str = parameters.get("method", "gaussian")
         # Ensure kernel size is odd
@@ -47,7 +48,7 @@ class Blur(ModuleBase):
 
     @typing.override
     # Process the entire video
-    def process(self, input_data, parameters):
+    def process(self, input_data: str, parameters: dict[str, typing.Any]) -> None:
         kernel_size: int = int(parameters.get("kernel_size", 5))
         method: str = parameters.get("method", "gaussian")
 
