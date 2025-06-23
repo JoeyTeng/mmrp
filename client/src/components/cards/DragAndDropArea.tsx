@@ -26,6 +26,19 @@ const initialNodes: Node<NodeData, NodeType>[] = [
     data: {
       label: "Source",
       params: getInitialNodeParamValue(moduleRegistry.Source.params),
+      inputPorts: [], // No input ports for a source node
+      outputPorts: [
+        {
+          id: "output-0",
+          label: "Video Output",
+          formats: {
+            resolution: { width: 1920, height: 1080 },
+            frameRate: 30,
+            pixelFormat: "YUV420",
+            colorSpace: "BT.709",
+          },
+        },
+      ],
     },
   },
   {
@@ -35,24 +48,85 @@ const initialNodes: Node<NodeData, NodeType>[] = [
     data: {
       label: "DownSample",
       params: getInitialNodeParamValue(moduleRegistry.DownSample.params),
+      inputPorts: [
+        {
+          id: "input-0",
+          label: "Video Input",
+          formats: {
+            resolution: { width: 1920, height: 1080 },
+            frameRate: 30,
+            pixelFormat: "YUV420",
+            colorSpace: "BT.709",
+          },
+        },
+      ],
+      outputPorts: [
+        {
+          id: "output-0",
+          label: "Downsampled Video Output",
+          formats: {
+            resolution: { width: 960, height: 540 },
+            frameRate: 30,
+            pixelFormat: "YUV420",
+            colorSpace: "BT.709",
+          },
+        },
+      ],
     },
   },
   {
     id: "3",
     type: NodeType.ProcessNode,
-    position: { x: 400, y: 100 },
+    position: { x: 420, y: 100 },
     data: {
       label: "Denoise",
       params: getInitialNodeParamValue(moduleRegistry.Denoise.params),
+      inputPorts: [
+        {
+          id: "input-0", // Hardcoded port ID
+          label: "Video Input",
+          formats: {
+            resolution: { width: 1920, height: 1080 },
+            frameRate: 30,
+            pixelFormat: "YUV420",
+            colorSpace: "BT.709",
+          },
+        },
+      ],
+      outputPorts: [
+        {
+          id: "output-0", // Hardcoded port ID
+          label: "Denoised Video Output",
+          formats: {
+            resolution: { width: 1920, height: 1080 },
+            frameRate: 30,
+            pixelFormat: "YUV420",
+            colorSpace: "BT.709",
+          },
+        },
+      ],
     },
   },
   {
     id: "4",
     type: NodeType.OutputNode,
-    position: { x: 600, y: 100 },
+    position: { x: 620, y: 100 },
     data: {
       label: "Result",
       params: getInitialNodeParamValue(moduleRegistry.Result.params),
+      inputPorts: [
+        {
+          id: "input-0",
+          label: "Final Video Input",
+          formats: {
+            resolution: { width: 1920, height: 1080 },
+            frameRate: 30,
+            pixelFormat: "YUV420",
+            colorSpace: "BT.709",
+          },
+        },
+      ],
+      outputPorts: [],
     },
   },
 ];
@@ -61,17 +135,23 @@ const initialEdges: Edge[] = [
   {
     id: "e1-2",
     source: "1",
+    sourceHandle: "output-0",
     target: "2",
+    targetHandle: "input-0",
   },
   {
     id: "e2-3",
     source: "2",
+    sourceHandle: "output-0",
     target: "3",
+    targetHandle: "input-0",
   },
   {
     id: "e3-4",
     source: "3",
+    sourceHandle: "output-0",
     target: "4",
+    targetHandle: "input-0",
   },
 ];
 

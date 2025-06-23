@@ -1,6 +1,10 @@
 "use client";
 import { Handle, Node, NodeProps, Position, useReactFlow } from "@xyflow/react";
-import { ParamValueType } from "@/components/modules/modulesRegistry";
+import {
+  type ParamValueType,
+  type PortType,
+  getPortsForNode,
+} from "@/components/modules/modulesRegistry";
 import { Trash } from "lucide-react";
 
 export enum NodeType {
@@ -12,9 +16,24 @@ export enum NodeType {
 export type NodeData = {
   label: string;
   params: Record<string, ParamValueType>; // constraint to ensure there's only one value
+  inputPorts: PortType[];
+  outputPorts: PortType[];
 };
 
 type CustomNode = Node<NodeData>;
+
+// simple tooltip
+function tooltip(port: PortType) {
+  const { resolution, frameRate, pixelFormat, colorSpace } = port.formats;
+  return [
+    resolution && `Resolution: ${resolution.width}×${resolution.height}`,
+    frameRate && `Frame rate: ${frameRate}fps`,
+    pixelFormat && `Pixel format: ${pixelFormat}`,
+    colorSpace && `Color space: ${colorSpace}`,
+  ]
+    .filter(Boolean) // drop any `undefined` entries
+    .join("\n");
+}
 
 export default function FlowNode({
   id,
@@ -25,6 +44,8 @@ export default function FlowNode({
   const { deleteElements } = useReactFlow();
 
   const MAX_VISIBLE = 4; //default no of params visible in node
+
+  const { inputPorts = [], outputPorts = [] } = getPortsForNode(label, params);
 
   return (
     <div
@@ -60,13 +81,35 @@ export default function FlowNode({
           <div className="text-left text-gray-400">…</div>
         )}
       </div>
-      {type !== NodeType.InputNode ? (
-        <Handle type="target" position={Position.Left} />
-      ) : null}
+      {type !== NodeType.InputNode
+        ? inputPorts.map((port, index) => (
+            <Handle
+              key={port.id}
+              id={port.id}
+              title={tooltip(port)}
+              type="target"
+              position={Position.Left}
+              style={{
+                top: `${((index + 1) / (inputPorts.length + 1)) * 100}%`,
+              }}
+            />
+          ))
+        : null}
 
-      {type !== NodeType.OutputNode ? (
-        <Handle type="source" position={Position.Right} />
-      ) : null}
+      {type !== NodeType.OutputNode
+        ? outputPorts.map((port, index) => (
+            <Handle
+              key={port.id}
+              id={port.id}
+              title={tooltip(port)}
+              type="source"
+              position={Position.Right}
+              style={{
+                top: `${((index + 1) / (outputPorts.length + 1)) * 100}%`,
+              }}
+            />
+          ))
+        : null}
     </div>
   );
 }

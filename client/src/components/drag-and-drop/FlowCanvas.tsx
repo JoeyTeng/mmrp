@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useRef, useEffect } from "react";
 import { OnEdgesChange, OnNodesChange, useReactFlow } from "@xyflow/react";
 import {
   ReactFlow,
@@ -19,12 +19,16 @@ import {
 import "@xyflow/react/dist/style.css";
 import {
   getInitialNodeParamValue,
+  getPortsForNode,
   moduleRegistry,
 } from "@/components/modules/modulesRegistry";
 import FlowNode, {
   NodeData,
   NodeType,
 } from "@/components/drag-and-drop/FlowNode";
+import isNodeConnectionValid from "@/components/modules/modulesFormatValidator";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
@@ -68,12 +72,113 @@ export default function FlowCanvas({
     [setNodes, setEdges],
   );
 
+  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
+  const invalidEdges = useRef<Set<string>>(new Set());
+
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (connection: Connection) => {
+      const nodes = getNodes() as Node<NodeData, NodeType>[];
+      const source = nodes.find((node) => node.id === connection.source);
+      const target = nodes.find((node) => node.id === connection.target);
+
+      if (!source || !target) return;
+
+      const { isValid, reason } = isNodeConnectionValid(
+        source,
+        connection.sourceHandle ?? "",
+        target,
+        connection.targetHandle ?? "",
+      );
+
+      const edgeId = `${+new Date()}`;
+
+      if (isValid) {
+        invalidEdges.current.delete(edgeId);
+        setEdges((eds) => addEdge({ ...connection, id: edgeId }, eds));
+      } else {
+        if (!invalidEdges.current.has(edgeId)) {
+          toast.error(`Error: ${reason}`, {
+            position: "top-right",
+            autoClose: false, // User must dismiss manually
+            closeOnClick: true,
+          });
+          invalidEdges.current.add(edgeId);
+        }
+        setEdges((eds) =>
+          addEdge(
+            {
+              ...connection,
+              id: edgeId,
+              style: { stroke: "red", strokeWidth: 1, strokeDasharray: "4 2" },
+            },
+            eds,
+          ),
+        );
+      }
+    },
     [setEdges],
   );
 
-  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
+  useEffect(
+    () => {
+      setEdges((edges) => {
+        const nodes = getNodes() as Node<NodeData, NodeType>[];
+        return edges.map((edge) => {
+          const source = nodes.find((n) => n.id === edge.source);
+          const target = nodes.find((n) => n.id === edge.target);
+          if (!source || !target) {
+            return edge;
+          }
+
+          const { isValid, reason } = isNodeConnectionValid(
+            source,
+            edge.sourceHandle ?? "",
+            target,
+            edge.targetHandle ?? "",
+          );
+
+          if (isValid && invalidEdges.current.has(edge.id)) {
+            invalidEdges.current.delete(edge.id);
+          }
+
+          if (!isValid && !invalidEdges.current.has(edge.id)) {
+            toast.error(
+              `Existing connection became invalid, Please rectify, ${reason}`,
+              {
+                position: "top-right",
+                autoClose: false,
+              },
+            );
+            invalidEdges.current.add(edge.id);
+          }
+
+          return {
+            ...edge,
+            style: isValid
+              ? {}
+              : {
+                  stroke: "red",
+                  strokeWidth: 1,
+                  strokeDasharray: "4 2",
+                  animated: true,
+                },
+          };
+        });
+      });
+    },
+    /* Re-run only when node output format change (for now): stringify to enforce content comparison and not referential */
+    [
+      JSON.stringify(
+        nodes.map((n) =>
+          getPortsForNode(n.data.label, n.data.params).outputPorts.map(
+            (p) => p.formats,
+          ),
+        ),
+      ),
+      getNodes,
+      setEdges,
+    ],
+  );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -95,16 +200,21 @@ export default function FlowCanvas({
         y: event.clientY,
       });
 
-      const moduleParams = moduleRegistry[label];
-      const defaultParams = moduleParams
-        ? getInitialNodeParamValue(moduleParams.params)
+      const moduleConfig = moduleRegistry[label];
+      const defaultParams = moduleConfig
+        ? getInitialNodeParamValue(moduleConfig.params)
         : {};
 
       const newNode = {
         id: `${+new Date()}`,
         type,
         position,
-        data: { label: `${label}`, params: defaultParams },
+        data: {
+          label: `${label}`,
+          params: defaultParams,
+          inputPorts: moduleConfig?.inputPorts || [],
+          outputPorts: moduleConfig?.outputPorts || [],
+        },
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
       };
@@ -115,12 +225,12 @@ export default function FlowCanvas({
   );
 
   const isValidConnection = useCallback(
-    (connection: Connection) => {
-      const nodes = getNodes();
+    (connection: Connection | Edge) => {
+      const nodes: Node[] = getNodes();
       const edges = getEdges();
-      const target = nodes.find((node) => node.id == connection.target);
+      const target = nodes.find((node) => node.id == connection.target) as Node;
       if (target.id == connection.source) return false;
-      const hasCycle = (node, visited = new Set()) => {
+      const hasCycle = (node: Node, visited = new Set()) => {
         if (visited.has(node.id)) return false;
         visited.add(node);
 
@@ -168,6 +278,7 @@ export default function FlowCanvas({
       >
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+        <ToastContainer theme="dark" />
       </ReactFlow>
     </div>
   );
