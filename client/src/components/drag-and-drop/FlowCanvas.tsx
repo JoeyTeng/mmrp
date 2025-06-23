@@ -44,6 +44,7 @@ type FlowCanvasProps = {
   setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onSelectNode: (id: string | null) => void;
+  onConfirm: () => void;
 };
 
 export default function FlowCanvas({
@@ -54,6 +55,7 @@ export default function FlowCanvas({
   setNodes,
   setEdges,
   onSelectNode,
+  onConfirm,
 }: FlowCanvasProps) {
   const paneRef = useRef<HTMLDivElement>(null);
 
@@ -228,8 +230,8 @@ export default function FlowCanvas({
     (connection: Connection | Edge) => {
       const nodes: Node[] = getNodes();
       const edges = getEdges();
-      const target = nodes.find((node) => node.id == connection.target) as Node;
-      if (target.id == connection.source) return false;
+      const target = nodes.find((node) => node.id == connection.target);
+      if (!target || target.id == connection.source) return false;
       const hasCycle = (node: Node, visited = new Set()) => {
         if (visited.has(node.id)) return false;
         visited.add(node);
@@ -247,7 +249,7 @@ export default function FlowCanvas({
 
   return (
     <div
-      className="w-full h-full overflow-hidden bg-gray-100"
+      className="w-full h-full overflow-hidden bg-gray-100 relative"
       ref={paneRef}
       tabIndex={0} // make this div focusable
       onClick={handlePaneClick}
@@ -280,6 +282,14 @@ export default function FlowCanvas({
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
         <ToastContainer theme="dark" />
       </ReactFlow>
+      <div className="absolute bottom-4 right-4 z-10">
+        <button
+          onClick={onConfirm}
+          className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-700 transition cursor-pointer"
+        >
+          Confirm
+        </button>
+      </div>
     </div>
   );
 }

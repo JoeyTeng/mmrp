@@ -17,6 +17,7 @@ import {
 } from "@/components/modules/modulesRegistry";
 import { useCallback, useState } from "react";
 import { NodeData, NodeType } from "@/components/drag-and-drop/FlowNode";
+import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 
 const initialNodes: Node<NodeData, NodeType>[] = [
   {
@@ -175,6 +176,14 @@ const DragAndDropArea = () => {
     },
     [selectedId, setNodes],
   );
+
+  const handleConfirm = () => {
+    const pipeline = dumpPipelineToJson(nodes, edges);
+    console.log(JSON.stringify(pipeline, null, 2));
+
+    //TODO: Send to backend
+  };
+
   return (
     <div className="flex h-[50vh] w-screen overflow-hidden">
       {/* Sidebar */}
@@ -193,6 +202,7 @@ const DragAndDropArea = () => {
             setNodes={setNodes}
             setEdges={setEdges}
             onSelectNode={setSelectedId}
+            onConfirm={handleConfirm}
           />
         </ReactFlowProvider>
       </div>
