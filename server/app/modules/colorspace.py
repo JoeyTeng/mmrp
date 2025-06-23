@@ -1,21 +1,26 @@
 import cv2
+import typing
 from pathlib import Path
+from app.utils.shared_functionality import as_context
 from app.modules.base_module import ModuleBase, ParameterDefinition
 
 class Colorspace(ModuleBase):
     name = "colorspace"
 
+    @typing.override
+    # Get the parameters for the colorspace module
     def get_parameters(self):
         return [
             ParameterDefinition(
                 name="colorspace",
                 type="str",
-                default="ycrcb",
-                choices=["ycrcb", "hsv", "lab", "rgb"],
+                default="rgb",
+                valid_values=["ycrcb", "hsv", "lab", "rgb"],
                 required=False
             )
         ]
     
+    @typing.override
     # Process a single frame
     def process_frame(self, frame, parameters):
         color_mode: str = parameters.get("colorspace", "rgb")
@@ -32,35 +37,32 @@ class Colorspace(ModuleBase):
             case _:
                 raise ValueError(f"Unsupported colorspace mode: {color_mode}")
     
+    @typing.override
     # Process the entire video
     def process(self, input_data, parameters):
-        color_mode: str = parameters.get("colorspace", "ycrcb")
-        
-        match color_mode:
-            case "ycrcb":
-                return self.ycrcb(input_data)
-            case _:
-                raise ValueError(f"Unsupported colorspace mode: {color_mode}")
-
-    # Transform video to YCrCb
-    def ycrcb(self, video_path):
         output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / "ycrcb.mp4")
 
-        cap: cv2.VideoCapture = cv2.VideoCapture(video_path)
-        fps: float = cap.get(cv2.CAP_PROP_FPS)
-        size: tuple[int, int] = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        # Video capture setup
+        cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
 
+        # Video writer setup
+        cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda cap: cap.release())
         fourcc = getattr(cv2, "VideoWriter_fourcc")(*'mp4v')
-        out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, size)
 
-        # Process frames
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            ycrcb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
-            out.write(ycrcb)
+        with cv2VideoCaptureContext(input_data) as cap:
+            if not cap.isOpened():
+                raise ValueError(f"Could not open video file: {input_data}")
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+            with cv2VideoWriterContext(output_path, fourcc, fps, (width, height)) as out:
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+                    output_frame = self.process_frame(frame, parameters)
+                    out.write(output_frame)
         
         cap.release()
         out.release()
-        return output_path

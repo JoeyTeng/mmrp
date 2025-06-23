@@ -1,29 +1,32 @@
 import cv2
+import typing
 from pathlib import Path
 from app.modules.base_module import ModuleBase, ParameterDefinition
+from app.utils.shared_functionality import as_context
 
 class Blur(ModuleBase):
     name = "blur"
 
+    @typing.override
+    # Get the parameters for the blur module
     def get_parameters(self):
         return [
             ParameterDefinition(
                 name="kernel_size",
                 type="int",
                 default=5,
-                required=False,
-                min=1,
-                max=99
+                required=False
             ),
             ParameterDefinition(
                 name="method",
                 type="str",
                 default="gaussian",
-                required=False,
-                choices=["gaussian", "median", "bilateral"]
+                valid_values=["gaussian", "median", "bilateral"],  # ✅ fixed keyword
+                required=False
             )
         ]
     
+    @typing.override
     # Process a single frame
     def process_frame(self, frame, parameters):
         kernel_size: int = int(parameters.get("kernel_size", 5))
@@ -42,6 +45,7 @@ class Blur(ModuleBase):
             case _:
                 raise ValueError(f"Unsupported blur method: {method}")
 
+    @typing.override
     # Process the entire video
     def process(self, input_data, parameters):
         kernel_size: int = int(parameters.get("kernel_size", 5))
@@ -53,31 +57,27 @@ class Blur(ModuleBase):
 
         output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"blur_{method}.mp4") 
 
-        cap: cv2.VideoCapture = cv2.VideoCapture(input_data)
-        fps: float = cap.get(cv2.CAP_PROP_FPS)
-        width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        # Video capture setup
+        cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
 
+        # Video writer setup
+        cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda cap: cap.release())
         fourcc = getattr(cv2, "VideoWriter_fourcc")(*'mp4v')
-        out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
+        with cv2VideoCaptureContext(input_data) as cap:
+            if not cap.isOpened():
+                raise ValueError(f"Could not open video file: {input_data}")
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-            match method:
-                case "gaussian":
-                   blurred = cv2.GaussianBlur(frame, (kernel_size, kernel_size), 0) 
-                case "median":
-                    blurred = cv2.medianBlur(frame, kernel_size)
-                case "bilateral":
-                    blurred = cv2.bilateralFilter(frame, d=kernel_size, sigmaColor=75, sigmaSpace=75)
-                case _:
-                    raise ValueError(f"Unsupported blur method: {method}")
-
-            out.write(blurred)
+            with cv2VideoWriterContext(output_path, fourcc, fps, (width, height)) as out:
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+                    output_frame = self.process_frame(frame, parameters)
+                    out.write(output_frame)
 
         cap.release()
         out.release()
-        return output_path

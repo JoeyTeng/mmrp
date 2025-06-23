@@ -6,9 +6,7 @@ class ModuleParameter(BaseModel):
     type: Literal["int", "float", "str", "bool"]
     description: Optional[str] = None
     default: Optional[Any] = None
-    min: Optional[float] = None
-    max: Optional[float] = None
-    choices: Optional[list[Any]] = None
+    valid_values: Optional[tuple[Any, Any] | list[Any]] = None
     required: bool = True
 
 class Module(BaseModel):

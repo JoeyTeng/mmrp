@@ -5,8 +5,8 @@ from pathlib import Path
 from collections import defaultdict, deque
 from app.schemas.pipeline import PipelineRequest, PipelineModule
 from app.routers.module import registry
-from app.utils.shared_functionality import get_video_path
-from server.app.modules.base_module import ModuleBase
+from app.utils.shared_functionality import get_video_path, as_context
+from app.modules.base_module import ModuleBase
 
 router = APIRouter(
     prefix="/pipeline",
@@ -18,60 +18,83 @@ router = APIRouter(
 @router.post("/", response_model=bool)
 def process_pipeline(request: PipelineRequest):
     try:
-        # Get video, pipeline modules and path
+        # Get video and pipeline
         selected_video: str = request.video
         modules: list[PipelineModule] = request.modules
         ordered_modules: list[PipelineModule] = get_execution_order(modules)
         video_path: str = str(get_video_path(selected_video))
 
-        # Read video frames
-        cap: cv2.VideoCapture = cv2.VideoCapture(video_path)
-        fps: float = cap.get(cv2.CAP_PROP_FPS)
-
-        # Video writer
-        fourcc = getattr(cv2, "VideoWriter_fourcc")(*'mp4v')
-        output_path = Path(__file__).resolve().parent.parent.parent / "output" / f"{selected_video}_output.mp4"
-        out = None
-
-        # Track module instances and parameters
+        # Registry lookup
         module_map: dict[int, tuple[ModuleBase, dict[str, str]]] = {
-            m.id: (registry[m.name](), {p.key: p.value for p in m.parameters}) for m in modules}
+            m.id: (registry[m.name](), {p.key: p.value for p in m.parameters}) for m in modules
+        }
 
         # Identify end modules (no children)
         end_modules: set[int] = {m.id for m in modules} - {d for m in modules for d in (m.source or [])}
 
-        # Process and write frames
-        while True:
-            ret, frame = cap.read()
+        # Output path
+        output_path = Path(__file__).resolve().parent.parent.parent / "output" / f"{selected_video}_output.mp4"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Context wrappers
+        cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
+        cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda writer: writer.release())
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*'mp4v')
+
+        with cv2VideoCaptureContext(video_path) as cap:
+            if not cap.isOpened():
+                raise ValueError(f"Could not open video file: {video_path}")
+            fps = cap.get(cv2.CAP_PROP_FPS)
+
+            # Read and prcoess first frame to get correct dimensions for writer
+            ret, first_frame = cap.read()
             if not ret:
-                break
-            frame_cache = {}
-            frame_cache[0] = frame
+                raise ValueError("Could not read first frame")
 
-            # Write frames in correct order (taking the source of the module as input frame)
+            # Process first frame
+            frame_cache = {0: first_frame}
             for mod in ordered_modules:
-                mod_id: int = mod.id
+                mod_id = mod.id
                 mod_instance, params = module_map[mod_id]
-                input_frames = [frame_cache[src_id] for src_id in (modules[mod_id].source or [0])]
-                
-                # Assuming single input frame for now
-                frame_input = input_frames[0]
-                frame_output = mod_instance.process_frame(frame_input, params)
-                
+                input_frames = [frame_cache[src_id] for src_id in (mod.source or [0])]
+                frame_output = mod_instance.process_frame(input_frames[0], params)
                 frame_cache[mod_id] = frame_output
-                final_outputs = [frame_cache[module_id] for module_id in end_modules]
 
+            final_outputs = [frame_cache[mid] for mid in end_modules]
+            out_height, out_width = final_outputs[0].shape[:2]
+
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path = str(output_path)
+
+            # Initialise output writer with dimensions from processed first frame
+            with cv2VideoWriterContext(out_path, fourcc, fps, (out_width, out_height)) as out:
+                # Write the first frame(s)
                 for out_frame in final_outputs:
-                    if out is None:
-                        out_height, out_width = out_frame.shape[:2]
-                        output_path.parent.mkdir(parents=True, exist_ok=True)
-                        out_path: str = str(output_path)
-                        out = cv2.VideoWriter(out_path, fourcc, fps, (out_width, out_height))
                     out.write(out_frame)
 
+                # Continue processing and writing remaining frames
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+
+                    frame_cache = {0: frame}
+                    for mod in ordered_modules:
+                        mod_id = mod.id
+                        mod_instance, params = module_map[mod_id]
+                        input_frames = [frame_cache[src_id] for src_id in (mod.source or [0])]
+                        frame_output = mod_instance.process_frame(input_frames[0], params)
+                        frame_cache[mod_id] = frame_output
+
+                    for out_frame in [frame_cache[mid] for mid in end_modules]:
+                        out.write(out_frame)
+
+        cap.release()
+        out.release()
         return True
+
     except Exception as e:
-        print(e)
+        print(f"Pipeline processing error: {e}")
         return False
 
 

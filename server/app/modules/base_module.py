@@ -1,28 +1,36 @@
 from dataclasses import dataclass
-from typing import Literal, Optional, Any
+from abc import ABC, abstractmethod
+from typing import Literal, Optional, Any, TypeVar, Generic
 import numpy as np
+
+ParameterType = TypeVar(
+    "ParameterType",
+    bound=int | float | str | bool,
+    covariant=True,  # important here
+)
 
 # Definition of module parameters
 @dataclass
-class ParameterDefinition:
+class ParameterDefinition(Generic[ParameterType]):
     name: str
     type: Literal["int", "float", "str", "bool"]
+    valid_values: tuple[ParameterType, ParameterType] | list[ParameterType] | None = None
     description: Optional[str] = None
     default: Optional[Any] = None
-    min: Optional[float] = None
-    max: Optional[float] = None
-    choices: Optional[list[Any]] = None
     required: bool = True
 
 # Base class of a module
-class ModuleBase:
+class ModuleBase(ABC):
     name: str
     
+    @abstractmethod
     def get_parameters(self) -> list[ParameterDefinition]:
         return []
 
+    @abstractmethod
     def process(self, input_data, parameters: dict):
         raise NotImplementedError
     
+    @abstractmethod
     def process_frame(self, frame: np.ndarray, parameters: dict) -> np.ndarray:
         raise NotImplementedError

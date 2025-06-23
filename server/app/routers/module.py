@@ -45,9 +45,7 @@ def get_all_modules():
                 type=p.type,
                 description=p.description,
                 default=p.default,
-                min=p.min,
-                max=p.max,
-                choices=p.choices,
+                valid_values=p.valid_values,
                 required=p.required
             )
             for p in parameters

@@ -1,10 +1,14 @@
 import cv2
+import typing
 from pathlib import Path
 from app.modules.base_module import ModuleBase, ParameterDefinition
+from app.utils.shared_functionality import as_context
 
 class Resize(ModuleBase):
     name = "resize"
 
+    @typing.override
+    # Get the parameters for the resize module
     def get_parameters(self):
         return [
             ParameterDefinition(
@@ -12,11 +16,11 @@ class Resize(ModuleBase):
                 type="int",
                 default=100,
                 required=False,
-                min=1,
-                max=200
+                valid_values=(1, 200)
             )
         ]
     
+    @typing.override
     # Process a single frame
     def process_frame(self, frame, parameters):
         factor: int = int(parameters.get("scale_factor", 100))
@@ -24,34 +28,40 @@ class Resize(ModuleBase):
         new_size: tuple[int, int] = (int(width * factor / 100), int(height * factor / 100))
         return cv2.resize(frame, new_size, interpolation=cv2.INTER_AREA)
     
+    @typing.override
     # Process the entire video
     def process(self, input_data, parameters):
         resize_factor: int = int(parameters.get("scale_factor", 100))
         output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"resize_{resize_factor}.mp4")
 
-        # Capture video
-        cap: cv2.VideoCapture = cv2.VideoCapture(input_data)
-        fps: float = cap.get(cv2.CAP_PROP_FPS)
+        # Video capture setup
+        cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
 
-        # Calculate new dimensions
-        width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        new_width: int = int(width * resize_factor / 100)
-        new_height: int = int(height * resize_factor / 100)
-        dim: tuple[int, int] = (new_width, new_height)
-
-        # Video writer
+        # Video writer setup
+        cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda cap: cap.release())
         fourcc = getattr(cv2, "VideoWriter_fourcc")(*'mp4v')
-        out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, dim)
 
-        # Process frames
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            out.write(cv2.resize(frame, dim, interpolation = cv2.INTER_AREA))
+        with cv2VideoCaptureContext(input_data) as cap:
+            if not cap.isOpened():
+                raise ValueError(f"Could not open video file: {input_data}")
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        # Release the video capture and writer and close all windows
+            # Calculate new dimension
+            new_width: int = int(width * resize_factor / 100)
+            new_height: int = int(height * resize_factor / 100)
+            dim: tuple[int, int] = (new_width, new_height)
+
+            with cv2VideoWriterContext(output_path, fourcc, fps, (new_width, new_height)) as out:
+                # Process and write frames
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+                    out.write(cv2.resize(frame, dim, interpolation = cv2.INTER_AREA))
+
+        # Release the video capture and writer
         cap.release()
         out.release()
         return output_path
