@@ -1,12 +1,12 @@
 "use client";
-import { NodeType } from "@/components/drag-and-drop/FlowNode";
+import { NodeType } from "./types";
 
-type SidebarItemProps = {
+type ModuleItemProps = {
   label: string;
   type: NodeType;
 };
 
-export default function SidebarItem({ label, type }: SidebarItemProps) {
+export default function ModuleItem({ label, type }: ModuleItemProps) {
   const onDragStart = (event: React.DragEvent) => {
     const nodeData = JSON.stringify({ type, label });
     event.dataTransfer.setData("application/reactflow", nodeData);

@@ -4,7 +4,7 @@ import {
   PipelineParameter,
   PipelineRequest,
 } from "@/types/pipeline";
-import { NodeData } from "@/components/drag-and-drop/FlowNode";
+import { NodeData } from "@/components/drag-and-drop/types";
 
 export function dumpPipelineToJson(
   nodes: Node<NodeData>[],
