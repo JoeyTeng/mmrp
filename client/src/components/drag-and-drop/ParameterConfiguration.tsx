@@ -5,7 +5,8 @@ import {
   ParamValueType,
   moduleRegistry,
 } from "@/components/modules/modulesRegistry";
-import { Info } from "lucide-react";
+import { InfoOutline as InfoIcon } from "@mui/icons-material";
+import { Box } from "@mui/material";
 
 type ParameterConfigurationProps = {
   node?: Node<{ label: string; params: Record<string, ParamValueType> }> | null;
@@ -97,25 +98,17 @@ export default function ParameterConfiguration({
 }: ParameterConfigurationProps) {
   if (!node) {
     return (
-      <div className="flex-1 border border-gray-700 h-full bg-white">
-        <div className="bg-gray-700 text-white font-semibold px-4 py-2 border-b border-gray-300">
-          Select a node to configure
-        </div>
-        <div className="flex justify-evenly gap-2.5">
-          <Info size={16} className="text-gray-500" />
-          <span>select pipeline module to edit parameters</span>
-        </div>
-      </div>
+      <Box className="flex justify-evenly gap-2.5">
+        <InfoIcon className="text-gray-500" />
+        <span>select pipeline module to edit parameters</span>
+      </Box>
     );
   }
 
   const { label, params } = node.data;
 
   return (
-    <div className="flex-1 border border-gray-900 rounded-md overflow-y-auto bg-white h-full">
-      <div className="bg-gray-700 text-white font-semibold px-4 py-2 border-b border-gray-300">
-        {label} Parameters
-      </div>
+    <Box className="flex-1 border border-gray-900 rounded-md overflow-y-auto bg-white h-full">
       <div className="p-2.5">
         {Object.entries(params).map(([key, value]) => {
           const moduleRegistryVal = moduleRegistry[label].params[key];
@@ -133,6 +126,6 @@ export default function ParameterConfiguration({
           return renderTextInput(key, value, onChange);
         })}
       </div>
-    </div>
+    </Box>
   );
 }

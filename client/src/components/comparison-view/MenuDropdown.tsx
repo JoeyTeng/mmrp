@@ -7,7 +7,7 @@ import {
   MenuItem,
   Transition,
 } from "@headlessui/react";
-import { Menu as MenuIcon } from "lucide-react";
+import { MenuOutlined as MenuIcon } from "@mui/icons-material";
 import { Fragment } from "react";
 
 export enum viewOptions {
@@ -23,7 +23,7 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
   return (
     <Menu as="div" className="relative inline-block z-50">
       <MenuButton className="flex items-center text-white hover:text-gray-300">
-        <MenuIcon size={20} className="cursor-pointer" />
+        <MenuIcon className="cursor-pointer" />
       </MenuButton>
 
       <Transition
