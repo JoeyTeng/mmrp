@@ -33,6 +33,7 @@ class Blur(ModuleBase):
         kernel_size: int = int(parameters.get("kernel_size", 5))
         method: str = parameters.get("method", "gaussian")
         # Ensure kernel size is odd
+        # TODO: replace this with a proper parameter validation & error reporting mechanism
         if kernel_size % 2 == 0:
             kernel_size += 1
         # Differentiate between different blur methods
@@ -49,14 +50,7 @@ class Blur(ModuleBase):
     @typing.override
     # Process the entire video
     def process(self, input_data: str, parameters: dict[str, typing.Any]) -> None:
-        kernel_size: int = int(parameters.get("kernel_size", 5))
-        method: str = parameters.get("method", "gaussian")
-
-        # Ensure kernel size is odd and >= 1
-        if kernel_size % 2 == 0:
-            kernel_size += 1
-
-        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"blur_{method}.mp4") 
+        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"blur.mp4") 
 
         # Video capture setup
         cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
@@ -79,6 +73,3 @@ class Blur(ModuleBase):
                         break
                     output_frame = self.process_frame(frame, parameters)
                     out.write(output_frame)
-
-        cap.release()
-        out.release()

@@ -62,7 +62,4 @@ class Resize(ModuleBase):
                         break
                     out.write(cv2.resize(frame, dim, interpolation = cv2.INTER_AREA))
 
-        # Release the video capture and writer
-        cap.release()
-        out.release()
         

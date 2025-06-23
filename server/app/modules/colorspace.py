@@ -65,6 +65,4 @@ class Colorspace(ModuleBase):
                         break
                     output_frame = self.process_frame(frame, parameters)
                     out.write(output_frame)
-        
-        cap.release()
-        out.release()
+

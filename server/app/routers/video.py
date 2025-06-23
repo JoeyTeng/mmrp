@@ -12,7 +12,7 @@ router = APIRouter(
 # Send a mp4 video to the frontend
 @router.get("/{video_name}")
 def get_video(video_name: str):
-    if "output" in video_name:
+    if video_name.endswith("_output"):
         video_path = Path(__file__).resolve().parent.parent.parent / "output" / f"{video_name}.mp4"
     else:
         video_path = get_video_path(video_name)

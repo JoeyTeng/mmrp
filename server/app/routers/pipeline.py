@@ -2,6 +2,7 @@ import cv2
 from fastapi import APIRouter
 from typing import List, Dict
 from pathlib import Path
+import numpy as np
 from collections import defaultdict, deque
 from app.schemas.pipeline import PipelineRequest, PipelineModule
 from app.routers.module import registry
@@ -46,19 +47,14 @@ def process_pipeline(request: PipelineRequest):
                 raise ValueError(f"Could not open video file: {video_path}")
             fps = cap.get(cv2.CAP_PROP_FPS)
 
-            # Read and prcoess first frame to get correct dimensions for writer
+            # Read and process first frame to get correct dimensions for writer
             ret, first_frame = cap.read()
             if not ret:
                 raise ValueError("Could not read first frame")
 
             # Process first frame
-            frame_cache = {0: first_frame}
-            for mod in ordered_modules:
-                mod_id = mod.id
-                mod_instance, params = module_map[mod_id]
-                input_frames = [frame_cache[src_id] for src_id in (mod.source or [0])]
-                frame_output = mod_instance.process_frame(input_frames[0], params)
-                frame_cache[mod_id] = frame_output
+            frame_cache: dict[int, np.ndarray] = {0: first_frame}
+            process_pipeline_frame(frame_cache, ordered_modules, module_map)
 
             final_outputs = [frame_cache[mid] for mid in end_modules]
             out_height, out_width = final_outputs[0].shape[:2]
@@ -79,18 +75,11 @@ def process_pipeline(request: PipelineRequest):
                         break
 
                     frame_cache = {0: frame}
-                    for mod in ordered_modules:
-                        mod_id = mod.id
-                        mod_instance, params = module_map[mod_id]
-                        input_frames = [frame_cache[src_id] for src_id in (mod.source or [0])]
-                        frame_output = mod_instance.process_frame(input_frames[0], params)
-                        frame_cache[mod_id] = frame_output
+                    process_pipeline_frame(frame_cache, ordered_modules, module_map)
 
                     for out_frame in [frame_cache[mid] for mid in end_modules]:
                         out.write(out_frame)
 
-        cap.release()
-        out.release()
         return True
 
     except Exception as e:
@@ -143,3 +132,16 @@ def get_execution_order(modules: List[PipelineModule]):
         )
     
     return execution_order
+
+
+def process_pipeline_frame(
+        frame_cache: dict[int, np.ndarray], 
+        ordered_modules: list[PipelineModule],
+        module_map: dict[int, tuple[ModuleBase, dict[str, str]]]
+):
+    for mod in ordered_modules:
+        mod_id = mod.id
+        mod_instance, params = module_map[mod_id]
+        input_frames = [frame_cache[src_id] for src_id in (mod.source or [0])]
+        frame_output = mod_instance.process_frame(input_frames[0], params)
+        frame_cache[mod_id] = frame_output
