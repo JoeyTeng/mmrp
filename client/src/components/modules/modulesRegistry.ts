@@ -132,7 +132,7 @@ export const moduleRegistry: Record<string, ModuleConfig> = {
           pixelFormat: "YUV420",
           colorSpace: "BT.709",
         },
-      }, // testing ports / works OK needs styling as there seems to be a overlap
+      },
     ],
   },
   UpSample: {
