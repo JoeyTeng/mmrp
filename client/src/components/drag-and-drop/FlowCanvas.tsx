@@ -27,7 +27,7 @@ import FlowNode, {
   NodeType,
 } from "@/components/drag-and-drop/FlowNode";
 import isNodeConnectionValid from "@/components/modules/modulesFormatValidator";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const nodeTypes = {
@@ -280,7 +280,6 @@ export default function FlowCanvas({
       >
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-        <ToastContainer theme="dark" />
       </ReactFlow>
       <div className="absolute bottom-4 right-4 z-10">
         <button

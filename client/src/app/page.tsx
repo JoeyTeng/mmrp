@@ -3,6 +3,7 @@ import CenterColumn from "@/components/layout/CenterColumn";
 import RightColumn from "@/components/layout/RightColumn";
 import DragAndDropArea from "@/components/cards/DragAndDropArea";
 import TopNavBar from "@/components/layout/TopNavBar";
+import { ToastContainer } from "react-toastify";
 
 export default function Home() {
   return (
@@ -22,6 +23,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <ToastContainer theme="dark" />
     </main>
   );
 }
