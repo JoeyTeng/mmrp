@@ -40,7 +40,8 @@ class Colorspace(ModuleBase):
     @typing.override
     # Process the entire video
     def process(self, input_data, parameters):
-        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / "ycrcb.mp4")
+        colorspace: str = parameters.get("colorspace", "rgb")
+        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"colorspace_{colorspace}.mp4")
 
         # Video capture setup
         cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
