@@ -4,6 +4,7 @@ import RightColumn from "@/components/layout/RightColumn";
 import DragAndDropArea from "@/components/cards/DragAndDropArea";
 import TopNavBar from "@/components/layout/TopNavBar";
 import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Home() {
   return (

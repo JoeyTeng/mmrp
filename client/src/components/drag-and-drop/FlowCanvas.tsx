@@ -28,7 +28,6 @@ import FlowNode, {
 } from "@/components/drag-and-drop/FlowNode";
 import isNodeConnectionValid from "@/components/modules/modulesFormatValidator";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
