@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-
 class PipelineParameter(BaseModel):
     key: str
     value: str

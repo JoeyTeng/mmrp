@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import uvicorn
 from app.routers import pipeline, video, module
-from app.routers.module import load_modules
+from app.services.module import load_modules
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

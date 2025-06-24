@@ -13,27 +13,42 @@ class Resize(ModuleBase):
     def get_parameters(self) -> list[ParameterDefinition[typing.Any]]:
         return [
             ParameterDefinition(
-                name="scale_factor",
+                name="width",
                 type="int",
-                default=100,
+                required=True,
+                valid_values=(1, 4096)
+            ),
+            ParameterDefinition(
+                name="height",
+                type="int",
+                required=True,
+                valid_values=(1, 4096)
+            ),
+            ParameterDefinition(
+                name="interpolation",
+                type="str",
                 required=False,
-                valid_values=(1, 200)
+                valid_values=["nearest", "linear", "cubic", "area", "lanczos4"]
             )
         ]
     
     @typing.override
     # Process a single frame
     def process_frame(self, frame: np.ndarray, parameters: dict[str, typing.Any]) -> np.ndarray:
-        factor: int = int(parameters.get("scale_factor", 100))
-        height, width = frame.shape[:2]
-        new_size: tuple[int, int] = (int(width * factor / 100), int(height * factor / 100))
-        return cv2.resize(frame, new_size, interpolation=cv2.INTER_AREA)
+        width: int = int(parameters.get("width", 640))
+        height: int = int(parameters.get("height", 480))
+        new_size: tuple[int, int] = (width, height)
+        interpolation: str = parameters.get("interpolation", "area")
+        interpolation_type: int = self.match_interpolation_type(interpolation)
+        return cv2.resize(frame, new_size, interpolation=interpolation_type)
     
     @typing.override
     # Process the entire video
     def process(self, input_data: str, parameters: dict[str, typing.Any]) -> None:
-        resize_factor: int = int(parameters.get("scale_factor", 100))
-        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"resize_{resize_factor}.mp4")
+        width: int = int(parameters.get("width", 640))
+        height: int = int(parameters.get("height", 480))
+        new_size: tuple[int, int] = (width, height)
+        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"resize_{width}_{height}.mp4")
 
         # Video capture setup
         cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
@@ -46,20 +61,28 @@ class Resize(ModuleBase):
             if not cap.isOpened():
                 raise ValueError(f"Could not open video file: {input_data}")
             fps = cap.get(cv2.CAP_PROP_FPS)
-            width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-            # Calculate new dimension
-            new_width: int = int(width * resize_factor / 100)
-            new_height: int = int(height * resize_factor / 100)
-            dim: tuple[int, int] = (new_width, new_height)
-
-            with cv2VideoWriterContext(output_path, fourcc, fps, (new_width, new_height)) as out:
+            with cv2VideoWriterContext(output_path, fourcc, fps, new_size) as out:
                 # Process and write frames
                 while True:
                     ret, frame = cap.read()
                     if not ret:
                         break
-                    out.write(cv2.resize(frame, dim, interpolation = cv2.INTER_AREA))
+                    output_frame = self.process_frame(frame, parameters)
+                    out.write(output_frame)
 
+    # Match interpolation input to OpenCV constants
+    def match_interpolation_type(self, interpolation: str) -> int:
+        if interpolation == "nearest":
+            return cv2.INTER_NEAREST
+        elif interpolation == "linear":
+            return cv2.INTER_LINEAR
+        elif interpolation == "cubic":
+            return cv2.INTER_CUBIC
+        elif interpolation == "area":
+            return cv2.INTER_AREA
+        elif interpolation == "lanczos4":
+            return cv2.INTER_LANCZOS4
+        else:
+            raise ValueError(f"Unsupported interpolation type: {interpolation}")
         

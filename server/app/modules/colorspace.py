@@ -13,10 +13,17 @@ class Colorspace(ModuleBase):
     def get_parameters(self) -> list[ParameterDefinition[typing.Any]]:
         return [
             ParameterDefinition(
-                name="colorspace",
+                name="input_colorspace",
                 type="str",
                 default="rgb",
-                valid_values=["ycrcb", "hsv", "lab", "rgb"],
+                valid_values=["ycrcb", "hsv", "lab", "rgb", "bgr"],
+                required=False
+            ),
+            ParameterDefinition(
+                name="output_colorspace",
+                type="str",
+                default="rgb",
+                valid_values=["ycrcb", "hsv", "lab", "rgb", "bgr"],
                 required=False
             )
         ]
@@ -24,19 +31,10 @@ class Colorspace(ModuleBase):
     @typing.override
     # Process a single frame
     def process_frame(self, frame: np.ndarray, parameters: dict[str, typing.Any]) -> np.ndarray:
-        color_mode: str = parameters.get("colorspace", "rgb")
-        # Differentiate between different color modes
-        match color_mode:
-            case "ycrcb":
-                return cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
-            case "hsv":
-                return cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            case "lab":
-                return cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
-            case "rgb":
-                return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            case _:
-                raise ValueError(f"Unsupported colorspace mode: {color_mode}")
+        input: str = parameters.get("input_colorspace", "rgb")
+        output: str = parameters.get("output_colorspace", "rgb")
+        # Differentiate between different input and output color modes
+        return self.match_colorspace(frame, input, output)
     
     @typing.override
     # Process the entire video
@@ -66,3 +64,61 @@ class Colorspace(ModuleBase):
                     output_frame = self.process_frame(frame, parameters)
                     out.write(output_frame)
 
+    # Process output colorspace (handle valid values)
+    def match_colorspace(self, frame: np.ndarray, input_color: str, output_color: str) -> np.ndarray:
+        if input_color == output_color:
+            return frame
+        
+        error: ValueError = ValueError(f"Unsupported output colorspace: {output_color} for input: {input_color}")
+        
+        match input_color:
+            case "ycrcb":
+                match output_color:
+                    case "rgb":
+                        return cv2.cvtColor(frame, cv2.COLOR_YCrCb2RGB)
+                    case "bgr":
+                        return cv2.cvtColor(frame, cv2.COLOR_YCrCb2BGR)
+                    case _:
+                        raise error
+            case "hsv":
+                match output_color:
+                    case "rgb":
+                        return cv2.cvtColor(frame, cv2.COLOR_HSV2RGB)
+                    case "bgr":
+                        return cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
+                    case _:
+                        raise error
+            case "lab":
+                match output_color:
+                    case "rgb":
+                        return cv2.cvtColor(frame, cv2.COLOR_Lab2RGB)
+                    case "bgr":
+                        return cv2.cvtColor(frame, cv2.COLOR_Lab2BGR)
+                    case _:
+                        raise error
+            case "rgb":
+                match output_color:
+                    case "bgr":
+                        return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                    case "ycrcb":
+                        return cv2.cvtColor(frame, cv2.COLOR_RGB2YCrCb)
+                    case "hsv":
+                        return cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
+                    case "lab":
+                        return cv2.cvtColor(frame, cv2.COLOR_RGB2Lab)
+                    case _:
+                        raise error
+            case "bgr":
+                match output_color:
+                    case "rgb":
+                        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    case "ycrcb":
+                        return cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
+                    case "hsv":
+                        return cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+                    case "lab":
+                        return cv2.cvtColor(frame, cv2.COLOR_BGR2Lab)
+                    case _:
+                        raise error
+            case _:
+                raise ValueError(f"Unsupported input colorspace: {input_color}")
