@@ -1,6 +1,0 @@
-{
-  "*.py": [
-    "uv run ruff check --fix --show-fixes",
-    "uv run ruff format"
-  ]
-}

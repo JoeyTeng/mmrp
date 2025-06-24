@@ -1,13 +1,19 @@
 "use client";
 
 import React, { useCallback, useRef } from "react";
-import { OnEdgesChange, OnNodesChange, useReactFlow } from "@xyflow/react";
+import {
+  OnEdgesChange,
+  OnNodesChange,
+  Panel,
+  useReactFlow,
+} from "@xyflow/react";
 import {
   ReactFlow,
   Background,
   Controls,
   addEdge,
   Connection,
+  IsValidConnection,
   BackgroundVariant,
   Position,
   MarkerType,
@@ -21,10 +27,12 @@ import {
   getInitialNodeParamValue,
   moduleRegistry,
 } from "@/components/modules/modulesRegistry";
-import FlowNode, {
-  NodeData,
-  NodeType,
-} from "@/components/drag-and-drop/FlowNode";
+
+import FlowNode from "@/components/drag-and-drop/FlowNode";
+import { NodeData, NodeType } from "./types";
+import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
+
+import { Box, Button } from "@mui/material";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
@@ -40,7 +48,6 @@ type FlowCanvasProps = {
   setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onSelectNode: (id: string | null) => void;
-  onConfirm: () => void;
 };
 
 export default function FlowCanvas({
@@ -51,7 +58,6 @@ export default function FlowCanvas({
   setNodes,
   setEdges,
   onSelectNode,
-  onConfirm,
 }: FlowCanvasProps) {
   const paneRef = useRef<HTMLDivElement>(null);
 
@@ -116,30 +122,38 @@ export default function FlowCanvas({
     [screenToFlowPosition, setNodes],
   );
 
-  const isValidConnection = useCallback(
+  // Update your function type to match ReactFlow's expected signature
+  const isValidConnection: IsValidConnection<Edge> = useCallback(
     (connection: Connection | Edge) => {
-      const nodes: Node[] = getNodes();
+      const conn = connection as Connection;
+      const nodes = getNodes();
       const edges = getEdges();
       const target = nodes.find((node) => node.id == connection.target);
       if (!target || target.id == connection.source) return false;
-      const hasCycle = (node: Node, visited = new Set()) => {
+      const hasCycle = (node: Node, visited = new Set<string>()) => {
         if (visited.has(node.id)) return false;
-        visited.add(node);
-
-        for (const i of getOutgoers(node, nodes, edges)) {
-          if (i.id == connection.source || hasCycle(i, visited)) {
+        visited.add(node.id);
+        for (const outgoer of getOutgoers(node, nodes, edges)) {
+          if (outgoer.id === conn.source || hasCycle(outgoer, visited))
             return true;
-          }
         }
+        return false;
       };
       return !hasCycle(target);
     },
     [getNodes, getEdges],
   );
 
+  const onConfirm = () => {
+    const pipeline = dumpPipelineToJson(nodes, edges);
+    console.log(JSON.stringify(pipeline, null, 2));
+
+    //TODO: Send to backend
+  };
+
   return (
-    <div
-      className="w-full h-full overflow-hidden bg-gray-100 relative"
+    <Box
+      className="w-full h-full bg-white rounded-lg border border-gray-300"
       ref={paneRef}
       tabIndex={0} // make this div focusable
       onClick={handlePaneClick}
@@ -158,6 +172,9 @@ export default function FlowCanvas({
         onSelectionChange={({ nodes: selected }) =>
           onSelectNode(selected.length ? selected[0].id : null)
         }
+        fitViewOptions={{
+          padding: 1,
+        }}
         defaultEdgeOptions={{
           markerEnd: {
             type: MarkerType.ArrowClosed,
@@ -166,19 +183,19 @@ export default function FlowCanvas({
           },
         }}
         fitView
-        className="w-full h-full"
       >
         <Controls />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+        <Panel position="bottom-right">
+          <Button
+            variant="contained"
+            className="bg-primary"
+            onClick={onConfirm}
+          >
+            Confirm
+          </Button>
+        </Panel>
       </ReactFlow>
-      <div className="absolute bottom-4 right-4 z-10">
-        <button
-          onClick={onConfirm}
-          className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-700 transition cursor-pointer"
-        >
-          Confirm
-        </button>
-      </div>
-    </div>
+    </Box>
   );
 }
