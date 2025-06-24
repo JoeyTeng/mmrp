@@ -16,22 +16,22 @@ class Blur(ModuleBase):
                 name="kernel_size",
                 type="int",
                 default=5,
-                required=False
+                required=True
             ),
             ParameterDefinition(
                 name="method",
                 type="str",
                 default="gaussian",
                 valid_values=["gaussian", "median", "bilateral"],
-                required=False
+                required=True
             )
         ]
     
     @typing.override
     # Process a single frame
     def process_frame(self, frame: np.ndarray, parameters: dict[str, typing.Any]) -> np.ndarray:
-        kernel_size: int = int(parameters.get("kernel_size", 5))
-        method: str = parameters.get("method", "gaussian")
+        kernel_size: int = parameters["kernel_size"]
+        method: str = parameters["method"]
         # Ensure kernel size is odd
         # TODO: replace this with a proper parameter validation & error reporting mechanism
         if kernel_size % 2 == 0:

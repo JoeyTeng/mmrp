@@ -247,6 +247,7 @@ dependencies = [
     { name = "numpy" },
     { name = "opencv-python" },
     { name = "pydantic" },
+    { name = "ruff" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -261,6 +262,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.3.1" },
     { name = "opencv-python", specifier = ">=4.11.0.86" },
     { name = "pydantic", specifier = "==2.11.5" },
+    { name = "ruff", specifier = ">=0.11.13" },
     { name = "uvicorn", extras = ["standard"], specifier = "==0.34.3" },
 ]
 

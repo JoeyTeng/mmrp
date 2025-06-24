@@ -2,28 +2,67 @@ import numpy as np
 import cv2
 from collections import defaultdict, deque
 from pathlib import Path
-from app.modules.base_module import ModuleBase
+from typing import Any
+from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest
 from app.utils.shared_functionality import get_video_path, as_context
 from app.services.module import registry
 
+# Validate pipeline parameters
+# Helper
+def _is_type_match(value: Any, expected_type: str) -> bool:
+    type_map: dict[str, type] = {
+        "int": int,
+        "float": float,
+        "str": str,
+        "bool": bool
+    }
+    if expected_type not in type_map:
+        raise ValueError(f"Unknown expected type '{expected_type}'")
+    
+    return isinstance(value, type_map[expected_type])
+
+def validate_parameters(
+    parameters: dict[str, Any],
+    parameter_defs: dict[str, ParameterDefinition[Any]],
+    module: ModuleBase
+):
+    for key, value in parameters.items():
+        if key not in parameter_defs:
+            raise ValueError(f"Unexpected parameter '{key}' for module '{module.name}'")
+
+        expected_type = parameter_defs[key].type
+        if not _is_type_match(value, expected_type):
+            raise TypeError(
+                f"Parameter '{key}' for module '{module.name}' should be of type '{expected_type}', "
+                f"but got value '{value}' ({type(value).__name__})"
+            )
+
+
 # Process a single frame through the pipeline
 def process_pipeline_frame(
         frame_cache: dict[int, np.ndarray], 
         ordered_modules: list[PipelineModule],
-        module_map: dict[int, tuple[ModuleBase, dict[str, str]]]
+        module_map: dict[int, tuple[ModuleBase, dict[str, Any]]]
 ):
     for mod in ordered_modules:
         mod_id = mod.id
         mod_instance, params = module_map[mod_id]
+
+        # Get expected parameter definitions
+        param_defs = {p.name: p for p in mod_instance.get_parameters()}
+
+        # Validate each parameter
+        validate_parameters(params, param_defs, mod_instance)
+            
         input_frames = [frame_cache[src_id] for src_id in (mod.source or [0])]
         frame_output = mod_instance.process_frame(input_frames[0], params)
         frame_cache[mod_id] = frame_output
         
 # Get modules in correct execution order in the pipeline
 def get_execution_order(modules: list[PipelineModule]):
-    # Map module id → module
+    # Map module id -> module
     module_map: dict[int, PipelineModule] = {mod.id: mod for mod in modules}
     all_module_ids = set(module_map.keys())
 
@@ -77,7 +116,7 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
         video_path: str = str(get_video_path(selected_video))
 
         # Registry lookup
-        module_map: dict[int, tuple[ModuleBase, dict[str, str]]] = {
+        module_map: dict[int, tuple[ModuleBase, dict[str, Any]]] = {
             m.id: (registry[m.name](), {p.key: p.value for p in m.parameters}) for m in modules
         }
 

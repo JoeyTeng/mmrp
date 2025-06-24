@@ -17,30 +17,29 @@ class Colorspace(ModuleBase):
                 type="str",
                 default="rgb",
                 valid_values=["ycrcb", "hsv", "lab", "rgb", "bgr"],
-                required=False
+                required=True
             ),
             ParameterDefinition(
                 name="output_colorspace",
                 type="str",
                 default="rgb",
                 valid_values=["ycrcb", "hsv", "lab", "rgb", "bgr"],
-                required=False
+                required=True
             )
         ]
     
     @typing.override
     # Process a single frame
     def process_frame(self, frame: np.ndarray, parameters: dict[str, typing.Any]) -> np.ndarray:
-        input: str = parameters.get("input_colorspace", "rgb")
-        output: str = parameters.get("output_colorspace", "rgb")
+        input: str = parameters["input_colorspace"]
+        output: str = parameters["output_colorspace"]
         # Differentiate between different input and output color modes
         return self.match_colorspace(frame, input, output)
     
     @typing.override
     # Process the entire video
     def process(self, input_data: str, parameters: dict[str, typing.Any]) -> None:
-        colorspace: str = parameters.get("colorspace", "rgb")
-        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"colorspace_{colorspace}.mp4")
+        output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"colorspace_conversion.mp4")
 
         # Video capture setup
         cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())

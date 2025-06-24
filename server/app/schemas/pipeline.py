@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 class PipelineParameter(BaseModel):
     key: str
-    value: str
+    value: int | float | str | bool
 
 
 class PipelineModule(BaseModel):

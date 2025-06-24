@@ -27,7 +27,7 @@ class Resize(ModuleBase):
             ParameterDefinition(
                 name="interpolation",
                 type="str",
-                required=False,
+                required=True,
                 valid_values=["nearest", "linear", "cubic", "area", "lanczos4"]
             )
         ]
@@ -35,18 +35,18 @@ class Resize(ModuleBase):
     @typing.override
     # Process a single frame
     def process_frame(self, frame: np.ndarray, parameters: dict[str, typing.Any]) -> np.ndarray:
-        width: int = int(parameters.get("width", 640))
-        height: int = int(parameters.get("height", 480))
+        width: int = parameters["width"]
+        height: int = parameters["height"]
         new_size: tuple[int, int] = (width, height)
-        interpolation: str = parameters.get("interpolation", "area")
+        interpolation: str = parameters["interpolation"]
         interpolation_type: int = self.match_interpolation_type(interpolation)
         return cv2.resize(frame, new_size, interpolation=interpolation_type)
     
     @typing.override
     # Process the entire video
     def process(self, input_data: str, parameters: dict[str, typing.Any]) -> None:
-        width: int = int(parameters.get("width", 640))
-        height: int = int(parameters.get("height", 480))
+        width: int = parameters["width"]
+        height: int = parameters["height"]
         new_size: tuple[int, int] = (width, height)
         output_path: str = str(Path(__file__).resolve().parent.parent.parent / "output" / f"resize_{width}_{height}.mp4")
 
