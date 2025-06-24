@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import Player, { PlayerHandle } from "./Player";
-import { config } from "../../utils/config";
 
 const SideBySide = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -13,7 +12,7 @@ const SideBySide = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const getVideo = (name: string) => {
-    return `${config.apiBaseUrl}/video/${encodeURIComponent(name)}`;
+    return `/${encodeURIComponent(name)}.mp4`;
   };
 
   return (
