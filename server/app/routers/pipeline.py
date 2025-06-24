@@ -8,7 +8,8 @@ router = APIRouter(
     responses={404: {"description": "Not Found"}},
 )
 
+
 # Endpoint to execute a video pipeline frame by frame
 @router.post("/", response_model=bool)
 def process_pipeline(request: PipelineRequest):
-    return handle_pipeline_request((request))
+    return handle_pipeline_request(request)
