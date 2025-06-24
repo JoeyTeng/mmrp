@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   OnEdgesChange,
   OnNodesChange,
@@ -26,12 +26,14 @@ import "@xyflow/react/dist/style.css";
 import {
   getInitialNodeParamValue,
   moduleRegistry,
+  ParamValueType,
 } from "@/components/modules/modulesRegistry";
 
 import FlowNode from "@/components/drag-and-drop/FlowNode";
 import { NodeData, NodeType } from "./types";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
-
+import { AppDrawer } from "@/components/sidebar/AppDrawer";
+import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 
 const nodeTypes = {
@@ -60,6 +62,14 @@ export default function FlowCanvas({
   onSelectNode,
 }: FlowCanvasProps) {
   const paneRef = useRef<HTMLDivElement>(null);
+  const [selectedNode, setSelectedNode] = useState<Node<
+    NodeData,
+    NodeType
+  > | null>(null);
+  const [appDrawerOpen, setAppDrawerOpen] = useState(false);
+  const [tempParams, setTempParams] = useState<Record<string, ParamValueType>>(
+    {},
+  );
 
   const handlePaneClick = () => {
     paneRef.current?.focus();
@@ -122,7 +132,6 @@ export default function FlowCanvas({
     [screenToFlowPosition, setNodes],
   );
 
-  // Update your function type to match ReactFlow's expected signature
   const isValidConnection: IsValidConnection<Edge> = useCallback(
     (connection: Connection | Edge) => {
       const conn = connection as Connection;
@@ -151,51 +160,132 @@ export default function FlowCanvas({
     //TODO: Send to backend
   };
 
-  return (
-    <Box
-      className="w-full h-full bg-white rounded-lg border border-gray-300"
-      ref={paneRef}
-      tabIndex={0} // make this div focusable
-      onClick={handlePaneClick}
-      onKeyDown={handlePaneKeyDown}
-    >
-      <ReactFlow
-        nodeTypes={nodeTypes}
-        nodes={nodes}
-        edges={edges}
-        isValidConnection={isValidConnection}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
-        onSelectionChange={({ nodes: selected }) =>
-          onSelectNode(selected.length ? selected[0].id : null)
+  const onNodeDoubleClickHandler = useCallback(
+    (event: React.MouseEvent, node: Node<NodeData, NodeType>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setSelectedNode(node);
+      setTempParams({ ...node.data.params });
+      setAppDrawerOpen(true);
+    },
+    [],
+  );
+
+  const handleParamChange = useCallback(
+    (params: Record<string, ParamValueType>) => {
+      setTempParams(params);
+    },
+    [],
+  );
+
+  const handleConfirmParams = useCallback(() => {
+    if (!selectedNode) return;
+
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === selectedNode.id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              params: tempParams,
+            },
+          };
         }
-        fitViewOptions={{
-          padding: 1,
-        }}
-        defaultEdgeOptions={{
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            width: 20,
-            height: 20,
-          },
-        }}
-        fitView
+        return node;
+      }),
+    );
+    setAppDrawerOpen(false);
+  }, [selectedNode, setNodes, tempParams]);
+
+  const handleCancelParams = useCallback(() => {
+    setAppDrawerOpen(false);
+    setSelectedNode(null);
+  }, []);
+
+  return (
+    <Box className="w-full h-full relative bg-white rounded-lg border border-gray-300">
+      <Box
+        className="w-full h-full"
+        ref={paneRef}
+        tabIndex={0}
+        onClick={handlePaneClick}
+        onKeyDown={handlePaneKeyDown}
       >
-        <Controls />
-        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-        <Panel position="bottom-right">
-          <Button
-            variant="contained"
-            className="bg-primary"
-            onClick={onConfirm}
+        <ReactFlow
+          nodeTypes={nodeTypes}
+          nodes={nodes}
+          edges={edges}
+          isValidConnection={isValidConnection}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          onSelectionChange={({ nodes: selected }) =>
+            onSelectNode(selected.length ? selected[0].id : null)
+          }
+          onNodeDoubleClick={onNodeDoubleClickHandler}
+          fitViewOptions={{
+            padding: 1,
+          }}
+          defaultEdgeOptions={{
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 20,
+              height: 20,
+            },
+          }}
+          fitView
+        >
+          <Controls />
+          <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+          <Panel position="bottom-right">
+            <Button
+              variant="contained"
+              className="bg-primary"
+              onClick={onConfirm}
+            >
+              Confirm
+            </Button>
+          </Panel>
+        </ReactFlow>
+      </Box>
+      <AppDrawer
+        open={appDrawerOpen}
+        onClose={handleCancelParams}
+        title={
+          selectedNode
+            ? `Edit ${selectedNode.data.label} Parameters`
+            : "Edit Parameters"
+        }
+        width={400}
+        anchor="right"
+      >
+        <Box display="flex" flexDirection="column" height="100%">
+          <Box flex={1} overflow="auto">
+            <ParameterConfiguration
+              node={selectedNode}
+              onChange={handleParamChange}
+            />
+          </Box>
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}
           >
-            Confirm
-          </Button>
-        </Panel>
-      </ReactFlow>
+            <Button variant="outlined" onClick={handleCancelParams}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-primary"
+              variant="contained"
+              onClick={handleConfirmParams}
+              disabled={!selectedNode}
+            >
+              Confirm
+            </Button>
+          </Box>
+        </Box>
+      </AppDrawer>
     </Box>
   );
 }

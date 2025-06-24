@@ -90,28 +90,4 @@ const DragAndDropArea = () => {
     </ReactFlowProvider>
   );
 };
-
-// const [selectedId, setSelectedId] = useState<string | null>(null);
-// const updateParam = useCallback(
-//   (key: string, value: ParamValueType) => {
-//     setNodes((nds) =>
-//       nds.map((n) =>
-//         n.id === selectedId
-//           ? {
-//               ...n,
-//               data: { ...n.data, params: { ...n.data.params, [key]: value } },
-//             }
-//           : n,
-//       ),
-//     );
-//   },
-//   [selectedId, setNodes],
-// );
-/* <div className="flex-1">
-  <ParameterConfiguration
-    node={nodes.find((n) => n.id === selectedId)}
-    onChange={updateParam}
-  />
-</div> */
-
 export default DragAndDropArea;
