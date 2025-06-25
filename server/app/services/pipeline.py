@@ -9,25 +9,23 @@ from app.schemas.pipeline import PipelineRequest
 from app.utils.shared_functionality import get_video_path, as_context
 from app.services.module import registry
 
+
 # Validate pipeline parameters
 # Helper
 def _is_type_match(value: Any, expected_type: str) -> bool:
-    type_map: dict[str, type] = {
-        "int": int,
-        "float": float,
-        "str": str,
-        "bool": bool
-    }
+    type_map: dict[str, type] = {"int": int, "float": float, "str": str, "bool": bool}
     if expected_type not in type_map:
         raise ValueError(f"Unknown expected type '{expected_type}'")
-    
+
     return isinstance(value, type_map[expected_type])
+
 
 def validate_parameters(
     parameters: dict[str, Any],
     parameter_defs: dict[str, ParameterDefinition[Any]],
-    module: ModuleBase
+    module: ModuleBase,
 ):
+    # Check for unexpected parameters
     for key, value in parameters.items():
         if key not in parameter_defs:
             raise ValueError(f"Unexpected parameter '{key}' for module '{module.name}'")
@@ -39,12 +37,19 @@ def validate_parameters(
                 f"but got value '{value}' ({type(value).__name__})"
             )
 
+    # Check for missing required parameters
+    for param_name, param_def in parameter_defs.items():
+        if param_def.required and param_name not in parameters:
+            raise ValueError(
+                f"Missing required parameter '{param_name}' for module '{module.name}'"
+            )
+
 
 # Process a single frame through the pipeline
 def process_pipeline_frame(
-        frame_cache: dict[int, np.ndarray], 
-        ordered_modules: list[PipelineModule],
-        module_map: dict[int, tuple[ModuleBase, dict[str, Any]]]
+    frame_cache: dict[int, np.ndarray],
+    ordered_modules: list[PipelineModule],
+    module_map: dict[int, tuple[ModuleBase, dict[str, Any]]],
 ):
     for mod in ordered_modules:
         mod_id = mod.id
@@ -55,11 +60,12 @@ def process_pipeline_frame(
 
         # Validate each parameter
         validate_parameters(params, param_defs, mod_instance)
-            
+
         input_frames = [frame_cache[src_id] for src_id in (mod.source or [0])]
         frame_output = mod_instance.process_frame(input_frames[0], params)
         frame_cache[mod_id] = frame_output
-        
+
+
 # Get modules in correct execution order in the pipeline
 def get_execution_order(modules: list[PipelineModule]):
     # Map module id -> module
@@ -103,8 +109,9 @@ def get_execution_order(modules: list[PipelineModule]):
         raise ValueError(
             f"Pipeline contains a cycle involving module IDs: {remaining_with_deps}"
         )
-    
+
     return execution_order
+
 
 # Handle the pipeline request and process the video
 def handle_pipeline_request(request: PipelineRequest) -> bool:
@@ -117,20 +124,29 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
 
         # Registry lookup
         module_map: dict[int, tuple[ModuleBase, dict[str, Any]]] = {
-            m.id: (registry[m.name](), {p.key: p.value for p in m.parameters}) for m in modules
+            m.id: (registry[m.name](), {p.key: p.value for p in m.parameters})
+            for m in modules
         }
 
         # Identify end modules (no children)
-        end_modules: set[int] = {m.id for m in modules} - {d for m in modules for d in (m.source or [])}
+        end_modules: set[int] = {m.id for m in modules} - {
+            d for m in modules for d in (m.source or [])
+        }
 
         # Output path
-        output_path = Path(__file__).resolve().parent.parent.parent / "output" / f"{selected_video}_output.mp4"
+        output_path = (
+            Path(__file__).resolve().parent.parent.parent
+            / "output"
+            / f"{selected_video}_output.mp4"
+        )
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Context wrappers
         cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
-        cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda writer: writer.release())
-        fourcc = getattr(cv2, "VideoWriter_fourcc")(*'mp4v')
+        cv2VideoWriterContext = as_context(
+            cv2.VideoWriter, lambda writer: writer.release()
+        )
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"mp4v")
 
         with cv2VideoCaptureContext(video_path) as cap:
             if not cap.isOpened():
@@ -153,7 +169,9 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
             out_path = str(output_path)
 
             # Initialise output writer with dimensions from processed first frame
-            with cv2VideoWriterContext(out_path, fourcc, fps, (out_width, out_height)) as out:
+            with cv2VideoWriterContext(
+                out_path, fourcc, fps, (out_width, out_height)
+            ) as out:
                 # Write the first frame(s)
                 for out_frame in final_outputs:
                     out.write(out_frame)

@@ -17,14 +17,14 @@ class Colorspace(ModuleBase):
                 name="input_colorspace",
                 type="str",
                 default="rgb",
-                valid_values=["ycrcb", "hsv", "lab", "rgb", "bgr"],
+                valid_values=["YCrCb", "HSV", "Lab", "RGB", "BGR"],
                 required=True,
             ),
             ParameterDefinition(
                 name="output_colorspace",
                 type="str",
                 default="rgb",
-                valid_values=["ycrcb", "hsv", "lab", "rgb", "bgr"],
+                valid_values=["YCrCb", "HSV", "Lab", "RGB", "BGR"],
                 required=True,
             ),
         ]
@@ -78,59 +78,10 @@ class Colorspace(ModuleBase):
     ) -> np.ndarray:
         if input_color == output_color:
             return frame
-
-        error: ValueError = ValueError(
-            f"Unsupported output colorspace: {output_color} for input: {input_color}"
+        constant_name = f"COLOR_{input_color}2{output_color}"
+        if hasattr(cv2, constant_name):
+            color = getattr(cv2, constant_name)
+            return cv2.cvtColor(frame, color)
+        raise ValueError(
+            f"Unsupported input-output colorspaces: {input_color} {output_color}"
         )
-
-        match input_color:
-            case "ycrcb":
-                match output_color:
-                    case "rgb":
-                        return cv2.cvtColor(frame, cv2.COLOR_YCrCb2RGB)
-                    case "bgr":
-                        return cv2.cvtColor(frame, cv2.COLOR_YCrCb2BGR)
-                    case _:
-                        raise error
-            case "hsv":
-                match output_color:
-                    case "rgb":
-                        return cv2.cvtColor(frame, cv2.COLOR_HSV2RGB)
-                    case "bgr":
-                        return cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
-                    case _:
-                        raise error
-            case "lab":
-                match output_color:
-                    case "rgb":
-                        return cv2.cvtColor(frame, cv2.COLOR_Lab2RGB)
-                    case "bgr":
-                        return cv2.cvtColor(frame, cv2.COLOR_Lab2BGR)
-                    case _:
-                        raise error
-            case "rgb":
-                match output_color:
-                    case "bgr":
-                        return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                    case "ycrcb":
-                        return cv2.cvtColor(frame, cv2.COLOR_RGB2YCrCb)
-                    case "hsv":
-                        return cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
-                    case "lab":
-                        return cv2.cvtColor(frame, cv2.COLOR_RGB2Lab)
-                    case _:
-                        raise error
-            case "bgr":
-                match output_color:
-                    case "rgb":
-                        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    case "ycrcb":
-                        return cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
-                    case "hsv":
-                        return cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-                    case "lab":
-                        return cv2.cvtColor(frame, cv2.COLOR_BGR2Lab)
-                    case _:
-                        raise error
-            case _:
-                raise ValueError(f"Unsupported input colorspace: {input_color}")

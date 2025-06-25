@@ -5,11 +5,12 @@ import uvicorn
 from app.routers import pipeline, video, module
 from app.services.module import load_modules
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load a registry of all modules at start up
     load_modules()
-    yield 
+    yield
 
 
 app = FastAPI(lifespan=lifespan)

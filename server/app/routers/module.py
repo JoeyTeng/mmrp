@@ -1,3 +1,4 @@
+import dataclasses
 from fastapi import APIRouter
 from typing import Any
 from app.modules.base_module import ModuleBase, ParameterDefinition
@@ -10,6 +11,7 @@ router = APIRouter(
     responses={404: {"description": "Not Found"}},
 )
 
+
 # Returns all modules and their parameters
 @router.get("/", response_model=list[Module])
 def get_all_modules() -> list[Module]:
@@ -19,24 +21,8 @@ def get_all_modules() -> list[Module]:
         instance: ModuleBase = module()
         parameters: list[ParameterDefinition[Any]] = instance.get_parameters()
 
-        param_models = [
-            ModuleParameter(
-                name=p.name,
-                type=p.type,
-                description=p.description,
-                default=p.default,
-                valid_values=p.valid_values,
-                required=p.required
-            )
-            for p in parameters
-        ]
+        param_models = [ModuleParameter(**dataclasses.asdict(p)) for p in parameters]
 
-        module_list.append(
-            Module(
-                id=i,
-                name=name,
-                parameters=param_models
-            )
-        )
+        module_list.append(Module(id=i, name=name, parameters=param_models))
 
     return module_list

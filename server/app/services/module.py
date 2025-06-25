@@ -6,6 +6,7 @@ import app.modules as module_pkg
 
 registry: dict[str, Type[ModuleBase]] = {}
 
+
 # Automatically find all subclasses of type ModuleBase
 def load_modules():
     for _, module_name, _ in pkgutil.iter_modules(module_pkg.__path__):

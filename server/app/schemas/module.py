@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Literal, Optional, Any
 
+
 class ModuleParameter(BaseModel):
     name: str
     type: Literal["int", "float", "str", "bool"]
@@ -8,6 +9,7 @@ class ModuleParameter(BaseModel):
     default: Optional[Any] = None
     valid_values: Optional[tuple[Any, Any] | list[Any]] = None
     required: bool = True
+
 
 class Module(BaseModel):
     id: int
