@@ -6,7 +6,7 @@ const defaultHeaders = {
 };
 
 function getHeaders(headers?: Record<string, string>) {
-  return { ...defaultHeaders, ...headers };
+  return { ...defaultHeaders, ...(headers ?? {}) };
 }
 
 export class RequestHandler {
