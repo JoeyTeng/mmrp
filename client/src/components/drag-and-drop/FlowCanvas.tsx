@@ -33,6 +33,7 @@ import { NodeData, NodeType } from "./types";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 
 import { Box, Button } from "@mui/material";
+import { sendPipelineToBackend } from "@/services/pipelineService";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
@@ -144,11 +145,15 @@ export default function FlowCanvas({
     [getNodes, getEdges],
   );
 
-  const onConfirm = () => {
+  const onConfirm = async () => {
     const pipeline = dumpPipelineToJson(nodes, edges);
     console.log(JSON.stringify(pipeline, null, 2));
-
-    //TODO: Send to backend
+    try {
+      const res = await sendPipelineToBackend(pipeline);
+      console.log("Executing in order", res);
+    } catch (err) {
+      console.log("Error sending pipleine to backend", err);
+    }
   };
 
   return (
