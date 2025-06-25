@@ -3,9 +3,6 @@ import { config } from "@/utils/config";
 
 export const apiClient = axios.create({
   baseURL: config.apiBaseUrl,
-  headers: {
-    "Content-Type": "application/json",
-  },
   timeout: 10000, // 10 seconds timeout
 });
 
