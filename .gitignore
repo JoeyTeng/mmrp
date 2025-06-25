@@ -176,5 +176,5 @@ cython_debug/
 # macOS Finder stuff:
 .DS_Store
 
-# eslintcache stuff:
+# .eslintcache
 .eslintcache
