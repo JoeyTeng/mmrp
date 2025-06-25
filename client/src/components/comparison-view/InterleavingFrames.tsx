@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Player, { PlayerHandle } from "./Player";
+import UnifiedPlayer from "./UnifiedPlayer";
+import { PlayerHandle } from "./VideoPlayer";
+import { VideoType } from "./types";
 
-const InterleavingFrames = () => {
+type Props = {
+  type: VideoType;
+};
+
+const InterleavingFrames = ({ type }: Props) => {
   const playerRef = useRef<PlayerHandle>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,23 +33,33 @@ const InterleavingFrames = () => {
       <div
         className={`flex justify-center items-center w-full ${isFullscreen ? "h-[calc(100vh-50px)]" : "h-full"}`}
       >
-        <video
-          ref={videoRef}
-          src="/example-video.mp4"
-          className={`object-contain bg-black ${
-            isFullscreen ? "w-full h-full" : "w-1/2 h-full"
-          }`}
-          onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
-          controls={false}
-        />
+        {type === VideoType.Video && videoRef && (
+          <div className="w-full flex justify-center">
+            <video
+              ref={videoRef}
+              src="/example-video.mp4"
+              className={`object-contain bg-black ${
+                isFullscreen ? "w-full h-full" : "w-1/2 h-full"
+              }`}
+              onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
+              controls={false}
+            />
+          </div>
+        )}
+        {type === VideoType.Stream && (
+          <div className="w-full flex justify-center items-center">
+            {/* UnifiedPlayer will render canvas stream */}
+          </div>
+        )}
       </div>
-
-      <Player
-        ref={playerRef}
+      <UnifiedPlayer
+        type={type}
         videoRefs={[videoRef]}
         showSource
         getSourceLabel={(frame) => (frame % 2 === 0 ? "Video A" : "Video B")}
         containerRef={containerRef}
+        ref={playerRef}
+        isFullscreen={isFullscreen}
       />
     </div>
   );

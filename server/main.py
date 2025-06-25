@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.routers import frame
 import uvicorn
 from app.routers import pipeline, video
 
@@ -15,6 +16,7 @@ app.add_middleware(
 
 app.include_router(pipeline.router)
 app.include_router(video.router)
+app.include_router(frame.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

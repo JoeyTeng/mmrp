@@ -1,12 +1,17 @@
 "use client";
 
-import { useState, useRef } from "react";
-import Player, { PlayerHandle } from "./Player";
-import { config } from "../../utils/config";
+import { useRef, useState } from "react";
+import UnifiedPlayer from "./UnifiedPlayer";
+import { config } from "@/utils/config";
+import { PlayerHandle } from "./VideoPlayer";
+import { VideoType } from "./types";
 
-const SideBySide = () => {
+type Props = {
+  type: VideoType;
+};
+
+const SideBySide = ({ type }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
-
   const videoARef = useRef<HTMLVideoElement>(null);
   const videoBRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<PlayerHandle>(null);
@@ -27,25 +32,30 @@ const SideBySide = () => {
             <div className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-        <video
-          ref={videoARef}
-          src={getVideo("example-video")}
-          className="w-1/2 h-full object-contain"
-          onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
-          onLoadStart={() => setIsLoading(true)}
-          onCanPlay={() => setIsLoading(false)}
-        />
-        <video
-          ref={videoBRef}
-          src={getVideo("example-video-filter")}
-          className="w-1/2 h-full object-contain"
-          muted
-        />
+        {type === VideoType.Video && (
+          <div className="flex justify-center w-full">
+            <video
+              ref={videoARef}
+              src={getVideo("example-video")}
+              className="w-1/2 h-full object-contain"
+              onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
+              onLoadStart={() => setIsLoading(true)}
+              onCanPlay={() => setIsLoading(false)}
+            />
+            <video
+              ref={videoBRef}
+              src={getVideo("example-video-filter")}
+              className="w-1/2 h-full object-contain"
+              muted
+            />
+          </div>
+        )}
       </div>
-      <Player
-        ref={playerRef}
+      <UnifiedPlayer
+        type={type}
         videoRefs={[videoARef, videoBRef]}
         containerRef={containerRef}
+        ref={playerRef}
       />
     </div>
   );

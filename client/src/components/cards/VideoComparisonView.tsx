@@ -5,7 +5,7 @@ import SideBySide from "@/components/comparison-view/SideBySide";
 import InterleavingFrames from "@/components/comparison-view/InterleavingFrames";
 import MenuDropdown from "@/components/comparison-view/MenuDropdown";
 import { Box, Typography } from "@mui/material";
-import { ViewOptions } from "@/components/comparison-view/types";
+import { VideoType, ViewOptions } from "@/components/comparison-view/types";
 
 const VideoComparisonView = () => {
   const [view, setView] = useState(ViewOptions.SideBySide);
@@ -17,8 +17,12 @@ const VideoComparisonView = () => {
         <Typography variant="subtitle1">{view} View</Typography>
       </Box>
       <Box>
-        {view === ViewOptions.SideBySide && <SideBySide />}
-        {view === ViewOptions.Interleaving && <InterleavingFrames />}
+        {view === ViewOptions.SideBySide && (
+          <SideBySide type={VideoType.Video} />
+        )}
+        {view === ViewOptions.Interleaving && (
+          <InterleavingFrames type={VideoType.Stream} />
+        )}
       </Box>
     </Box>
   );
