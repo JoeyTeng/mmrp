@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import type { Node } from "@xyflow/react";
 import {
   ParamValueType,
@@ -11,7 +10,7 @@ import { Box } from "@mui/material";
 
 type ParameterConfigurationProps = {
   node?: Node<{ label: string; params: Record<string, ParamValueType> }> | null;
-  onChange: (params: Record<string, ParamValueType>) => void;
+  onParamChange: (key: string, value: ParamValueType) => void;
 };
 
 function renderSelectInput(
@@ -88,24 +87,8 @@ function renderTextInput(
 
 export default function ParameterConfiguration({
   node,
-  onChange,
+  onParamChange,
 }: ParameterConfigurationProps) {
-  const [tempParams, setTempParams] = useState<Record<string, ParamValueType>>(
-    {},
-  );
-
-  useEffect(() => {
-    if (node) {
-      setTempParams({ ...node.data.params });
-    }
-  }, [node]);
-
-  const handleParamChange = (key: string, value: ParamValueType) => {
-    const newParams = { ...tempParams, [key]: value };
-    setTempParams(newParams);
-    onChange(newParams);
-  };
-
   if (!node) {
     return (
       <Box className="flex justify-evenly gap-2.5">
@@ -115,12 +98,12 @@ export default function ParameterConfiguration({
     );
   }
 
-  const { label } = node.data;
+  const { label, params } = node.data;
 
   return (
     <Box className="flex-1 overflow-y-auto h-full">
       <div className="p-2">
-        {Object.entries(tempParams).map(([key, value]) => {
+        {Object.entries(params).map(([key, value]) => {
           const moduleRegistryVal = moduleRegistry[label].params[key];
           // 1) string[]
           if (Array.isArray(moduleRegistryVal)) {
@@ -128,17 +111,17 @@ export default function ParameterConfiguration({
               moduleRegistryVal,
               key,
               value,
-              handleParamChange,
+              onParamChange,
             );
           }
 
           // 2) number
           if (typeof value === "number") {
-            return renderNumberInput(key, value, handleParamChange);
+            return renderNumberInput(key, value, onParamChange);
           }
 
           // 3) string
-          return renderTextInput(key, value, handleParamChange);
+          return renderTextInput(key, value, onParamChange);
         })}
       </div>
     </Box>
