@@ -1,29 +1,15 @@
 import { apiClient } from "@/services/apiClient";
 
-// Add more default headers here if needed
-const defaultHeaders = {
-  "Content-Type": "application/json",
-};
-
-function getHeaders(headers?: Record<string, string>) {
-  return { ...defaultHeaders, ...(headers ?? {}) };
-}
-
 export class RequestHandler {
   //get
   static async get<T>(
     path: string,
     headers?: Record<string, string>,
   ): Promise<T> {
-    try {
-      const response = await apiClient.get<T>(path, {
-        headers: getHeaders(headers),
-      });
-      return response.data;
-    } catch (error) {
-      console.error("GET request error:", error);
-      throw error;
-    }
+    const response = await apiClient.get<T>(path, {
+      headers: headers,
+    });
+    return response.data;
   }
 
   //post
@@ -32,15 +18,10 @@ export class RequestHandler {
     data: unknown,
     headers?: Record<string, string>,
   ): Promise<T> {
-    try {
-      const response = await apiClient.post<T>(path, data, {
-        headers: getHeaders(headers),
-      });
-      return response.data;
-    } catch (error) {
-      console.error("POST request error:", error);
-      throw error;
-    }
+    const response = await apiClient.post<T>(path, data, {
+      headers: headers,
+    });
+    return response.data;
   }
 
   //put
@@ -49,15 +30,10 @@ export class RequestHandler {
     data: unknown,
     headers?: Record<string, string>,
   ): Promise<T> {
-    try {
-      const response = await apiClient.put<T>(path, data, {
-        headers: getHeaders(headers),
-      });
-      return response.data;
-    } catch (error) {
-      console.error("PUT request error:", error);
-      throw error;
-    }
+    const response = await apiClient.put<T>(path, data, {
+      headers: headers,
+    });
+    return response.data;
   }
 
   // patch
@@ -67,15 +43,10 @@ export class RequestHandler {
     data: unknown,
     headers?: Record<string, string>,
   ): Promise<T> {
-    try {
-      const response = await apiClient.patch<T>(path, data, {
-        headers: getHeaders(headers),
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`PATCH request error: ${path}`, error);
-      throw error;
-    }
+    const response = await apiClient.patch<T>(path, data, {
+      headers: headers,
+    });
+    return response.data;
   }
 
   // delete
@@ -84,14 +55,9 @@ export class RequestHandler {
     path: string,
     headers?: Record<string, string>,
   ): Promise<T> {
-    try {
-      const response = await apiClient.delete<T>(path, {
-        headers: getHeaders(headers),
-      });
-      return response.data;
-    } catch (error) {
-      console.error("DELETE request error:", error);
-      throw error;
-    }
+    const response = await apiClient.delete<T>(path, {
+      headers: headers,
+    });
+    return response.data;
   }
 }

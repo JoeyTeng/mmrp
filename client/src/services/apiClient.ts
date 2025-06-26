@@ -1,8 +1,14 @@
 import axios from "axios";
 import { config } from "@/utils/config";
 
+// Add more default headers here if needed
+const DEFAULT_HEADERS = {
+  "Content-Type": "application/json",
+};
+
 export const apiClient = axios.create({
   baseURL: config.apiBaseUrl,
+  headers: DEFAULT_HEADERS,
   timeout: 10000, // 10 seconds timeout
 });
 

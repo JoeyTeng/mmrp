@@ -152,7 +152,7 @@ export default function FlowCanvas({
       const res = await sendPipelineToBackend(pipeline);
       console.log("Executing in order", res);
     } catch (err) {
-      console.log("Error sending pipleine to backend", err);
+      console.error("Error sending pipleine to backend", err);
     }
   };
 
