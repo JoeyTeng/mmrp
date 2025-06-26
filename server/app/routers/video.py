@@ -15,9 +15,7 @@ router = APIRouter(
 def get_video(video_name: str):
     if video_name.endswith("_output"):
         video_path = (
-            Path(__file__).resolve().parent.parent.parent
-            / "output"
-            / f"{video_name}.webm"
+            Path(__file__).resolve().parent.parent.parent / "output" / video_name
         )
     else:
         video_path = get_video_path(video_name)

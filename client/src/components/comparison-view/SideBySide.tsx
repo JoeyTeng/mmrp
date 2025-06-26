@@ -29,7 +29,7 @@ const SideBySide = () => {
         )}
         <video
           ref={videoARef}
-          src={getVideo("example-video")}
+          src={getVideo("example-video.mp4")}
           className="w-1/2 h-full object-contain"
           onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
           onLoadStart={() => setIsLoading(true)}
@@ -37,7 +37,7 @@ const SideBySide = () => {
         />
         <video
           ref={videoBRef}
-          src={getVideo("example-video")}
+          src={getVideo("example-video-filter.mp4")}
           className="w-1/2 h-full object-contain"
           muted
         />
