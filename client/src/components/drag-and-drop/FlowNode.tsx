@@ -3,6 +3,7 @@ import { Handle, Node, NodeProps, Position, useReactFlow } from "@xyflow/react";
 import { DeleteOutlined as Trash } from "@mui/icons-material";
 
 import { NodeData, NodeType } from "./types";
+import { getPortsForNode, PortType } from "../modules/modulesRegistry";
 
 type CustomNode = Node<NodeData>;
 

@@ -7,7 +7,7 @@ import {
   type FormatType,
   getPortsForNode,
 } from "@/components/modules/modulesRegistry";
-import { NodeData, NodeType } from "@/components/drag-and-drop/FlowNode";
+import { NodeData, NodeType } from "@/components/drag-and-drop/types";
 import { type Node } from "@xyflow/react";
 
 function isFormatsCompatible(

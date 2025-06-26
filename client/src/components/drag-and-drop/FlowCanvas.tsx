@@ -35,6 +35,8 @@ import { AppDrawer } from "@/components/sidebar/AppDrawer";
 import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
+import isNodeConnectionValid from "../modules/modulesFormatValidator";
+import { toast } from "react-toastify";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
@@ -76,7 +78,15 @@ export default function FlowCanvas({
     (evt: React.KeyboardEvent) => {
       if (evt.key === "Delete" || evt.key === "Backspace") {
         setNodes((nds) => nds.filter((n) => !n.selected));
-        setEdges((eds) => eds.filter((e) => !e.selected));
+        setEdges((eds) =>
+          eds.filter((e) => {
+            if (e.selected && invalidEdges.current.has(e.id)) {
+              invalidEdges.current.delete(e.id);
+            }
+
+            return !e.selected;
+          }),
+        );
         evt.preventDefault();
       }
     },
@@ -259,11 +269,29 @@ export default function FlowCanvas({
   const onConfirm = async () => {
     const pipeline = dumpPipelineToJson(nodes, edges);
     console.log(JSON.stringify(pipeline, null, 2));
-    try {
-      const res = await sendPipelineToBackend(pipeline);
-      console.log("Executing in order", res);
-    } catch (err) {
-      console.error("Error sending pipleine to backend", err);
+    if (invalidEdges.current.size == 0) {
+      try {
+        const res = await sendPipelineToBackend(pipeline);
+        console.log("Executing in order", res);
+        toast.dismiss(); // Dismiss any previous toasts
+
+        toast.success("Pipeline sent to backend successfully!", {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      } catch (err) {
+        console.error("Error sending pipleine to backend", err);
+        toast.error(`Error sending pipeline to backend: ${err}`, {
+          position: "top-right",
+          autoClose: false,
+        });
+        return;
+      }
+    } else {
+      toast.error("Please resolve all invalid connections before confirming.", {
+        position: "top-right",
+        autoClose: false,
+      });
     }
   };
 
