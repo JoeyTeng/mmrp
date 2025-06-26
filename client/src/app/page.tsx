@@ -1,30 +1,24 @@
-import LeftColumn from "@/components/layout/LeftColumn";
-import CenterColumn from "@/components/layout/CenterColumn";
-import RightColumn from "@/components/layout/RightColumn";
+import VideoPlayer from "@/components/layout/VideoPlayer";
 import DragAndDropArea from "@/components/cards/DragAndDropArea";
-import TopNavBar from "@/components/layout/TopNavBar";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import AppLayout from "@/components/layout/AppLayout";
+import { Box } from "@mui/material";
 
 export default function Home() {
   return (
-    <main className="h-screen w-screen flex flex-col overflow-hidden">
-      <TopNavBar />
-
-      {/* rest of screen */}
-      <div className="flex flex-1">
-        <div className="flex flex-col flex-3 gap-0.5">
-          <div className="flex flex-1 gap-0.5">
-            <LeftColumn />
-            <CenterColumn />
-            <RightColumn />
-          </div>
-          <div className="flex flex-1">
-            <DragAndDropArea />
-          </div>
-        </div>
-      </div>
-      <ToastContainer theme="dark" />
-    </main>
+    <AppLayout>
+      <Box className="flex flex-col h-full gap-2">
+        {/* Video Player - Fixed height with min-height */}
+        <Box className="h-1/3 min-h-[350px]">
+          <VideoPlayer />
+        </Box>
+        {/* Flow Canvas - Takes remaining space with min-height */}
+        <Box className="h-2/3 flex-1">
+          <DragAndDropArea />
+        </Box>
+      </Box>
+       <ToastContainer theme="dark" />
+    </AppLayout>
   );
 }

@@ -6,15 +6,16 @@ import React, {
   forwardRef,
   useEffect,
 } from "react";
+
 import {
-  PauseIcon,
-  PlayIcon,
-  StepBack,
-  StepForward,
-  Volume2,
-  VolumeX,
-  Maximize,
-} from "lucide-react";
+  PlayArrowOutlined as PlayIcon,
+  PauseCircleOutline as PauseIcon,
+  Fullscreen as Maximize,
+  VolumeUpOutlined as Volume2,
+  VolumeOffOutlined as VolumeX,
+  ArrowLeftOutlined as StepBack,
+  ArrowRightOutlined as StepForward,
+} from "@mui/icons-material";
 
 type Props = {
   videoRefs: React.RefObject<HTMLVideoElement | null>[];
@@ -143,26 +144,26 @@ const Player = forwardRef<PlayerHandle, Props>(
               onClick={() => stepFrame(-1)}
               className="text-gray-800 hover:text-black cursor-pointer px-2"
             >
-              <StepBack size={24} />
+              <StepBack />
             </button>
             <button
               onClick={handlePlayPause}
               className="text-gray-800 hover:text-black cursor-pointer px-2"
             >
-              {isPlaying ? <PauseIcon size={24} /> : <PlayIcon size={24} />}
+              {isPlaying ? <PauseIcon /> : <PlayIcon />}
             </button>
             <button
               onClick={() => stepFrame(1)}
               className="text-gray-800 hover:text-black cursor-pointer px-2"
             >
-              <StepForward size={24} />
+              <StepForward />
             </button>
             <button
               onClick={toggleMute}
               className="text-gray-800 hover:text-black cursor-pointer px-2"
               title={isMuted ? "Unmute" : "Mute"}
             >
-              {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+              {isMuted ? <VolumeX /> : <Volume2 />}
             </button>
           </div>
           <input
@@ -186,7 +187,7 @@ const Player = forwardRef<PlayerHandle, Props>(
             onClick={handleFullscreen}
             className="ml-4 text-gray-800 hover:text-black cursor-pointer"
           >
-            <Maximize size={22} />
+            <Maximize />
           </button>
         </div>
       </div>

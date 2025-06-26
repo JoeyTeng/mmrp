@@ -1,33 +1,40 @@
 "use client";
 
-import React, { useCallback, useRef, useEffect } from "react";
-import { OnEdgesChange, OnNodesChange, useReactFlow } from "@xyflow/react";
+import React, { useCallback, useRef, useState, useEffect } from "react";
 import {
   ReactFlow,
   Background,
   Controls,
   addEdge,
   Connection,
+  IsValidConnection,
   BackgroundVariant,
   Position,
   MarkerType,
   getOutgoers,
-  type Node,
-  type Edge,
+  OnEdgesChange,
+  OnNodesChange,
+  Panel,
+  useReactFlow,
 } from "@xyflow/react";
+
+import type { Node, Edge } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
 import {
   getInitialNodeParamValue,
   getPortsForNode,
   moduleRegistry,
+  ParamValueType,
 } from "@/components/modules/modulesRegistry";
-import FlowNode, {
-  NodeData,
-  NodeType,
-} from "@/components/drag-and-drop/FlowNode";
-import isNodeConnectionValid from "@/components/modules/modulesFormatValidator";
-import { toast } from "react-toastify";
+
+import FlowNode from "@/components/drag-and-drop/FlowNode";
+import { NodeData, NodeType } from "./types";
+import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
+import { AppDrawer } from "@/components/sidebar/AppDrawer";
+import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
+import { Box, Button } from "@mui/material";
+import { sendPipelineToBackend } from "@/services/pipelineService";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
@@ -43,7 +50,6 @@ type FlowCanvasProps = {
   setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onSelectNode: (id: string | null) => void;
-  onConfirm: () => void;
 };
 
 export default function FlowCanvas({
@@ -54,9 +60,13 @@ export default function FlowCanvas({
   setNodes,
   setEdges,
   onSelectNode,
-  onConfirm,
 }: FlowCanvasProps) {
   const paneRef = useRef<HTMLDivElement>(null);
+
+  const [appDrawerOpen, setAppDrawerOpen] = useState(false);
+  const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
+    null,
+  );
 
   const handlePaneClick = () => {
     paneRef.current?.focus();
@@ -225,69 +235,160 @@ export default function FlowCanvas({
     [screenToFlowPosition, setNodes],
   );
 
-  const isValidConnection = useCallback(
+  const isValidConnection: IsValidConnection<Edge> = useCallback(
     (connection: Connection | Edge) => {
-      const nodes: Node[] = getNodes();
+      const conn = connection as Connection;
+      const nodes = getNodes();
       const edges = getEdges();
       const target = nodes.find((node) => node.id == connection.target);
       if (!target || target.id == connection.source) return false;
-      const hasCycle = (node: Node, visited = new Set()) => {
+      const hasCycle = (node: Node, visited = new Set<string>()) => {
         if (visited.has(node.id)) return false;
-        visited.add(node);
-
-        for (const i of getOutgoers(node, nodes, edges)) {
-          if (i.id == connection.source || hasCycle(i, visited)) {
+        visited.add(node.id);
+        for (const outgoer of getOutgoers(node, nodes, edges)) {
+          if (outgoer.id === conn.source || hasCycle(outgoer, visited))
             return true;
-          }
         }
+        return false;
       };
       return !hasCycle(target);
     },
     [getNodes, getEdges],
   );
 
+  const onConfirm = async () => {
+    const pipeline = dumpPipelineToJson(nodes, edges);
+    console.log(JSON.stringify(pipeline, null, 2));
+    try {
+      const res = await sendPipelineToBackend(pipeline);
+      console.log("Executing in order", res);
+    } catch (err) {
+      console.error("Error sending pipleine to backend", err);
+    }
+  };
+
+  const onNodeDoubleClickHandler = useCallback(
+    (event: React.MouseEvent, node: Node<NodeData, NodeType>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setTempNode({ ...node });
+      setAppDrawerOpen(true);
+    },
+    [],
+  );
+
+  const handleParamChange = useCallback(
+    (key: string, value: ParamValueType) => {
+      setTempNode((prev) =>
+        prev
+          ? {
+              ...prev,
+              data: {
+                ...prev.data,
+                params: { ...prev.data.params, [key]: value },
+              },
+            }
+          : null,
+      );
+    },
+    [],
+  );
+
+  const handleConfirmParams = useCallback(() => {
+    if (!tempNode) return;
+
+    setNodes((nds) => nds.map((n) => (n.id === tempNode.id ? tempNode : n)));
+    setAppDrawerOpen(false);
+  }, [tempNode, setNodes]);
+
+  const handleCancelParams = useCallback(() => {
+    setAppDrawerOpen(false);
+    setTempNode(null);
+  }, []);
+
   return (
-    <div
-      className="w-full h-full overflow-hidden bg-gray-100 relative"
-      ref={paneRef}
-      tabIndex={0} // make this div focusable
-      onClick={handlePaneClick}
-      onKeyDown={handlePaneKeyDown}
-    >
-      <ReactFlow
-        nodeTypes={nodeTypes}
-        nodes={nodes}
-        edges={edges}
-        isValidConnection={isValidConnection}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
-        onSelectionChange={({ nodes: selected }) =>
-          onSelectNode(selected.length ? selected[0].id : null)
-        }
-        defaultEdgeOptions={{
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            width: 20,
-            height: 20,
-          },
-        }}
-        fitView
+    <Box className="w-full h-full relative bg-white rounded-lg border border-gray-300">
+      <Box
         className="w-full h-full"
+        ref={paneRef}
+        tabIndex={0}
+        onClick={handlePaneClick}
+        onKeyDown={handlePaneKeyDown}
       >
-        <Controls />
-        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-      </ReactFlow>
-      <div className="absolute bottom-4 right-4 z-10">
-        <button
-          onClick={onConfirm}
-          className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-700 transition cursor-pointer"
+        <ReactFlow
+          nodeTypes={nodeTypes}
+          nodes={nodes}
+          edges={edges}
+          isValidConnection={isValidConnection}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          onSelectionChange={({ nodes: selected }) =>
+            onSelectNode(selected.length ? selected[0].id : null)
+          }
+          onNodeDoubleClick={onNodeDoubleClickHandler}
+          fitViewOptions={{
+            padding: 1,
+          }}
+          defaultEdgeOptions={{
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 20,
+              height: 20,
+            },
+          }}
+          fitView
         >
-          Confirm
-        </button>
-      </div>
-    </div>
+          <Controls />
+          <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+          <Panel position="bottom-right">
+            <Button
+              variant="contained"
+              className="bg-primary"
+              onClick={onConfirm}
+            >
+              Confirm
+            </Button>
+          </Panel>
+        </ReactFlow>
+      </Box>
+      <AppDrawer
+        open={appDrawerOpen}
+        onClose={handleCancelParams}
+        title={
+          tempNode
+            ? `Edit ${tempNode.data.label} Parameters`
+            : "Edit Parameters"
+        }
+        width={400}
+        anchor="right"
+      >
+        <Box display="flex" flexDirection="column" height="100%">
+          <Box flex={1} overflow="auto">
+            <ParameterConfiguration
+              node={tempNode}
+              onParamChange={handleParamChange}
+            />
+          </Box>
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}
+          >
+            <Button variant="outlined" onClick={handleCancelParams}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-primary"
+              variant="contained"
+              onClick={handleConfirmParams}
+              disabled={!tempNode}
+            >
+              Confirm
+            </Button>
+          </Box>
+        </Box>
+      </AppDrawer>
+    </Box>
   );
 }

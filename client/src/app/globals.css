@@ -1,4 +1,17 @@
+@layer theme, base, mui, components, utilities;
 @import "tailwindcss";
+
+:root {
+  /* Colours */
+  --primary: #07182d;
+  --primary-light: #02c8ff;
+  --primary-dark: #0a60ff;
+  /* Status colors */
+  --error: #d32f2f;
+  --warning: #ed6c02;
+  --info: #0288d1;
+  --success: #2e7d32;
+}
 
 /* To prevent seeing a caret when clicking anywhere in the page */
 * {
@@ -16,4 +29,53 @@ body {
   background-color: #f0f8ff;
   color: #111;
   height: 100%;
+}
+
+/* Utilities */
+@layer utilities {
+  /* Text */
+  .text-primary {
+    color: var(--primary);
+  }
+  .text-primary-light {
+    color: var(--primary-light);
+  }
+  .text-primary-dark {
+    color: var(--primary-dark);
+  }
+  /* Background */
+  .bg-primary {
+    background-color: var(--primary);
+    color: white;
+  }
+  .bg-primary-light {
+    background-color: var(--primary-light);
+    color: var(--primary);
+  }
+  .bg-primary-dark {
+    background-color: var(--primary-dark);
+    color: var(--primary-light);
+  }
+  .hover\:bg-primary:hover {
+    background-color: var(--primary);
+    color: white;
+  }
+  .hover\:bg-primary-light:hover {
+    background-color: var(--primary-light);
+    color: var(--primary);
+  }
+  .hover\:.bg-primary-dark:hover {
+    background-color: var(--primary-dark);
+    color: var(--primary-light);
+  }
+  /* Background */
+  .border-primary {
+    border-color: var(--primary);
+  }
+  .border-primary-light {
+    border-color: var(--primary-light);
+  }
+  .border-primary-dark {
+    border-color: var(--primary-dark);
+  }
 }

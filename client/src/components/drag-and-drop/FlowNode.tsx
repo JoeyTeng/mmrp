@@ -1,24 +1,8 @@
 "use client";
 import { Handle, Node, NodeProps, Position, useReactFlow } from "@xyflow/react";
-import {
-  type ParamValueType,
-  type PortType,
-  getPortsForNode,
-} from "@/components/modules/modulesRegistry";
-import { Trash } from "lucide-react";
+import { DeleteOutlined as Trash } from "@mui/icons-material";
 
-export enum NodeType {
-  InputNode = "inputNode",
-  ProcessNode = "processNode",
-  OutputNode = "outputNode",
-}
-
-export type NodeData = {
-  label: string;
-  params: Record<string, ParamValueType>; // constraint to ensure there's only one value
-  inputPorts: PortType[];
-  outputPorts: PortType[];
-};
+import { NodeData, NodeType } from "./types";
 
 type CustomNode = Node<NodeData>;
 
@@ -56,7 +40,6 @@ export default function FlowNode({
       <div className="px-3 py-1 font-semibold text-gray-800 flex justify-between align-center">
         {label}
         <Trash
-          size={14}
           className="cursor-pointer"
           onClick={(e) => {
             e.stopPropagation(); //prevent the container’s onClick

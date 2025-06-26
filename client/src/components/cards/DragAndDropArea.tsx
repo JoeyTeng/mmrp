@@ -8,16 +8,12 @@ import {
   useNodesState,
   useEdgesState,
 } from "@xyflow/react";
-import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
-import SideBar from "@/components/drag-and-drop/SideBar";
 import {
-  ParamValueType,
   moduleRegistry,
   getInitialNodeParamValue,
 } from "@/components/modules/modulesRegistry";
-import { useCallback, useState } from "react";
-import { NodeData, NodeType } from "@/components/drag-and-drop/FlowNode";
-import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
+
+import { NodeData, NodeType } from "../drag-and-drop/types";
 
 const initialNodes: Node<NodeData, NodeType>[] = [
   {
@@ -159,63 +155,19 @@ const initialEdges: Edge[] = [
 const DragAndDropArea = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const updateParam = useCallback(
-    (key: string, value: ParamValueType) => {
-      setNodes((nds) =>
-        nds.map((n) =>
-          n.id === selectedId
-            ? {
-                ...n,
-                data: { ...n.data, params: { ...n.data.params, [key]: value } },
-              }
-            : n,
-        ),
-      );
-    },
-    [selectedId, setNodes],
-  );
-
-  const handleConfirm = () => {
-    const pipeline = dumpPipelineToJson(nodes, edges);
-    console.log(JSON.stringify(pipeline, null, 2));
-
-    //TODO: Send to backend
-  };
 
   return (
-    <div className="flex h-[50vh] w-screen overflow-hidden">
-      {/* Sidebar */}
-      <div className="flex-1 border-gray-300">
-        <SideBar />
-      </div>
-
-      {/* Flow Canvas */}
-      <div className="flex-[2.5] min-w-0">
-        <ReactFlowProvider>
-          <FlowCanvas
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            setNodes={setNodes}
-            setEdges={setEdges}
-            onSelectNode={setSelectedId}
-            onConfirm={handleConfirm}
-          />
-        </ReactFlowProvider>
-      </div>
-
-      {/* Parameter Configuration */}
-      <div className="flex-1">
-        <ParameterConfiguration
-          node={nodes.find((n) => n.id === selectedId)}
-          onChange={updateParam}
-        />
-      </div>
-    </div>
+    <ReactFlowProvider>
+      <FlowCanvas
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        setNodes={setNodes}
+        setEdges={setEdges}
+        onSelectNode={() => {}}
+      />
+    </ReactFlowProvider>
   );
 };
-
 export default DragAndDropArea;

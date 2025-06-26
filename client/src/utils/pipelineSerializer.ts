@@ -4,7 +4,7 @@ import {
   PipelineParameter,
   PipelineRequest,
 } from "@/types/pipeline";
-import { NodeData } from "@/components/drag-and-drop/FlowNode";
+import { NodeData } from "@/components/drag-and-drop/types";
 
 export function dumpPipelineToJson(
   nodes: Node<NodeData>[],
@@ -27,7 +27,8 @@ export function dumpPipelineToJson(
     const parameters: PipelineParameter[] = Object.entries(
       node.data.params,
     ).map(([key, value]) => ({
-      [key]: value,
+      key,
+      value: String(value),
     }));
 
     return {
