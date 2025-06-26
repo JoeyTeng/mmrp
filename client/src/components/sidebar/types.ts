@@ -1,3 +1,4 @@
+import { SxProps, Theme } from "@mui/material";
 import { ReactNode } from "react";
 
 export type SidebarAnchor = "left" | "right";
@@ -32,6 +33,21 @@ export interface SidebarPanelProps {
   title: string;
   width?: number;
   drawerWidth: number;
+  zIndex?: number;
   anchor: SidebarAnchor;
   children: ReactNode;
 }
+
+export type AppDrawerProps = {
+  open: boolean;
+  onClose: () => void;
+  title?: string;
+  width?: number | string;
+  children: React.ReactNode;
+  anchor?: "left" | "right" | "top" | "bottom";
+  zIndex?: number;
+  sx?: SxProps<Theme>;
+  elevation?: number;
+  headerSx?: SxProps<Theme>;
+  contentSx?: SxProps<Theme>;
+};
