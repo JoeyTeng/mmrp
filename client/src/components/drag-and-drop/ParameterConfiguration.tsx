@@ -10,7 +10,7 @@ import { Box } from "@mui/material";
 
 type ParameterConfigurationProps = {
   node?: Node<{ label: string; params: Record<string, ParamValueType> }> | null;
-  onChange: (key: string, value: ParamValueType) => void;
+  onParamChange: (key: string, value: ParamValueType) => void;
 };
 
 function renderSelectInput(
@@ -20,7 +20,6 @@ function renderSelectInput(
   onChange: (key: string, value: ParamValueType) => void,
 ) {
   const options = moduleRegistryVal;
-  // value should be a single string
   const selected = typeof value === "string" ? value : "";
 
   return (
@@ -32,13 +31,7 @@ function renderSelectInput(
         id={key}
         value={selected}
         className="w-full p-1.5 rounded bg-gray-100"
-        onChange={(e) => {
-          const selected = Array.from(
-            e.currentTarget.selectedOptions,
-            (o) => o.value,
-          );
-          onChange(key, selected[0] ?? "");
-        }}
+        onChange={(e) => onChange(key, e.target.value)}
       >
         {options.map((opt) => (
           <option key={opt} value={opt}>
@@ -64,7 +57,7 @@ function renderNumberInput(
         id={key}
         type="number"
         value={typeof value === "number" ? value : ""}
-        onChange={(e) => onChange(key, Number(e.currentTarget.value))}
+        onChange={(e) => onChange(key, Number(e.target.value))}
         className="w-full p-1.5 rounded bg-gray-100"
       />
     </div>
@@ -85,7 +78,7 @@ function renderTextInput(
         id={key}
         type="text"
         value={value}
-        onChange={(e) => onChange(key, e.currentTarget.value)}
+        onChange={(e) => onChange(key, e.target.value)}
         className="w-full p-1.5 rounded bg-gray-100"
       />
     </div>
@@ -94,7 +87,7 @@ function renderTextInput(
 
 export default function ParameterConfiguration({
   node,
-  onChange,
+  onParamChange,
 }: ParameterConfigurationProps) {
   if (!node) {
     return (
@@ -108,22 +101,27 @@ export default function ParameterConfiguration({
   const { label, params } = node.data;
 
   return (
-    <Box className="flex-1 border border-gray-900 rounded-md overflow-y-auto bg-white h-full">
-      <div className="p-2.5">
+    <Box className="flex-1 overflow-y-auto h-full">
+      <div className="p-2">
         {Object.entries(params).map(([key, value]) => {
           const moduleRegistryVal = moduleRegistry[label].params[key];
           // 1) string[]
           if (Array.isArray(moduleRegistryVal)) {
-            return renderSelectInput(moduleRegistryVal, key, value, onChange);
+            return renderSelectInput(
+              moduleRegistryVal,
+              key,
+              value,
+              onParamChange,
+            );
           }
 
           // 2) number
           if (typeof value === "number") {
-            return renderNumberInput(key, value, onChange);
+            return renderNumberInput(key, value, onParamChange);
           }
 
           // 3) string
-          return renderTextInput(key, value, onChange);
+          return renderTextInput(key, value, onParamChange);
         })}
       </div>
     </Box>
