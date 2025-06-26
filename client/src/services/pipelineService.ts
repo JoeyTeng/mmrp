@@ -1,9 +1,9 @@
 import type { PipelineRequest } from "@/types/pipeline";
-import axios from "axios";
+import { apiClient } from "./apiClient";
 
 export async function sendPipelineToBackend(
   pipeline: PipelineRequest,
 ): Promise<string[]> {
-  const response = await axios.post<string[]>("/pipeline", pipeline);
+  const response = await apiClient.post<string[]>("/pipeline", pipeline);
   return response.data;
 }
