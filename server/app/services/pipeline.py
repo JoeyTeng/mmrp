@@ -146,7 +146,7 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
         cv2VideoWriterContext = as_context(
             cv2.VideoWriter, lambda writer: writer.release()
         )
-        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"h264")
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"mp4v")
 
         with cv2VideoCaptureContext(video_path) as cap:
             if not cap.isOpened():
@@ -172,6 +172,10 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
             with cv2VideoWriterContext(
                 out_path, fourcc, fps, (out_width, out_height)
             ) as out:
+                if not out.isOpened():
+                    raise ValueError(
+                        "Could not open VideoWriter. Codec 'avc1' might not be supported."
+                    )
                 # Write the first frame(s)
                 for out_frame in final_outputs:
                     out.write(out_frame)

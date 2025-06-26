@@ -53,7 +53,7 @@ class Colorspace(ModuleBase):
 
         # Video writer setup
         cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda cap: cap.release())
-        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"h264")
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"mp4v")
 
         with cv2VideoCaptureContext(input_data) as cap:
             if not cap.isOpened():
