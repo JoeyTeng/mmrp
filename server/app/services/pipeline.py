@@ -146,7 +146,7 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
         cv2VideoWriterContext = as_context(
             cv2.VideoWriter, lambda writer: writer.release()
         )
-        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"mp4v")
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"h264")
 
         with cv2VideoCaptureContext(video_path) as cap:
             if not cap.isOpened():
