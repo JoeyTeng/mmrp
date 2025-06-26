@@ -1,25 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import SideBySide from "../comparison-view/SideBySide";
-import InterleavingFrames from "../comparison-view/InterleavingFrames";
-import MenuDropdown, { viewOptions } from "../comparison-view/MenuDropdown";
-import { Box } from "@mui/material";
+import SideBySide from "@/components/comparison-view/SideBySide";
+import InterleavingFrames from "@/components/comparison-view/InterleavingFrames";
+import MenuDropdown from "@/components/comparison-view/MenuDropdown";
+import { Box, Typography } from "@mui/material";
+import { ViewOptions } from "@/components/comparison-view/types";
 
 const VideoComparisonView = () => {
-  const [view, setView] = useState(viewOptions.SideBySide);
+  const [view, setView] = useState(ViewOptions.SideBySide);
 
   return (
-    <Box className="flex flex-col flex-1 relative border border-gray-900 rounded-md overflow-hidden bg-gray-100">
-      <Box className="flex items-center justify-between bg-gray-700 px-4 py-2 border-b border-gray-300 font-semibold text-white">
-        <Box className="flex items-center gap-2">
-          <MenuDropdown onSelect={setView} />
-          <span>{view} View</span>
-        </Box>
+    <Box className="flex flex-1 flex-col relative border-1 border-primary bg-primary overflow-hidden rounded-md">
+      <Box className="flex items-center borde gap-0.5 p-1">
+        <MenuDropdown onSelect={setView} />
+        <Typography variant="subtitle1">{view} View</Typography>
       </Box>
-
-      {view === viewOptions.SideBySide && <SideBySide />}
-      {view === viewOptions.Interleaving && <InterleavingFrames />}
+      <Box>
+        {view === ViewOptions.SideBySide && <SideBySide />}
+        {view === ViewOptions.Interleaving && <InterleavingFrames />}
+      </Box>
     </Box>
   );
 };
