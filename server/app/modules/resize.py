@@ -48,7 +48,7 @@ class Resize(ModuleBase):
         output_path: str = str(
             Path(__file__).resolve().parent.parent.parent
             / "output"
-            / f"resize_{width}_{height}.mp4"
+            / f"resize_{width}_{height}.webm"
         )
 
         # Video capture setup
@@ -56,7 +56,7 @@ class Resize(ModuleBase):
 
         # Video writer setup
         cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda cap: cap.release())
-        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"mp4v")
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"VP80")
 
         with cv2VideoCaptureContext(input_data) as cap:
             if not cap.isOpened():

@@ -29,7 +29,7 @@ const InterleavingFrames = () => {
       >
         <video
           ref={videoRef}
-          src="/example-video.mp4"
+          src="/example-video.webm"
           className={`object-contain bg-black ${
             isFullscreen ? "w-full h-full" : "w-1/2 h-full"
           }`}

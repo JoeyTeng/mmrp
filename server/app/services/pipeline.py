@@ -137,7 +137,7 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
         output_path = (
             Path(__file__).resolve().parent.parent.parent
             / "output"
-            / f"{selected_video}_output.mp4"
+            / f"{selected_video}_output.webm"
         )
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -146,7 +146,8 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
         cv2VideoWriterContext = as_context(
             cv2.VideoWriter, lambda writer: writer.release()
         )
-        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"mp4v")
+        # FIXME: OpenCV warning (use a format that is supported with the codec)
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"VP80")
 
         with cv2VideoCaptureContext(video_path) as cap:
             if not cap.isOpened():
@@ -172,10 +173,6 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
             with cv2VideoWriterContext(
                 out_path, fourcc, fps, (out_width, out_height)
             ) as out:
-                if not out.isOpened():
-                    raise ValueError(
-                        "Could not open VideoWriter. Codec 'avc1' might not be supported."
-                    )
                 # Write the first frame(s)
                 for out_frame in final_outputs:
                     out.write(out_frame)

@@ -17,7 +17,7 @@ def get_video(video_name: str):
         video_path = (
             Path(__file__).resolve().parent.parent.parent
             / "output"
-            / f"{video_name}.mp4"
+            / f"{video_name}.webm"
         )
     else:
         video_path = get_video_path(video_name)
@@ -31,4 +31,4 @@ def get_video(video_name: str):
             while chunk := file.read(chunk_size):
                 yield chunk
 
-    return StreamingResponse(iterfile(), media_type="video/mp4")
+    return StreamingResponse(iterfile(), media_type="video/webm")

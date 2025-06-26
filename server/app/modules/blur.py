@@ -53,7 +53,7 @@ class Blur(ModuleBase):
     # Process the entire video
     def process(self, input_data: str, parameters: dict[str, typing.Any]) -> None:
         output_path: str = str(
-            Path(__file__).resolve().parent.parent.parent / "output" / "blur.mp4"
+            Path(__file__).resolve().parent.parent.parent / "output" / "blur.webm"
         )
 
         # Video capture setup
@@ -61,7 +61,7 @@ class Blur(ModuleBase):
 
         # Video writer setup
         cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda cap: cap.release())
-        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"mp4v")
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"VP80")
 
         with cv2VideoCaptureContext(input_data) as cap:
             if not cap.isOpened():

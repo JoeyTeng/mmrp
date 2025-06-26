@@ -9,7 +9,7 @@ def get_video_path(video: str) -> Path:
         Path(__file__).resolve().parent.parent.parent.parent
         / "client"
         / "public"
-        / f"{video}.mp4"
+        / f"{video}.webm"
     )
 
 
