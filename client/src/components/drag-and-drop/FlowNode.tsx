@@ -56,7 +56,6 @@ export default function FlowNode({
   const handleNodeAction = (action: NodeAction) => {
     switch (action) {
       case NodeAction.Delete:
-        // deleteElements({ nodes: [{ id }] });
         setIsDeleteModalOpen(true);
         break;
 
@@ -72,7 +71,7 @@ export default function FlowNode({
       <div
         className={`w-40 bg-white rounded-lg overflow-hidden text-sm ${selected ? "border border-black-100" : "border border-gray-300"}`}
       >
-        <div className="px-3 py-1 font-semibold text-gray-800 flex justify-between items-center">
+        <div className="pl-3 pr-1 py-1 font-semibold text-gray-800 flex justify-between items-center">
           {label}
           <IconButton
             onClick={(e) => {
@@ -82,6 +81,9 @@ export default function FlowNode({
             }}
             size="small"
             aria-label="Module options"
+            sx={{
+              padding: 0,
+            }}
           >
             <MenuIcon />
           </IconButton>
