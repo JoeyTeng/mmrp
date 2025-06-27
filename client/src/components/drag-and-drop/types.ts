@@ -10,3 +10,13 @@ export enum NodeType {
   ProcessNode = "processNode",
   OutputNode = "outputNode",
 }
+
+export enum NodeAction {
+  Expand = "expand",
+  Duplicate = "duplicate",
+  Rename = "rename",
+  Color = "color",
+  Configure = "configure",
+  Export = "export",
+  Delete = "delete",
+}
