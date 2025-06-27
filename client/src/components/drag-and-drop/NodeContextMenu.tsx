@@ -84,9 +84,9 @@ const ContextMenu = ({
       </MenuItem>
       <MenuItem onClick={() => onAction(NodeAction.Delete)}>
         <ListItemIcon>
-          <DeleteIcon />
+          <DeleteIcon className="fill-red-700" />
         </ListItemIcon>
-        <ListItemText>Delete</ListItemText>
+        <ListItemText className="text-red-700">Delete</ListItemText>
       </MenuItem>
     </Menu>
   );
