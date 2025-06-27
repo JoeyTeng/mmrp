@@ -57,7 +57,6 @@ const FrameStreamPlayer = ({
   );
 
   const handlePlayPause = () => {
-    console.log(frames);
     if (isPlaying) {
       setIsPlaying(false);
     } else {
@@ -180,7 +179,7 @@ const FrameStreamPlayer = ({
         />
       </div>
       <PlayerControls
-        currentFrame={currentFrame + 1}
+        currentFrame={Math.min(currentFrame + 1, frames.length)}
         totalFrames={frames.length}
         isPlaying={isPlaying}
         showMute={false}
