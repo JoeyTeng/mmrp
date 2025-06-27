@@ -30,8 +30,6 @@ const ContextMenu = ({
   onAction,
   onClose,
 }: NodeContextMenuProps) => {
-  console.log(position);
-
   return (
     <Menu
       open={open}
