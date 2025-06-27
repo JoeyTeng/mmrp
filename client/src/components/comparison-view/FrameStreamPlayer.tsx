@@ -1,13 +1,20 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import PlayerControls from "./PlayerControls";
+import { config } from "@/utils/config";
 
 type Props = {
   containerRef: React.RefObject<HTMLDivElement | null>;
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
   isFullscreen?: boolean;
+};
+
+type FrameData = {
+  blob: Blob;
+  fps: number;
+  mime: string;
 };
 
 const FrameStreamPlayer = ({
@@ -18,32 +25,43 @@ const FrameStreamPlayer = ({
 }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [frameBlobs, setFrameBlobs] = useState<Blob[]>([]);
-  const [currentFrame, setCurrentFrame] = useState(0);
-  const [dynamicFps, setDynamicFps] = useState(30);
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
+  const currentFpsRef = useRef(30);
+  const currentMimeRef = useRef("image/webp");
 
-  const renderFrame = (index: number) => {
-    if (!canvasRef.current || index >= frameBlobs.length) return;
-    const ctx = canvasRef.current.getContext("2d");
-    const blob = frameBlobs[index];
-    const url = URL.createObjectURL(blob);
-    const img = new Image();
-    img.onload = () => {
-      canvasRef.current!.width = img.width;
-      canvasRef.current!.height = img.height;
-      ctx?.drawImage(img, 0, 0);
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
-  };
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [frames, setFrames] = useState<FrameData[]>([]);
+  const [currentFrame, setCurrentFrame] = useState(0);
+
+  // Render frame at given index
+  const renderFrame = useCallback(
+    (index: number): Promise<void> => {
+      return new Promise((resolve) => {
+        if (!canvasRef.current || index >= frames.length) return resolve();
+        const ctx = canvasRef.current.getContext("2d");
+        const { blob } = frames[index];
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          if (!canvasRef.current) return resolve();
+          canvasRef.current.width = img.width;
+          canvasRef.current.height = img.height;
+          ctx?.drawImage(img, 0, 0);
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+        img.src = url;
+      });
+    },
+    [frames],
+  );
 
   const handlePlayPause = () => {
+    console.log(frames);
     if (isPlaying) {
       setIsPlaying(false);
     } else {
-      if (currentFrame >= frameBlobs.length - 1) {
+      if (currentFrame >= frames.length) {
         setCurrentFrame(0);
         renderFrame(0);
       }
@@ -51,11 +69,9 @@ const FrameStreamPlayer = ({
     }
   };
 
+  // Step forward/backward by delta frames
   const stepFrame = (delta: number) => {
-    const next = Math.min(
-      Math.max(currentFrame + delta, 0),
-      frameBlobs.length - 1,
-    );
+    const next = Math.min(Math.max(currentFrame + delta, 0), frames.length - 1);
     setCurrentFrame(next);
     renderFrame(next);
     setIsPlaying(false);
@@ -77,26 +93,29 @@ const FrameStreamPlayer = ({
   };
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8000/ws/video");
+    const ws = new WebSocket(`${config.apiBaseUrl}/ws/video`);
     ws.binaryType = "arraybuffer";
     wsRef.current = ws;
-
-    let expectingImage = false;
 
     ws.onmessage = (event) => {
       if (typeof event.data === "string") {
         try {
           const meta = JSON.parse(event.data);
-          if (meta.fps) setDynamicFps(meta.fps);
-          expectingImage = true;
+          if (meta.fps) {
+            currentFpsRef.current = meta.fps;
+          }
+          if (meta.mime) {
+            currentMimeRef.current = meta.mime;
+          }
         } catch (e) {
           console.error("Invalid metadata", e);
         }
-      } else if (expectingImage) {
-        //TODO: get MIME type along with the metadata to render the correct format
-        const blob = new Blob([event.data], { type: "image/jpeg" });
-        setFrameBlobs((prev) => [...prev, blob]);
-        expectingImage = false;
+      } else {
+        const blob = new Blob([event.data], { type: currentMimeRef.current });
+        setFrames((prev) => [
+          ...prev,
+          { blob, fps: currentFpsRef.current, mime: currentMimeRef.current },
+        ]);
       }
     };
 
@@ -105,41 +124,55 @@ const FrameStreamPlayer = ({
     };
   }, []);
 
+  // Playback effect - dynamic frame timing by fps stored in each frame
   useEffect(() => {
     if (!isPlaying) {
-      if (playbackTimer.current) clearInterval(playbackTimer.current);
+      if (playbackTimer.current) {
+        clearTimeout(playbackTimer.current);
+        playbackTimer.current = null;
+      }
       return;
     }
 
-    const interval = setInterval(() => {
-      setCurrentFrame((prev) => {
-        const next = prev + 1;
-        if (next < frameBlobs.length) {
-          renderFrame(next);
-          return next;
-        } else {
-          setIsPlaying(false);
-          return prev;
-        }
-      });
-    }, 1000 / dynamicFps);
-
-    playbackTimer.current = interval;
-    return () => clearInterval(interval);
-  }, [isPlaying, frameBlobs.length, dynamicFps]);
-
-  useEffect(() => {
-    if (frameBlobs.length > 0 && currentFrame === 0) {
-      renderFrame(0);
+    if (currentFrame >= frames.length) {
+      setIsPlaying(false);
+      return;
     }
-  }, [frameBlobs]);
+
+    // Render current frame
+    renderFrame(currentFrame);
+
+    // Schedule next frame
+    const fps = frames[currentFrame]?.fps || 30;
+    const delay = 1000 / fps;
+
+    playbackTimer.current = setTimeout(() => {
+      setCurrentFrame((prev) => prev + 1);
+    }, delay);
+
+    return () => {
+      if (playbackTimer.current) {
+        clearTimeout(playbackTimer.current);
+        playbackTimer.current = null;
+      }
+    };
+  }, [isPlaying, currentFrame, frames, renderFrame]);
+
+  // When currentFrame changes and playback is paused, render frame immediately
+  useEffect(() => {
+    if (!isPlaying && frames.length > 0) {
+      renderFrame(currentFrame);
+    }
+  }, [currentFrame, isPlaying, frames, renderFrame]);
 
   const sourceLabel = getSourceLabel?.(currentFrame);
 
   return (
     <div className="w-full">
       <div
-        className={`flex justify-center items-center w-full ${isFullscreen ? "h-[calc(100vh-50px)]" : "h-full"}`}
+        className={`flex justify-center items-center w-full ${
+          isFullscreen ? "h-[calc(100vh-50px)]" : "h-full"
+        }`}
       >
         <canvas
           ref={canvasRef}
@@ -148,7 +181,7 @@ const FrameStreamPlayer = ({
       </div>
       <PlayerControls
         currentFrame={currentFrame + 1}
-        totalFrames={frameBlobs.length}
+        totalFrames={frames.length}
         isPlaying={isPlaying}
         showMute={false}
         isMuted={true}
@@ -160,7 +193,7 @@ const FrameStreamPlayer = ({
         showSource={showSource}
         sourceLabel={sourceLabel}
         sliderValue={currentFrame}
-        sliderMax={frameBlobs.length - 1}
+        sliderMax={frames.length - 1}
         sliderStep={1}
       />
     </div>

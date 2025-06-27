@@ -27,7 +27,8 @@ export function dumpPipelineToJson(
     const parameters: PipelineParameter[] = Object.entries(
       node.data.params,
     ).map(([key, value]) => ({
-      [key]: value,
+      key,
+      value: String(value),
     }));
 
     return {

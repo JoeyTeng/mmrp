@@ -50,7 +50,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
       return () => {
         mainVideo.removeEventListener("ended", onEnded);
       };
-    }, [videoRefs]);
+    }, [mainVideo]);
 
     const handleTimeUpdate = () => {
       const mainVideo = videoRefs[0].current;

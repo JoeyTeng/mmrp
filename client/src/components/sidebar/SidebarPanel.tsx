@@ -10,6 +10,7 @@ export const SidebarPanel = ({
   drawerWidth,
   anchor,
   children,
+  zIndex = 20,
 }: SidebarPanelProps) => {
   if (!open) return null;
   return (
@@ -22,12 +23,14 @@ export const SidebarPanel = ({
         [anchor]: drawerWidth,
         width,
         height: "100vh",
-        zIndex: 20,
+        zIndex,
       }}
     >
       <Box className="p-4 h-full flex flex-col">
         <Box className="flex justify-between items-center mb-4 text-primary">
-          <Typography variant="h6">{title}</Typography>
+          <Typography variant="h6" className="capitalize text-primary">
+            {title}
+          </Typography>
           <IconButton onClick={onClose} size="small">
             <Close fontSize="small" />
           </IconButton>

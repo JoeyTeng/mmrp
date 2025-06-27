@@ -1,10 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import frame
+from contextlib import asynccontextmanager
 import uvicorn
-from app.routers import pipeline, video
+from app.routers import pipeline, video, module, frame
+from app.services.module import load_modules
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load a registry of all modules at start up
+    load_modules()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,6 +25,7 @@ app.add_middleware(
 
 app.include_router(pipeline.router)
 app.include_router(video.router)
+app.include_router(module.router)
 app.include_router(frame.router)
 
 if __name__ == "__main__":

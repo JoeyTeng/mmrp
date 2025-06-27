@@ -15,11 +15,11 @@
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@headlessui/react": "^2.2.4",
     "@mui/icons-material": "^7.1.1",
     "@mui/material": "^7.1.1",
     "@mui/material-nextjs": "^7.1.1",
     "@xyflow/react": "^12.6.4",
+    "axios": "^1.10.0",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -37,8 +37,8 @@
     "eslint-plugin-react": "^7.37.5",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.0",
-    "prettier": "3.5.3",
     "postcss": "^8.5.5",
+    "prettier": "3.5.3",
     "tailwindcss": "^4.1.10",
     "typescript": "^5"
   }

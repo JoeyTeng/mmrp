@@ -3,8 +3,11 @@ from pathlib import Path
 import cv2
 import asyncio
 import json
+from app.utils.shared_functionality import as_context
 
 router = APIRouter()
+
+cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
 
 
 @router.websocket("/ws/video")
@@ -17,29 +20,37 @@ async def video_feed(websocket: WebSocket):
         / "public"
         / "example-video.mp4"
     )
-    cap = cv2.VideoCapture(str(video_path))
-    fps = cap.get(cv2.CAP_PROP_FPS) or 30
 
     try:
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
+        with cv2VideoCaptureContext(str(video_path)) as cap:
+            fps = cap.get(cv2.CAP_PROP_FPS) or 30
+            mime_type = "image/webp"
 
-            success, buffer = cv2.imencode(".jpg", frame)
-            if not success:
-                continue
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break
 
-            # Send FPS as JSON metadata
-            await websocket.send_text(json.dumps({"fps": fps}))
-            # Send the JPEG frame
-            await websocket.send_bytes(buffer.tobytes())
+                encode_success, buffer = cv2.imencode(
+                    ".webp", frame, [cv2.IMWRITE_WEBP_QUALITY, 100]
+                )
 
-            await asyncio.sleep(1 / fps)
+                if not encode_success:
+                    mime_type = "image/png"
+                    encode_success, buffer = cv2.imencode(".png", frame)
+
+                if not encode_success:
+                    continue
+
+                # Send metadata with FPS and MIME type
+                await websocket.send_text(json.dumps({"fps": fps, "mime": mime_type}))
+                await websocket.send_bytes(buffer.tobytes())
+
+                await asyncio.sleep(1 / fps)
+
     except Exception as e:
         print("WebSocket error:", e)
     finally:
-        cap.release()
         try:
             await websocket.close()
         except RuntimeError:

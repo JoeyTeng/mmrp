@@ -3,12 +3,10 @@ import {
   CloudUploadOutlined,
   FileDownloadOutlined,
   AppsOutlined,
-  Tune,
   QueryStatsOutlined,
   FilterAltOutlined,
 } from "@mui/icons-material";
 import Modules from "../drag-and-drop/Modules";
-import ParameterConfiguration from "../drag-and-drop/ParameterConfiguration";
 import { SidebarItem } from "./types";
 
 export const LEFT_SIDEBAR_ITEMS: SidebarItem[] = [
@@ -58,13 +56,5 @@ export const RIGHT_SIDEBAR_ITEMS: SidebarItem[] = [
       </div>
     ),
     showArrow: true,
-  },
-  {
-    id: "editParams",
-    title: "Edit Params",
-    icon: <Tune />,
-    panelContent: <ParameterConfiguration node={null} onChange={() => {}} />,
-    showArrow: true,
-    showAfterDivider: true,
   },
 ];
