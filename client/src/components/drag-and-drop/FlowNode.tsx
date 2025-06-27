@@ -6,6 +6,7 @@ import { NodeAction, NodeData, NodeType } from "./types";
 import { IconButton } from "@mui/material";
 import { useState } from "react";
 import NodeContextMenu from "./NodeContextMenu";
+import DeleteModal from "./DeleteModal";
 
 type CustomNode = Node<NodeData>;
 
@@ -15,12 +16,16 @@ export default function FlowNode({
   data: { label, params },
   selected,
 }: NodeProps<CustomNode>) {
-  const { deleteElements, setNodes } = useReactFlow();
+  const { deleteElements, setNodes, getNodeConnections } = useReactFlow();
 
   const [contextMenuPos, setContextMenuPos] = useState<{
     x: number;
     y: number;
   } | null>(null);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const isBreakingChange = getNodeConnections({ nodeId: id }).length > 0;
 
   const setNodeSelected = (selected: boolean) => {
     setNodes((nodes) =>
@@ -51,7 +56,8 @@ export default function FlowNode({
   const handleNodeAction = (action: NodeAction) => {
     switch (action) {
       case NodeAction.Delete:
-        deleteElements({ nodes: [{ id }] });
+        // deleteElements({ nodes: [{ id }] });
+        setIsDeleteModalOpen(true);
         break;
 
       default:
@@ -111,6 +117,14 @@ export default function FlowNode({
         onAction={handleNodeAction}
         open={!!contextMenuPos}
       />
+      {isDeleteModalOpen && (
+        <DeleteModal
+          moduleTitle={label}
+          isBreakingChange={isBreakingChange}
+          onCancel={() => setIsDeleteModalOpen(false)}
+          onDelete={() => deleteElements({ nodes: [{ id }] })}
+        />
+      )}
     </div>
   );
 }
