@@ -3,7 +3,6 @@ from fastapi.responses import StreamingResponse
 from pathlib import Path
 from app.utils.shared_functionality import get_video_path
 from app.utils.constants import VIDEO_TYPES
-import os
 
 router = APIRouter(
     prefix="/video",
@@ -20,7 +19,7 @@ router = APIRouter(
 @router.get("/{video_name}")
 def get_video(video_name: str):
     try:
-        file_ext = os.path.splitext(video_name)[1].lower()
+        file_ext = Path(video_name).suffix.lower()
 
         if file_ext not in VIDEO_TYPES:
             raise HTTPException(

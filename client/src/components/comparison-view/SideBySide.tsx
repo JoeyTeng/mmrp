@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, RefObject } from "react";
+import { useState, useRef, useEffect } from "react";
 import Player, { PlayerHandle } from "./Player";
-import { apiClient } from "@/services/apiClient";
 import { Box } from "@mui/material";
+import { loadVideo } from "@/services/videoService";
 
 const SideBySide = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -13,29 +13,6 @@ const SideBySide = () => {
   const videoBRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<PlayerHandle>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const loadVideo = async (
-    videoName: string,
-    ref: RefObject<HTMLVideoElement | null>,
-  ) => {
-    try {
-      const response = await apiClient.get(
-        `/video/${encodeURIComponent(videoName)}`,
-        {
-          responseType: "blob",
-          timeout: 30000,
-        },
-      );
-      const url = URL.createObjectURL(response.data);
-      if (ref.current) {
-        ref.current.src = url;
-      }
-      return url;
-    } catch (e) {
-      console.error(`Error loading video ${videoName}`);
-      throw e;
-    }
-  };
 
   useEffect(() => {
     const urls: string[] = [];
@@ -68,84 +45,48 @@ const SideBySide = () => {
   return (
     <Box
       ref={containerRef}
-      className="relative w-full h-full bg-primary"
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        width: "100vw",
-        position: "relative",
-        overflow: "hidden",
-      }}
+      className="relative h-full w-full flex flex-col bg-black"
     >
-      {/* Loading Spinner Overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary bg-opacity-60">
-          <div className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
+      {/* Video Container */}
+      <Box className="relative flex flex-1">
+        {/* Status Overlay */}
+        {(isLoading || error) && (
+          <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
+            {isLoading ? (
+              <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              error
+            )}
+          </Box>
+        )}
 
-      {/* Error Message Overlay */}
-      {error && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary bg-opacity-60 text-white">
-          {error}
-        </div>
-      )}
-
-      {/* Videos Container */}
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          width: "100%",
-          minHeight: 0,
-        }}
-      >
+        {/* Left Video */}
         <Box
-          sx={{
-            flex: 1,
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <video
-            ref={videoARef}
-            className="w-full h-full object-contain"
-            onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
-            onLoadedData={() => setIsLoading(false)}
-            onError={() => setError("Error playing original video")}
-          />
-        </Box>
-        <Box
-          sx={{
-            flex: 1,
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <video
-            ref={videoBRef}
-            className="w-full h-full object-contain"
-            muted
-            onError={() => setError("Error playing filtered video")}
-          />
-        </Box>
-      </Box>
+          component="video"
+          ref={videoARef}
+          className="w-1/2 h-full object-contain"
+          onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
+          onLoadStart={() => setIsLoading(true)}
+          onCanPlay={() => setIsLoading(false)}
+          onError={() => setError("Failed to load original video")}
+        />
 
-      {/* Player Container */}
-      <Box
-        className="w-full"
-        sx={{
-          overflow: "hidden",
-          position: "relative",
-        }}
-      >
-        <Player
-          ref={playerRef}
-          videoRefs={[videoARef, videoBRef]}
-          containerRef={containerRef}
+        {/* Right Video */}
+        <Box
+          component="video"
+          ref={videoBRef}
+          className="w-1/2 h-full object-contain"
+          muted
+          onError={() => setError("Failed to load filtered video")}
         />
       </Box>
+
+      {/* Player Controls */}
+      <Player
+        ref={playerRef}
+        videoRefs={[videoARef, videoBRef]}
+        containerRef={containerRef}
+      />
     </Box>
   );
 };
