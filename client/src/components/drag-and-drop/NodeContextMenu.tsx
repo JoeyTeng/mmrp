@@ -9,7 +9,6 @@ import {
   OpenInFullOutlined as OpenInFullIcon,
   PaletteOutlined as PaletteIcon,
   FileDownloadOutlined as FileDownloadIcon,
-  // CircleRounded as CircleIcon,
 } from "@mui/icons-material";
 
 import { NodeAction } from "./types";
@@ -44,45 +43,45 @@ const ContextMenu = ({
         },
       }}
     >
-      <MenuItem onClick={() => onAction(NodeAction.Expand)}>
+      <MenuItem dense onClick={() => onAction(NodeAction.Expand)}>
         <ListItemIcon>
           <OpenInFullIcon />
         </ListItemIcon>
         <ListItemText>Expand</ListItemText>
       </MenuItem>
-      <MenuItem onClick={() => onAction(NodeAction.Duplicate)}>
+      <MenuItem dense onClick={() => onAction(NodeAction.Duplicate)}>
         <ListItemIcon>
           <DuplicateIcon />
         </ListItemIcon>
         <ListItemText>Duplicate</ListItemText>
       </MenuItem>
       <Divider />
-      <MenuItem onClick={() => onAction(NodeAction.Rename)}>
+      <MenuItem dense onClick={() => onAction(NodeAction.Rename)}>
         <ListItemIcon>
           <EditIcon />
         </ListItemIcon>
         <ListItemText>Rename</ListItemText>
       </MenuItem>
-      <MenuItem onClick={() => onAction(NodeAction.Configure)}>
+      <MenuItem dense onClick={() => onAction(NodeAction.Configure)}>
         <ListItemIcon>
           <SettingsIcon />
         </ListItemIcon>
         <ListItemText>Configure</ListItemText>
       </MenuItem>
-      <MenuItem>
+      <MenuItem dense>
         <ListItemIcon>
           <PaletteIcon />
         </ListItemIcon>
         <ListItemText>Colour</ListItemText>
       </MenuItem>
       <Divider />
-      <MenuItem onClick={() => onAction(NodeAction.Export)}>
+      <MenuItem dense onClick={() => onAction(NodeAction.Export)}>
         <ListItemIcon>
           <FileDownloadIcon />
         </ListItemIcon>
         <ListItemText>Export</ListItemText>
       </MenuItem>
-      <MenuItem onClick={() => onAction(NodeAction.Delete)}>
+      <MenuItem dense onClick={() => onAction(NodeAction.Delete)}>
         <ListItemIcon>
           <DeleteIcon />
         </ListItemIcon>
