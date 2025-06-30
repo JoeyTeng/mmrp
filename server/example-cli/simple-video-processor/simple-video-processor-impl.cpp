@@ -1,5 +1,7 @@
 #include <functional>
+#include <cstring>
 #include <iostream>
+#include <limits>
 
 #include "simple-video-processor-impl.h"
 
