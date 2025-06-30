@@ -7,8 +7,8 @@ import contextlib
 def get_video_path(video: str) -> Path:
     return (
         Path(__file__).resolve().parent.parent.parent.parent
-        / "client"
-        / "public"
+        / "server"
+        / "videos"
         / video
     )
 
