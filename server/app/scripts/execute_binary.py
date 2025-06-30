@@ -76,6 +76,7 @@ def execute_binary(binary_name: str, video_name: str, args: dict[str, Any]):
 
 if __name__ == "__main__":
     # Example usage
+    # TODO: Integrate binary execution in pipeline processing or other processing enpoints
     binary_name = "simple-video-processor-app"
     video_name = "bus_cif.yuv"
     args: dict[str, Any] = {
