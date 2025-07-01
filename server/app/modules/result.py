@@ -19,7 +19,7 @@ class Result(ModuleBase):
                 name="path",
                 type="str",
                 required=False,
-                description="(Optional) output .mp4 file path",
+                description="Optional output .mp4 file path",  # for now we can choose to remove this if output psth will be hardcoded
                 default="example_output.webm",
             )
         ]
