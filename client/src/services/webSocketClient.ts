@@ -13,7 +13,7 @@ export const createVideoWebSocket = (
   onError?: (err: Event) => void,
   onClose?: () => void,
 ): WebSocket => {
-  const url = `${process.env.NEXT_PUBLIC_API_URL?.replace(/^http/, "ws")}/ws/video`;
+  const url = `${process.env.NEXT_PUBLIC_WS_API_URL}/video`;
   ws = new WebSocket(url);
   ws.binaryType = "arraybuffer";
 
