@@ -17,7 +17,10 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # frontend
+    allow_origins=[
+        "http://localhost:3000",
+        "https://3000-everlygif-mmrp-vhurzt6eidc.ws-eu120.gitpod.io",
+    ],  # frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

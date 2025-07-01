@@ -2,12 +2,19 @@ import cv2
 import typing
 from pathlib import Path
 from app.utils.shared_functionality import as_context
-from app.modules.base_module import ModuleBase, ParameterDefinition
+from app.modules.base_module import (
+    ModuleBase,
+    ParameterDefinition,
+    FormatDefinition,
+    ModuleRole,
+)
 import numpy as np
 
 
 class Colorspace(ModuleBase):
     name = "colorspace"
+
+    role = ModuleRole.PROCESSNODE
 
     @typing.override
     # Get the parameters for the colorspace module
@@ -27,6 +34,22 @@ class Colorspace(ModuleBase):
                 valid_values=["YCrCb", "HSV", "Lab", "RGB", "BGR"],
                 required=True,
             ),
+        ]
+
+    @typing.override
+    def get_input_formats(self) -> list[FormatDefinition]:
+        # input color space comes from parameter
+        return [
+            FormatDefinition(pixel_format="bgr24", color_space="param:input_colorspace")
+        ]
+
+    @typing.override
+    def get_output_formats(self) -> list[FormatDefinition]:
+        # output color space comes from parameter
+        return [
+            FormatDefinition(
+                pixel_format="bgr24", color_space="param:output_colorspace"
+            )
         ]
 
     @typing.override

@@ -1,13 +1,20 @@
 import cv2
 import typing
 from pathlib import Path
-from app.modules.base_module import ModuleBase, ParameterDefinition
+from app.modules.base_module import (
+    ModuleBase,
+    ParameterDefinition,
+    FormatDefinition,
+    ModuleRole,
+)
 from app.utils.shared_functionality import as_context
 import numpy as np
 
 
 class Blur(ModuleBase):
     name = "blur"
+
+    role = ModuleRole.PROCESSNODE
 
     @typing.override
     # Get the parameters for the blur module
@@ -24,6 +31,19 @@ class Blur(ModuleBase):
                 required=True,
             ),
         ]
+
+    @typing.override
+    def get_input_formats(self) -> list[FormatDefinition]:
+        return [
+            FormatDefinition(pixel_format="bgr24", color_space="sRGB"),
+            FormatDefinition(pixel_format="rgb24", color_space="sRGB"),
+            FormatDefinition(pixel_format="gray8", color_space="sRGB"),
+        ]
+
+    @typing.override
+    def get_output_formats(self) -> list[FormatDefinition]:
+        # blur doesn’t change format
+        return self.get_input_formats()
 
     @typing.override
     # Process a single frame

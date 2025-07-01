@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useContext, useRef, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -23,7 +23,7 @@ import type { Node, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import {
   getInitialNodeParamValue,
-  moduleRegistry,
+  makePorts,
   ParamValueType,
 } from "@/components/modules/modulesRegistry";
 
@@ -34,6 +34,7 @@ import { AppDrawer } from "@/components/sidebar/AppDrawer";
 import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
+import { ModulesContext } from "@/contexts/ModulesContext";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
@@ -94,6 +95,8 @@ export default function FlowCanvas({
     event.dataTransfer.dropEffect = "copy";
   }, []);
 
+  const modules = useContext(ModulesContext);
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -103,29 +106,35 @@ export default function FlowCanvas({
 
       const { type: typeValueStr, label } = JSON.parse(nodeData);
       const type = typeValueStr as NodeType;
+      const moduleDef = modules.find((m) => m.name === label)!;
+      if (!moduleDef) return;
 
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
 
-      const moduleParams = moduleRegistry[label];
-      const defaultParams = moduleParams
-        ? getInitialNodeParamValue(moduleParams.params)
-        : {};
+      const defaultParams = getInitialNodeParamValue(moduleDef.parameters);
+      const inputPorts = makePorts(moduleDef.inputFormats, "input");
+      const outputPorts = makePorts(moduleDef.outputFormats, "output");
 
-      const newNode = {
+      const newNode: Node<NodeData, NodeType> = {
         id: `${+new Date()}`,
         type,
         position,
-        data: { label: `${label}`, params: defaultParams },
+        data: {
+          label: `${label}`,
+          params: defaultParams,
+          inputFormats: inputPorts,
+          outputFormats: outputPorts,
+        },
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
       };
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [screenToFlowPosition, setNodes],
+    [screenToFlowPosition, setNodes, modules],
   );
 
   const isValidConnection: IsValidConnection<Edge> = useCallback(
@@ -198,6 +207,8 @@ export default function FlowCanvas({
     setAppDrawerOpen(false);
     setTempNode(null);
   }, []);
+
+  if (!modules) return;
 
   return (
     <Box className="w-full h-full relative bg-white rounded-lg border border-gray-300">

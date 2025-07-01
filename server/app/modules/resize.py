@@ -1,13 +1,20 @@
 import cv2
 import typing
 from pathlib import Path
-from app.modules.base_module import ModuleBase, ParameterDefinition
+from app.modules.base_module import (
+    ModuleBase,
+    ParameterDefinition,
+    FormatDefinition,
+    ModuleRole,
+)
 from app.utils.shared_functionality import as_context
 import numpy as np
 
 
 class Resize(ModuleBase):
     name = "resize"
+
+    role = ModuleRole.PROCESSNODE
 
     @typing.override
     # Get the parameters for the resize module
@@ -25,6 +32,28 @@ class Resize(ModuleBase):
                 required=True,
                 valid_values=["nearest", "linear", "cubic", "area", "lanczos4"],
             ),
+        ]
+
+    @typing.override
+    def get_input_formats(self) -> list[FormatDefinition]:
+        return [
+            FormatDefinition(pixel_format="bgr24", color_space="sRGB"),
+            FormatDefinition(pixel_format="rgb24", color_space="sRGB"),
+            FormatDefinition(pixel_format="gray8", color_space="sRGB"),
+        ]
+
+    @typing.override
+    def get_output_formats(self) -> list[FormatDefinition]:
+        # width/height will be resolved from parameters at runtime
+        return [
+            FormatDefinition(
+                pixel_format=fmt.pixel_format,
+                color_space=fmt.color_space,
+                width="param:width",
+                height="param:height",
+                frame_rate=fmt.frame_rate,
+            )
+            for fmt in self.get_input_formats()
         ]
 
     @typing.override

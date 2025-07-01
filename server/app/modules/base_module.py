@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import Literal, Optional, Any, TypeVar, Generic
 import numpy as np
+from enum import Enum
 
 ParameterType = TypeVar(
     "ParameterType",
@@ -23,12 +24,37 @@ class ParameterDefinition(Generic[ParameterType]):
     required: bool = True
 
 
+@dataclass
+class FormatDefinition:
+    pixel_format: Optional[Literal["bgr24", "rgb24", "gray8"]] | str = None
+    color_space: Optional[Literal["sRGB", "BT.709", "BT.2020"]] | str = None
+    width: Optional[int] | str = None
+    height: Optional[int] | str = None
+    frame_rate: Optional[float] | str = None
+
+
+class ModuleRole(str, Enum):
+    INPUTNODE = "inputNode"
+    PROCESSNODE = "processNode"
+    OUTPUTNODE = "outputNode"
+
+
 # Base class of a module
 class ModuleBase(ABC):
     name: str
 
+    role: ModuleRole
+
     @abstractmethod
     def get_parameters(self) -> list[ParameterDefinition[Any]]:
+        return []
+
+    @abstractmethod
+    def get_input_formats(self) -> list[FormatDefinition]:
+        return []
+
+    @abstractmethod
+    def get_output_formats(self) -> list[FormatDefinition]:
         return []
 
     @abstractmethod

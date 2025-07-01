@@ -3,18 +3,31 @@ import { Handle, Node, NodeProps, Position, useReactFlow } from "@xyflow/react";
 import { DeleteOutlined as Trash } from "@mui/icons-material";
 
 import { NodeData, NodeType } from "./types";
+import { Port } from "../modules/modulesRegistry";
 
 type CustomNode = Node<NodeData>;
 
 export default function FlowNode({
   id,
   type,
-  data: { label, params },
+  data: { label, params, inputFormats = [], outputFormats = [] },
   selected,
 }: NodeProps<CustomNode>) {
   const { deleteElements } = useReactFlow();
 
   const MAX_VISIBLE = 4; //default no of params visible in node
+
+  function tooltip(port: Port) {
+    const { width, height, frameRate, pixelFormat, colorSpace } = port.formats;
+    return [
+      width && height && `Resolution: ${width}×${height}`,
+      frameRate && `Frame rate: ${frameRate}fps`,
+      pixelFormat && `Pixel format: ${pixelFormat}`,
+      colorSpace && `Colorspace: ${colorSpace}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
 
   return (
     <div
@@ -49,13 +62,35 @@ export default function FlowNode({
           <div className="text-left text-gray-400">…</div>
         )}
       </div>
-      {type !== NodeType.InputNode ? (
-        <Handle type="target" position={Position.Left} />
-      ) : null}
+      {type !== NodeType.InputNode
+        ? inputFormats.map((port, index) => (
+            <Handle
+              key={port.id}
+              id={port.id}
+              title={tooltip(port)}
+              type="target"
+              position={Position.Left}
+              style={{
+                top: `${((index + 1) / (inputFormats.length + 1)) * 100}%`,
+              }}
+            />
+          ))
+        : null}
 
-      {type !== NodeType.OutputNode ? (
-        <Handle type="source" position={Position.Right} />
-      ) : null}
+      {type !== NodeType.OutputNode
+        ? outputFormats.map((port, index) => (
+            <Handle
+              key={port.id}
+              id={port.id}
+              title={tooltip(port)}
+              type="source"
+              position={Position.Right}
+              style={{
+                top: `${((index + 1) / (outputFormats.length + 1)) * 100}%`,
+              }}
+            />
+          ))
+        : null}
     </div>
   );
 }
