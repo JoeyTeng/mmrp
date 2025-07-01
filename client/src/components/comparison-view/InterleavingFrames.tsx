@@ -60,33 +60,32 @@ const InterleavingFrames = ({ type }: Props) => {
       <div
         className={`relative flex justify-center items-center w-full ${isFullscreen ? "h-[calc(100vh-50px)]" : "h-full"}`}
       >
-        {/* Status Overlay */}
-        {(isLoading || error) && (
-          <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
-            {isLoading ? (
-              <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              error
-            )}
-          </Box>
-        )}
         {type === VideoType.Video && videoRef && (
-          <video
-            ref={videoRef}
-            className={`object-contain bg-black ${
-              isFullscreen ? "w-full h-full" : "w-1/2 h-full"
-            }`}
-            onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
-            onLoadStart={() => setIsLoading(true)}
-            onCanPlay={() => setIsLoading(false)}
-            onError={() => setError("Failed to load video")}
-            controls={false}
-          />
+          <>
+            {(isLoading || error) && (
+              <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
+                {isLoading ? (
+                  <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  error
+                )}
+              </Box>
+            )}
+            <video
+              ref={videoRef}
+              className={`object-contain bg-black ${isFullscreen ? "w-full h-full" : "w-1/2 h-full"}`}
+              onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
+              onLoadStart={() => setIsLoading(true)}
+              onCanPlay={() => setIsLoading(false)}
+              onError={() => setError("Failed to load video")}
+              controls={false}
+            />
+          </>
+        )}
+        {type === VideoType.Stream && (
+          <>{/* UnifiedPlayer will render canvas stream */}</>
         )}
       </div>
-      {type === VideoType.Stream && (
-        <>{/* UnifiedPlayer will render canvas stream */}</>
-      )}
       <UnifiedPlayer
         type={type}
         videoRefs={[videoRef]}

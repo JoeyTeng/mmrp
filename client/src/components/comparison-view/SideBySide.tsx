@@ -55,18 +55,18 @@ const SideBySide = ({ type }: Props) => {
     >
       {/* Video Container */}
       <Box className="relative flex flex-1">
-        {/* Status Overlay */}
-        {(isLoading || error) && (
-          <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
-            {isLoading ? (
-              <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              error
-            )}
-          </Box>
-        )}
         {type === VideoType.Video && (
           <>
+            {/* Status Overlay */}
+            {(isLoading || error) && (
+              <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
+                {isLoading ? (
+                  <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  error
+                )}
+              </Box>
+            )}
             {/* Left Video */}
             <Box
               component="video"

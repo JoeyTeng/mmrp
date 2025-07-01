@@ -160,10 +160,12 @@ const FrameStreamPlayer = ({
 
   return (
     <>
-      <canvas
-        ref={canvasRef}
-        className={`object-contain bg-black ${isFullscreen ? "w-full h-full" : "w-1/2 h-full"}`}
-      />
+      <div className="flex justify-center items-center w-full h-full">
+        <canvas
+          ref={canvasRef}
+          className={`object-contain bg-black ${isFullscreen ? "w-full h-full" : "w-1/2 h-full"}`}
+        />
+      </div>
       <PlayerControls
         currentFrame={Math.min(currentFrame + 1, frames.length)}
         totalFrames={frames.length}
