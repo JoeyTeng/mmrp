@@ -16,8 +16,8 @@ async def video_feed(websocket: WebSocket):
 
     video_path = (
         Path(__file__).resolve().parent.parent.parent.parent
-        / "client"
-        / "public"
+        / "server"
+        / "videos"
         / "example-video.mp4"
     )
 

@@ -2,7 +2,10 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import PlayerControls from "./PlayerControls";
-import { config } from "@/utils/config";
+import {
+  closeVideoWebSocket,
+  createVideoWebSocket,
+} from "@/services/webSocketClient";
 
 type Props = {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -92,34 +95,23 @@ const FrameStreamPlayer = ({
   };
 
   useEffect(() => {
-    const ws = new WebSocket(`${config.apiBaseUrl}/ws/video`);
-    ws.binaryType = "arraybuffer";
-    wsRef.current = ws;
-
-    ws.onmessage = (event) => {
-      if (typeof event.data === "string") {
-        try {
-          const meta = JSON.parse(event.data);
-          if (meta.fps) {
-            currentFpsRef.current = meta.fps;
-          }
-          if (meta.mime) {
-            currentMimeRef.current = meta.mime;
-          }
-        } catch (e) {
-          console.error("Invalid metadata", e);
-        }
-      } else {
-        const blob = new Blob([event.data], { type: currentMimeRef.current });
+    const ws = createVideoWebSocket((data) => {
+      if (data instanceof ArrayBuffer) {
+        const blob = new Blob([data], { type: currentMimeRef.current });
         setFrames((prev) => [
           ...prev,
           { blob, fps: currentFpsRef.current, mime: currentMimeRef.current },
         ]);
+      } else {
+        if (data.fps) currentFpsRef.current = data.fps;
+        if (data.mime) currentMimeRef.current = data.mime;
       }
-    };
+    });
+
+    wsRef.current = ws;
 
     return () => {
-      ws.close();
+      closeVideoWebSocket();
     };
   }, []);
 
@@ -167,17 +159,11 @@ const FrameStreamPlayer = ({
   const sourceLabel = getSourceLabel?.(currentFrame);
 
   return (
-    <div className="w-full">
-      <div
-        className={`flex justify-center items-center w-full ${
-          isFullscreen ? "h-[calc(100vh-50px)]" : "h-full"
-        }`}
-      >
-        <canvas
-          ref={canvasRef}
-          className={`object-contain bg-black ${isFullscreen ? "w-full h-full" : "w-1/2 h-full"}`}
-        />
-      </div>
+    <>
+      <canvas
+        ref={canvasRef}
+        className={`object-contain bg-black ${isFullscreen ? "w-full h-full" : "w-1/2 h-full"}`}
+      />
       <PlayerControls
         currentFrame={Math.min(currentFrame + 1, frames.length)}
         totalFrames={frames.length}
@@ -195,7 +181,7 @@ const FrameStreamPlayer = ({
         sliderMax={frames.length - 1}
         sliderStep={1}
       />
-    </div>
+    </>
   );
 };
 
