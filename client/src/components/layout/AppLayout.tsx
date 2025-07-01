@@ -16,7 +16,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { modules, loading } = useModules();
 
   if (loading) {
-    <Loading />;
+    return <Loading />;
   }
 
   return (
