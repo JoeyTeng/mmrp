@@ -1,42 +1,101 @@
 import subprocess
 import platform
 import json
+import cv2
 from pathlib import Path
 from typing import Any
+from app.utils.shared_functionality import as_context
+
+
+# Decode a video file to a spcified output format such as YUV
+def decode_video(video_path: Path, input_colorspace: str, output_format: str = "yuv"):
+    video = str(video_path)
+    output_path = str(video_path.parent / f"{video_path.stem}.{output_format}")
+
+    # Use this to map output format to OpenCV constants
+    # TODO: Add more formats if needed
+    match output_format:
+        case "yuv":
+            output: str = "YUV_I420"
+        case _:
+            output: str = "YUV_I420"
+
+    # Video capture setup
+    cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
+
+    with cv2VideoCaptureContext(video) as cap:
+        if not cap.isOpened():
+            raise ValueError(f"Could not open video file: {video}")
+
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        with open(output_path, "wb") as out_file:
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                constant_name = f"COLOR_{input_colorspace}2{output}"
+                if not hasattr(cv2, constant_name):
+                    raise ValueError(
+                        f"Unsupported colorspace conversion: {input_colorspace} to {output}"
+                    )
+                color = getattr(cv2, constant_name)
+                output_frame = cv2.cvtColor(frame, color)
+                out_file.write(output_frame.tobytes())
+
+    return output_path, (width, height)
 
 
 # Function to execute a specified binary with given parameters
 def execute_binary(binary_name: str, video_name: str, args: dict[str, Any]):
     base_dir = Path(__file__).resolve().parents[2]
+    binary_dir = base_dir / "binaries" / binary_name
+
+    # Get video and transform it to yuv
+    video = base_dir / "videos" / video_name
+    if not video.exists():
+        raise FileNotFoundError(f"Video file not found: {video}")
+    yuv, dim = decode_video(video, "BGR", "yuv")
 
     # Resolve input and output paths
-    input_path = base_dir / "videos" / video_name
+    input_path = base_dir / "videos" / yuv
     output_dir = base_dir / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "output.yuv"
 
     # Detect OS and choose binary accordingly
-    is_windows = platform.system() == "Windows"
-    exe_name = (
-        "simple-video-processor-app.exe" if is_windows else "simple-video-processor-app"
-    )
-    binary: Path = base_dir / "binaries" / binary_name
-    exe_path = binary / exe_name
+    match platform.system():
+        case "Windows":
+            exe_path = binary_dir / "Windows-AMD64"
+            exe = exe_path / f"{binary_name}.exe"
+        case "Linux":
+            exe_path = binary_dir / "Linux-x86_64"
+            exe = exe_path / f"{binary_name}"
+            subprocess.run(["chmod", "+x", str(exe)], check=True)
+        case "Darwin":
+            exe_path = binary_dir / "Darwin-arm64"
+            exe = exe_path / f"{binary_name}"
+        case _:
+            raise Exception(
+                "Unsupported operating system. Only Windows, Linux, and macOS are supported."
+            )
 
-    if not exe_path.exists():
-        raise FileNotFoundError(f"Executable not found: {exe_path}")
-
-    # Ensure executable permission on Linux/macOS
-    if not is_windows:
-        subprocess.run(["chmod", "+x", str(exe_path)], check=True)
+    if not exe_path.exists() or not exe.exists():
+        raise FileNotFoundError(f"Executable not found: {exe}")
 
     # Load parameter config
-    config_path = binary / "config.json"
-    with open(config_path, "r") as f:
-        config = json.load(f)
+    config_path = exe_path / "config.json"
+    if not config_path.exists():
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+    try:
+        with open(config_path, "r") as f:
+            config = json.load(f)
+    except json.JSONDecodeError:
+        raise ValueError(f"Invalid JSON in config file: {config_path}")
 
     # Build command
-    command = [str(exe_path)]
+    command = [str(exe)]
 
     for param in config["parameters"]:
         name = param["name"]
@@ -44,7 +103,7 @@ def execute_binary(binary_name: str, video_name: str, args: dict[str, Any]):
         param_type = param["type"]
         required = param.get("required", False)
 
-        # Handle special names for input/output
+        # Handle parameters
         if name == "input":
             value = str(input_path)
         elif name == "output":
@@ -66,6 +125,7 @@ def execute_binary(binary_name: str, video_name: str, args: dict[str, Any]):
     try:
         result = subprocess.run(command, check=True, capture_output=True, text=True)
         print("STDOUT:", result.stdout)
+        print("Output dimensions:", dim)
         print("STDERR:", result.stderr)
     except subprocess.CalledProcessError as e:
         print("Execution failed:")
@@ -78,9 +138,8 @@ if __name__ == "__main__":
     # Example usage
     # TODO: Integrate binary execution in pipeline processing or other processing enpoints
     binary_name = "simple-video-processor-app"
-    video_name = "bus_cif.yuv"
+    video_name = "example-video.mp4"
     args: dict[str, Any] = {
-        "input": "bus_cif.yuv",
         "width": 1280,
         "height": 720,
         "mode": 1,
@@ -88,7 +147,6 @@ if __name__ == "__main__":
         "y": 1,
         "u": 1,
         "v": 1,
-        "output": "four.yuv",
         "verbose": True,
     }  # Example arguments
 
