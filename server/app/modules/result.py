@@ -19,7 +19,7 @@ class Result(ModuleBase):
                 name="path",
                 type="str",
                 required=False,
-                description="Optional output .mp4 file path",  # for now we can choose to remove this if output path will be hardcoded
+                description="Optional output .mp4 file path",  # for now, we can choose to remove this if output path will be hardcoded
                 default="example_output.webm",
             )
         ]
@@ -41,7 +41,7 @@ class Result(ModuleBase):
         return []
 
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:
-        # Pass‐through; pipeline runner will pick this up as the final frame
+        # Pass‐through
         raise NotImplementedError
 
     def process(self, input_data: Any, parameters: dict[str, Any]) -> None:
