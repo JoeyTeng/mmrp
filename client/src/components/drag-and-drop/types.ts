@@ -20,3 +20,36 @@ export enum NodeAction {
   Export = "export",
   Delete = "delete",
 }
+
+export type ContextMenuItem<ActionType extends string> = {
+  id: ActionType;
+  label: string;
+  icon?: React.ReactNode;
+  disabled?: boolean;
+  dividerAfter?: boolean;
+  submenu?: ContextMenuItem<ActionType>[];
+  dense?: boolean;
+  color?:
+    | "red"
+    | "orange"
+    | "amber"
+    | "yellow"
+    | "lime"
+    | "green"
+    | "emerald"
+    | "teal"
+    | "cyan"
+    | "sky"
+    | "blue"
+    | "indigo"
+    | "violet"
+    | "purple"
+    | "fuchsia"
+    | "pink"
+    | "rose"
+    | "slate"
+    | "gray"
+    | "zinc"
+    | "neutral"
+    | "stone";
+};
