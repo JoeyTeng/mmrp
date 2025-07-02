@@ -20,23 +20,12 @@ const InterleavingFrames = ({ type }: Props) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [frames, setFrames] = useState<FrameData[]>([]);
   const currentFpsRef = useRef(30);
   const currentMimeRef = useRef("image/webp");
   const wsRef = useRef<WebSocket | null>(null);
-
-  useEffect(() => {
-    const onFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement));
-    };
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-    };
-  }, []);
 
   useEffect(() => {
     let url: string = videoRef.current?.src || "";
@@ -104,12 +93,12 @@ const InterleavingFrames = ({ type }: Props) => {
   }, []);
 
   return (
-    <div
+    <Box
       ref={containerRef}
-      className={`relative w-full flex flex-col ${isFullscreen ? "h-screen bg-black" : "h-full"}`}
+      className="relative h-full w-full flex flex-col bg-black"
     >
-      <div
-        className={`relative flex justify-center items-center w-full ${isFullscreen ? "h-[calc(100vh-50px)]" : "h-full"}`}
+      <Box
+        className={`relative flex-1 flex justify-center items-center overflow-hidden`}
       >
         {(isLoading || error) && (
           <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
@@ -122,9 +111,10 @@ const InterleavingFrames = ({ type }: Props) => {
         )}
         {type === VideoType.Video && videoRef && (
           <>
-            <video
+            <Box
+              component="video"
               ref={videoRef}
-              className={`object-contain bg-black ${isFullscreen ? "w-full h-full" : "w-1/2 h-full"}`}
+              className={`h-full w-auto object-contain`}
               onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
               onLoadStart={() => setIsLoading(true)}
               onCanPlay={() => setIsLoading(false)}
@@ -135,13 +125,14 @@ const InterleavingFrames = ({ type }: Props) => {
         )}
         {type === VideoType.Stream && (
           <>
-            <canvas
+            <Box
+              component="canvas"
               ref={canvasRef}
-              className={`object-contain bg-black ${isFullscreen ? "w-full h-full" : "w-1/2 h-full"}`}
+              className={`h-full w-auto object-contain`}
             />
           </>
         )}
-      </div>
+      </Box>
       <UnifiedPlayer
         type={type}
         videoRefs={[videoRef]}
@@ -152,7 +143,7 @@ const InterleavingFrames = ({ type }: Props) => {
         containerRef={containerRef}
         ref={playerRef}
       />
-    </div>
+    </Box>
   );
 };
 

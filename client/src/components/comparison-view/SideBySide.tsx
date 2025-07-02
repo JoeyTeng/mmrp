@@ -140,11 +140,13 @@ const SideBySide = ({ type }: Props) => {
         )}
         {type === VideoType.Stream && (
           <>
-            <canvas
+            <Box
+              component="canvas"
               ref={canvasARef}
               className="w-1/2 h-full bg-black object-contain"
             />
-            <canvas
+            <Box
+              component="canvas"
               ref={canvasBRef}
               className="w-1/2 h-full bg-black object-contain"
             />
