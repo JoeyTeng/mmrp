@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from typing import Any
 from pathlib import Path
 import platform
@@ -23,20 +23,11 @@ def get_all_binaries() -> list[dict[str, Any]]:
         if not binary_dir.is_dir():
             continue
         # Determine OS and choose binary accordingly
-        match platform.system():
-            case "Windows":
-                exe_path = binary_dir / "Windows-AMD64"
-            case "Linux":
-                exe_path = binary_dir / "Linux-x86_64"
-            case "Darwin":
-                exe_path = binary_dir / "Darwin-arm64"
-            case _:
-                raise HTTPException(
-                    status_code=500,
-                    detail="Unsupported operating system. Only Windows, Linux, and macOS are supported.",
-                )
+        exe_path: Path = binary_dir / f"{platform.system()}-{platform.machine()}"
         if not exe_path.exists():
             continue
+
+        # Get config file for parameters
         config_path = exe_path / "config.json"
         if not config_path.exists():
             continue
@@ -44,7 +35,7 @@ def get_all_binaries() -> list[dict[str, Any]]:
         try:
             with open(config_path, "r") as f:
                 config = json.load(f)
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             continue
 
         binaries.append(

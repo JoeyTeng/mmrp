@@ -7,7 +7,7 @@ from typing import Any
 from app.utils.shared_functionality import as_context
 
 
-# Decode a video file to a spcified output format such as YUV
+# Decode a video file to a specified output format such as YUV
 def decode_video(video_path: Path, input_colorspace: str, output_format: str = "yuv"):
     video = str(video_path)
     output_path = str(video_path.parent / f"{video_path.stem}.{output_format}")
@@ -38,7 +38,7 @@ def decode_video(video_path: Path, input_colorspace: str, output_format: str = "
                 constant_name = f"COLOR_{input_colorspace}2{output}"
                 if not hasattr(cv2, constant_name):
                     raise ValueError(
-                        f"Unsupported colorspace conversion: {input_colorspace} to {output}"
+                        f"Unsupported conversion: {input_colorspace} to {output}"
                     )
                 color = getattr(cv2, constant_name)
                 output_frame = cv2.cvtColor(frame, color)
@@ -65,23 +65,17 @@ def execute_binary(binary_name: str, video_name: str, args: dict[str, Any]):
     output_path = output_dir / "output.yuv"
 
     # Detect OS and choose binary accordingly
-    match platform.system():
-        case "Windows":
-            exe_path = binary_dir / "Windows-AMD64"
-            exe = exe_path / f"{binary_name}.exe"
-        case "Linux":
-            exe_path = binary_dir / "Linux-x86_64"
-            exe = exe_path / f"{binary_name}"
-            subprocess.run(["chmod", "+x", str(exe)], check=True)
-        case "Darwin":
-            exe_path = binary_dir / "Darwin-arm64"
-            exe = exe_path / f"{binary_name}"
-        case _:
-            raise Exception(
-                "Unsupported operating system. Only Windows, Linux, and macOS are supported."
-            )
+    exe_path: Path = binary_dir / f"{platform.system()}-{platform.machine()}"
+    if not exe_path.exists():
+        raise FileNotFoundError(f"Executable path not found: {exe_path}")
 
-    if not exe_path.exists() or not exe.exists():
+    if platform.system() in {"Linux", "Darwin"}:
+        exe = exe_path / f"{binary_name}"
+        subprocess.run(["chmod", "+x", str(exe)], check=True)
+    else:
+        exe = exe_path / f"{binary_name}.exe"
+
+    if not exe.exists():
         raise FileNotFoundError(f"Executable not found: {exe}")
 
     # Load parameter config
@@ -91,7 +85,7 @@ def execute_binary(binary_name: str, video_name: str, args: dict[str, Any]):
     try:
         with open(config_path, "r") as f:
             config = json.load(f)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         raise ValueError(f"Invalid JSON in config file: {config_path}")
 
     # Build command
