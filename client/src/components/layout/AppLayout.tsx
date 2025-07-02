@@ -20,7 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ModulesContext.Provider value={modules}>
+    <ModulesContext value={modules}>
       <Box className="flex h-screen w-screen bg-gray-50">
         <Sidebar
           anchor="left"
@@ -48,6 +48,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           onPanelToggle={setRightOpenPanelId}
         />
       </Box>
-    </ModulesContext.Provider>
+    </ModulesContext>
   );
 }
