@@ -4,6 +4,7 @@ export type FrameMessage =
   | {
       fps?: number;
       mime?: string;
+      count?: number;
     }
   | ArrayBuffer;
 
@@ -12,6 +13,7 @@ export const createVideoWebSocket = (
   onOpen?: () => void,
   onError?: (err: Event) => void,
   onClose?: () => void,
+  initMessage?: object,
 ): WebSocket => {
   const url = `${process.env.NEXT_PUBLIC_API_URL?.replace(/^http/, "ws")}/ws/video`;
   ws = new WebSocket(url);
@@ -19,6 +21,9 @@ export const createVideoWebSocket = (
 
   ws.onopen = () => {
     console.log("WebSocket connection opened");
+    if (initMessage) {
+      ws?.send(JSON.stringify(initMessage)); // send mode info
+    }
     onOpen?.();
   };
 

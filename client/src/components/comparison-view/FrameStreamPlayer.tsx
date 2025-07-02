@@ -2,61 +2,54 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import PlayerControls from "./PlayerControls";
-import {
-  closeVideoWebSocket,
-  createVideoWebSocket,
-} from "@/services/webSocketClient";
+import { FrameData } from "./types";
 
 type Props = {
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  canvasRefs: React.RefObject<HTMLCanvasElement | null>[];
+  frames: FrameData[];
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
-  isFullscreen?: boolean;
-};
-
-type FrameData = {
-  blob: Blob;
-  fps: number;
-  mime: string;
+  onFullscreen: () => void;
 };
 
 const FrameStreamPlayer = ({
-  containerRef,
+  canvasRefs,
+  frames,
   showSource,
   getSourceLabel,
-  isFullscreen,
+  onFullscreen,
 }: Props) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
-  const currentFpsRef = useRef(30);
-  const currentMimeRef = useRef("image/webp");
-
   const [isPlaying, setIsPlaying] = useState(false);
-  const [frames, setFrames] = useState<FrameData[]>([]);
   const [currentFrame, setCurrentFrame] = useState(0);
 
   // Render frame at given index
   const renderFrame = useCallback(
-    (index: number): Promise<void> => {
-      return new Promise((resolve) => {
-        if (!canvasRef.current || index >= frames.length) return resolve();
-        const ctx = canvasRef.current.getContext("2d");
-        const { blob } = frames[index];
+    async (index: number): Promise<void> => {
+      if (index >= frames.length) return;
+
+      const frame = frames[index];
+
+      for (let i = 0; i < canvasRefs.length; i++) {
+        const canvas = canvasRefs[i]?.current;
+        const blob = frame.blob[i]; // Match frame blob to canvas
+
+        if (!canvas || !blob) continue;
+
         const url = URL.createObjectURL(blob);
         const img = new Image();
         img.onload = () => {
-          if (!canvasRef.current) return resolve();
-          canvasRef.current.width = img.width;
-          canvasRef.current.height = img.height;
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx?.clearRect(0, 0, canvas.width, canvas.height);
           ctx?.drawImage(img, 0, 0);
           URL.revokeObjectURL(url);
-          resolve();
         };
         img.src = url;
-      });
+      }
     },
-    [frames],
+    [frames, canvasRefs],
   );
 
   const handlePlayPause = () => {
@@ -83,37 +76,6 @@ const FrameStreamPlayer = ({
     setCurrentFrame(value);
     renderFrame(value);
   };
-
-  const handleFullscreen = () => {
-    const elem = containerRef.current;
-    if (!elem) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      elem.requestFullscreen();
-    }
-  };
-
-  useEffect(() => {
-    const ws = createVideoWebSocket((data) => {
-      if (data instanceof ArrayBuffer) {
-        const blob = new Blob([data], { type: currentMimeRef.current });
-        setFrames((prev) => [
-          ...prev,
-          { blob, fps: currentFpsRef.current, mime: currentMimeRef.current },
-        ]);
-      } else {
-        if (data.fps) currentFpsRef.current = data.fps;
-        if (data.mime) currentMimeRef.current = data.mime;
-      }
-    });
-
-    wsRef.current = ws;
-
-    return () => {
-      closeVideoWebSocket();
-    };
-  }, []);
 
   // Playback effect - dynamic frame timing by fps stored in each frame
   useEffect(() => {
@@ -160,12 +122,6 @@ const FrameStreamPlayer = ({
 
   return (
     <>
-      <div className="flex justify-center items-center w-full h-full">
-        <canvas
-          ref={canvasRef}
-          className={`object-contain bg-black ${isFullscreen ? "w-full h-full" : "w-1/2 h-full"}`}
-        />
-      </div>
       <PlayerControls
         currentFrame={Math.min(currentFrame + 1, frames.length)}
         totalFrames={frames.length}
@@ -176,7 +132,7 @@ const FrameStreamPlayer = ({
         onMuteToggle={() => {}}
         onStepFrame={stepFrame}
         onSliderChange={onSliderChange}
-        onFullscreen={handleFullscreen}
+        onFullscreen={onFullscreen}
         showSource={showSource}
         sourceLabel={sourceLabel}
         sliderValue={currentFrame}

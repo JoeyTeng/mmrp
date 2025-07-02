@@ -3,34 +3,48 @@
 import React from "react";
 import VideoPlayer, { PlayerHandle } from "./VideoPlayer";
 import FrameStreamPlayer from "./FrameStreamPlayer";
-import { VideoType } from "./types";
+import { FrameData, VideoType } from "./types";
 
 type UnifiedPlayerProps = {
   type: VideoType;
   videoRefs?: React.RefObject<HTMLVideoElement | null>[];
+  canvasRefs?: React.RefObject<HTMLCanvasElement | null>[];
+  frames: FrameData[];
   containerRef: React.RefObject<HTMLDivElement | null>;
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
   ref?: React.RefObject<PlayerHandle | null>;
-  isFullscreen?: boolean;
 };
 
 const UnifiedPlayer = ({
   type,
   videoRefs,
+  canvasRefs,
+  frames,
   containerRef,
   showSource,
   getSourceLabel,
   ref,
-  isFullscreen,
 }: UnifiedPlayerProps) => {
+  const handleFullscreen = () => {
+    const elem = containerRef.current;
+    if (!elem) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      elem.requestFullscreen().catch((err) => {
+        console.error("Failed to enter fullscreen:", err);
+      });
+    }
+  };
+
   if (type === VideoType.Video && videoRefs) {
     return (
       <VideoPlayer
         videoRefs={videoRefs}
-        containerRef={containerRef}
         showSource={showSource}
         getSourceLabel={getSourceLabel}
+        onFullscreen={handleFullscreen}
         ref={ref}
       />
     );
@@ -38,10 +52,11 @@ const UnifiedPlayer = ({
 
   return (
     <FrameStreamPlayer
-      containerRef={containerRef}
+      canvasRefs={canvasRefs!}
+      frames={frames}
       showSource={showSource}
       getSourceLabel={getSourceLabel}
-      isFullscreen={isFullscreen}
+      onFullscreen={handleFullscreen}
     />
   );
 };
