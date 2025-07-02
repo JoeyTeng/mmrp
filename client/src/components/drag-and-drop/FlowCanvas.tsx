@@ -12,8 +12,6 @@ import {
   Position,
   MarkerType,
   getOutgoers,
-  OnEdgesChange,
-  OnNodesChange,
   Panel,
   useReactFlow,
 } from "@xyflow/react";
@@ -23,7 +21,12 @@ import type { Node, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import FlowNode from "@/components/drag-and-drop/FlowNode";
-import { NodeData, NodeType, ParamValueType } from "./types";
+import {
+  FlowCanvasProps,
+  NodeData,
+  NodeType,
+  ParameterConfigurationRef,
+} from "./types";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { AppDrawer } from "@/components/sidebar/AppDrawer";
 import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
@@ -38,16 +41,6 @@ const nodeTypes = {
   [NodeType.OutputNode]: FlowNode,
 };
 
-type FlowCanvasProps = {
-  nodes: Node<NodeData, NodeType>[];
-  edges: Edge[];
-  onNodesChange: OnNodesChange<Node<NodeData, NodeType>>;
-  onEdgesChange: OnEdgesChange;
-  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
-  onSelectNode: (id: string | null) => void;
-};
-
 export default function FlowCanvas({
   nodes,
   edges,
@@ -58,6 +51,7 @@ export default function FlowCanvas({
   onSelectNode,
 }: FlowCanvasProps) {
   const paneRef = useRef<HTMLDivElement>(null);
+  const paramsConfigRef = useRef<ParameterConfigurationRef>(null);
 
   const [appDrawerOpen, setAppDrawerOpen] = useState(false);
   const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
@@ -178,29 +172,18 @@ export default function FlowCanvas({
     [],
   );
 
-  const handleParamChange = useCallback(
-    (key: string, value: ParamValueType) => {
-      setTempNode((prev) =>
-        prev
-          ? {
-              ...prev,
-              data: {
-                ...prev.data,
-                params: { ...prev.data.params, [key]: value },
-              },
-            }
-          : null,
-      );
-    },
-    [],
-  );
-
   const handleConfirmParams = useCallback(() => {
-    if (!tempNode) return;
+    const tempConfigNodeRef = paramsConfigRef.current?.getTempNode() as
+      | Node<NodeData, NodeType>
+      | undefined;
 
-    setNodes((nds) => nds.map((n) => (n.id === tempNode.id ? tempNode : n)));
+    if (!tempConfigNodeRef) return;
+
+    setNodes((nds) =>
+      nds.map((n) => (n.id === tempConfigNodeRef.id ? tempConfigNodeRef : n)),
+    );
     setAppDrawerOpen(false);
-  }, [tempNode, setNodes]);
+  }, [setNodes]);
 
   const handleCancelParams = useCallback(() => {
     setAppDrawerOpen(false);
@@ -270,10 +253,7 @@ export default function FlowCanvas({
       >
         <Box display="flex" flexDirection="column" height="100%">
           <Box flex={1} overflow="auto">
-            <ParameterConfiguration
-              node={tempNode}
-              onParamChange={handleParamChange}
-            />
+            <ParameterConfiguration ref={paramsConfigRef} node={tempNode} />
           </Box>
           <Box
             sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}

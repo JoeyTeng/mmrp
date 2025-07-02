@@ -1,178 +1,162 @@
 "use client";
 
-import type { Node } from "@xyflow/react";
+import { useState, useCallback, useImperativeHandle, forwardRef } from "react";
 import { InfoOutline as InfoIcon } from "@mui/icons-material";
-import { Box } from "@mui/material";
-import { useContext } from "react";
-import { ModulesContext } from "@/contexts/ModulesContext";
-import { NodeData, ParameterDefinition, ParamValueType } from "./types";
+import { Box, TextField, MenuItem } from "@mui/material";
+import { NodeParamValue } from "../modules/modulesRegistry";
+import {
+  ParameterConfigurationProps,
+  ParameterConfigurationRef,
+} from "./types";
 
-type ParameterConfigurationProps = {
-  node?: Node<NodeData> | null;
-  onParamChange: (key: string, value: ParamValueType) => void;
+const getInputType = (value: NodeParamValue) => {
+  if (Array.isArray(value)) return "select";
+  if (typeof value === "number") return "number";
+  if (typeof value === "boolean") return "boolean";
+  return "text";
 };
 
-function renderBoolInput(
-  key: string,
-  value: ParamValueType,
-  onChange: (key: string, value: ParamValueType) => void,
-) {
-  return (
-    <div key={key} className="mb-4">
-      <label className="block mb-1 font-medium">{key}</label>
-      <input
-        type="checkbox"
-        checked={Boolean(value)}
-        onChange={(e) => onChange(key, e.target.checked)}
-      />
-    </div>
+const ParameterConfiguration = forwardRef<
+  ParameterConfigurationRef,
+  ParameterConfigurationProps
+>(({ node }, ref) => {
+  const [tempNode, setTempNode] = useState(node);
+  const [numberInputStates, setNumberInputStates] = useState<
+    Record<string, string>
+  >({});
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getTempNode: () => tempNode ?? null,
+    }),
+    [tempNode],
   );
-}
 
-function renderSelectInput(
-  moduleRegistryVal: string[],
-  key: string,
-  value: ParamValueType,
-  onChange: (key: string, value: ParamValueType) => void,
-) {
-  const options = moduleRegistryVal;
-  const selected = typeof value === "string" ? value : "";
+  useState(() => {
+    if (tempNode) {
+      const initialStates: Record<string, string> = {};
+      Object.entries(tempNode.data.params).forEach(([key, value]) => {
+        if (typeof value === "number") {
+          initialStates[key] = value.toString();
+        }
+      });
+      setNumberInputStates(initialStates);
+    }
+  });
 
-  return (
-    <div key={key} className="mb-4">
-      <label htmlFor={key} className="block mb-1 font-medium">
-        {key}
-      </label>
-      <select
-        id={key}
-        value={selected}
-        className="w-full p-1.5 rounded bg-gray-100"
-        onChange={(e) => onChange(key, e.target.value)}
-      >
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
-    </div>
+  const handleParamChange = useCallback(
+    (key: string, value: NodeParamValue) => {
+      setTempNode((prev) => {
+        if (!prev) return null;
+
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            params: {
+              ...prev.data.params,
+              [key]: value,
+            },
+          },
+        };
+      });
+    },
+    [],
   );
-}
 
-function renderNumberInput(
-  key: string,
-  value: ParamValueType,
-  paramDef: ParameterDefinition,
-  onChange: (key: string, value: ParamValueType) => void,
-) {
-  const [min, max] = Array.isArray(paramDef.validValues)
-    ? (paramDef.validValues as [number, number])
-    : [undefined, undefined];
+  const handleInputNumber = (key: string, rawValue: string) => {
+    const regex = /^\d*\.?\d*$/;
+    if (regex.test(rawValue) || rawValue === "") {
+      setNumberInputStates((prev) => ({ ...prev, [key]: rawValue }));
+      handleParamChange(key, rawValue === "" ? 0 : Number(rawValue));
+    }
+  };
 
-  return (
-    <div key={key} className="mb-4">
-      <label htmlFor={key} className="block mb-1 font-medium">
-        {key}
-      </label>
-      <input
-        id={key}
-        type="number"
-        min={min}
-        max={max}
-        value={typeof value === "number" ? value : ""}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          let num = Number(e.target.value);
-          if (min !== undefined && num < min) num = min;
-          if (max !== undefined && num > max) num = max; // guard against invalid input
-          onChange(key, num);
-        }}
-        className="w-full p-1.5 rounded bg-gray-100"
-      />
-    </div>
-  );
-}
-
-function renderTextInput(
-  key: string,
-  value: ParamValueType,
-  onChange: (key: string, value: ParamValueType) => void,
-) {
-  return (
-    <div key={key} className="mb-4">
-      <label htmlFor={key} className="block mb-1 font-medium">
-        {key}
-      </label>
-      <input
-        id={key}
-        type="text"
-        value={typeof value === "string" ? value : String(value)}
-        onChange={(e) => onChange(key, e.target.value)}
-        className="w-full p-1.5 rounded bg-gray-100"
-      />
-    </div>
-  );
-}
-
-export default function ParameterConfiguration({
-  node,
-  onParamChange,
-}: ParameterConfigurationProps) {
-  const modules = useContext(ModulesContext);
-
-  if (!node) {
+  if (!tempNode) {
     return (
-      <Box className="flex justify-evenly gap-2.5">
-        <InfoIcon className="text-gray-500" />
-        <span>select pipeline module to edit parameters</span>
+      <Box display="flex" alignItems="center" gap={2} p={2}>
+        <InfoIcon color="action" />
+        <span>Select pipeline module to edit parameters</span>
       </Box>
     );
   }
 
-  if (!modules) return;
-  const { label, params } = node.data;
+  const renderParamInput = (key: string, value: NodeParamValue) => {
+    const inputType = getInputType(value);
 
-  const moduleDef = modules.find((m) => m.name == label)!;
-  if (!moduleDef) return;
+    switch (inputType) {
+      case "select":
+        return (
+          <TextField
+            key={key}
+            select
+            fullWidth
+            label={key}
+            value={value}
+            onChange={(e) => handleParamChange(key, e.target.value)}
+            sx={{ mb: 2 }}
+          >
+            {Array.isArray(value) &&
+              value.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+          </TextField>
+        );
+
+      case "number":
+        return (
+          <TextField
+            key={key}
+            fullWidth
+            type="text" // Changed from "number" to "text" for better control
+            label={key}
+            value={numberInputStates[key] || ""}
+            onChange={(e) => handleInputNumber(key, e.target.value)}
+            sx={{ mb: 2 }}
+          />
+        );
+
+      case "boolean":
+        return (
+          <TextField
+            key={key}
+            select
+            fullWidth
+            label={key}
+            value={String(value)}
+            onChange={(e) => handleParamChange(key, e.target.value === "true")}
+            sx={{ mb: 2 }}
+          >
+            <MenuItem value="true">True</MenuItem>
+            <MenuItem value="false">False</MenuItem>
+          </TextField>
+        );
+
+      default:
+        return (
+          <TextField
+            key={key}
+            fullWidth
+            label={key}
+            value={String(value)}
+            onChange={(e) => handleParamChange(key, e.target.value)}
+            sx={{ mb: 2 }}
+          />
+        );
+    }
+  };
 
   return (
-    <Box className="flex-1 overflow-y-auto h-full">
-      <div className="p-2">
-        {Object.entries(params).map(([key, value]) => {
-          const paramDef = moduleDef.parameters.find((p) => p.name === key);
-          if (!paramDef) return;
-
-          if (paramDef.type === "bool") {
-            return renderBoolInput(key, Boolean(value), onParamChange);
-          }
-
-          // 2) select
-          if (
-            Array.isArray(paramDef.validValues) &&
-            paramDef.validValues.length > 0 &&
-            typeof paramDef.validValues[0] === "string"
-          ) {
-            return renderSelectInput(
-              paramDef.validValues as string[],
-              key,
-              value,
-              onParamChange,
-            );
-          }
-
-          // 3) number
-          if (paramDef.type === "int" || paramDef.type === "float") {
-            return renderNumberInput(
-              key,
-              Number(value),
-              paramDef,
-              onParamChange,
-            );
-          }
-
-          // 4) fallback text
-          return renderTextInput(key, String(value), onParamChange);
-        })}
-      </div>
+    <Box sx={{ p: 2, height: "100%", overflowY: "auto" }}>
+      {Object.entries(tempNode.data.params).map(([key, value]) =>
+        renderParamInput(key, value),
+      )}
     </Box>
   );
-}
+});
+
+ParameterConfiguration.displayName = "ParameterConfiguration";
+export default ParameterConfiguration;

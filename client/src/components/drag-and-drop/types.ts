@@ -34,3 +34,24 @@ export enum NodeType {
   ProcessNode = "processNode",
   OutputNode = "outputNode",
 }
+
+export type FlowCanvasProps = {
+  nodes: Node<NodeData, NodeType>[];
+  edges: Edge[];
+  onNodesChange: OnNodesChange<Node<NodeData, NodeType>>;
+  onEdgesChange: OnEdgesChange;
+  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
+  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  onSelectNode: (id: string | null) => void;
+};
+
+export type ParameterConfigurationProps = {
+  node?: Node<{ label: string; params: Record<string, NodeParamValue> }> | null;
+};
+
+export type ParameterConfigurationRef = {
+  getTempNode: () => Node<{
+    label: string;
+    params: Record<string, NodeParamValue>;
+  }> | null;
+};
