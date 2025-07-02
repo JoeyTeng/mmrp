@@ -41,11 +41,9 @@ class Source(ModuleBase):
         ]
 
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:
-        # Source frames are injected by the pipeline controller, never called directly
-        raise NotImplementedError(
-            "Frame injection is handled by the pipeline controller"
-        )
+        # Source frames are injected by the pipeline service, never called directly
+        raise NotImplementedError("Frame injection is handled by the pipeline service")
 
     def process(self, input_data: Any, parameters: dict[str, Any]) -> None:
-        # Entire‐video processing is handled by the pipeline controller
-        raise NotImplementedError("Video read is handled by the pipeline controller")
+        # Entire‐video processing is handled by the pipeline service
+        raise NotImplementedError("Video read is handled by the pipeline service")

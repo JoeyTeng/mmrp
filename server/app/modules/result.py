@@ -19,7 +19,7 @@ class Result(ModuleBase):
                 name="path",
                 type="str",
                 required=False,
-                description="Optional output .mp4 file path",  # for now we can choose to remove this if output psth will be hardcoded
+                description="Optional output .mp4 file path",  # for now we can choose to remove this if output path will be hardcoded
                 default="example_output.webm",
             )
         ]
@@ -45,5 +45,5 @@ class Result(ModuleBase):
         raise NotImplementedError
 
     def process(self, input_data: Any, parameters: dict[str, Any]) -> None:
-        # Writing out is done by your pipeline controller’s writer logic
-        raise NotImplementedError("Writing is handled by the pipeline controller")
+        # Writing out is done by pipeline service’s writer logic
+        raise NotImplementedError("Writing is handled by the pipeline service")
