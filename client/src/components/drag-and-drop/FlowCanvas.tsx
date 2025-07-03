@@ -107,7 +107,10 @@ export default function FlowCanvas({
       const { type: typeValueStr, label } = JSON.parse(nodeData);
       const type = typeValueStr as NodeType;
       const moduleDef = modules.find((m) => m.name === label)!;
-      if (!moduleDef) return;
+      if (!moduleDef) {
+        console.error("Modules not yet loaded or cannot find module name");
+        return;
+      }
 
       const position = screenToFlowPosition({
         x: event.clientX,

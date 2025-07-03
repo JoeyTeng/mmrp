@@ -31,39 +31,31 @@ export function getInitialNodeParamValue(
     (initialParams, p) => {
       let val: ParamValueType;
 
-      if (Array.isArray(p.validValues)) {
-        // Case 1: numeric range [min, max] for int/float
-        if (
-          p.validValues.length === 2 &&
-          (p.type === "int" || p.type === "float") &&
-          typeof p.validValues[0] === "number" &&
-          typeof p.validValues[1] === "number"
-        ) {
-          const [min, max] = p.validValues as [number, number];
-          // Use default if valid, otherwise fallback to min
-          val =
-            typeof p.default === "number" &&
-            p.default >= min &&
-            p.default <= max
-              ? p.default
-              : min;
-        }
-        // Case 2: enum of discrete options
-        else if (p.validValues.length > 0) {
-          val = p.validValues[0] as ParamValueType;
-        }
-        // Empty array: fall through to fallback
-        else {
-          val = p.type === "bool" ? false : "";
-        }
-      }
-      // No validValues array: explicit default
-      else if (p.default !== undefined && p.default !== null) {
+      // 1) pick explicit default if there is one
+      if (p.default != null || p.default != undefined) {
         val = p.default as ParamValueType;
       }
-      // Otherwise, choose a safe empty
+      // 2) else pick the first validValues entry (if any)
+      else if (Array.isArray(p.validValues) && p.validValues.length > 0) {
+        val = p.validValues[0] as ParamValueType;
+      }
+      // 3) final fallback
       else {
         val = p.type === "bool" ? false : "";
+      }
+
+      // 4) additional check if default is in [min,max] range
+      if (
+        Array.isArray(p.validValues) &&
+        p.validValues.length === 2 &&
+        (p.type === "int" || p.type === "float")
+      ) {
+        const [min, max] = p.validValues as [number, number];
+        if (typeof val !== "number") {
+          val = min;
+        } else {
+          val = Math.min(Math.max(val, min), max);
+        }
       }
 
       initialParams[p.name] = val;

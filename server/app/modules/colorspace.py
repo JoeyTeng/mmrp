@@ -14,7 +14,7 @@ import numpy as np
 class Colorspace(ModuleBase):
     name = "colorspace"
 
-    role = ModuleRole.PROCESSNODE
+    role = ModuleRole.PROCESS_NODE
 
     @typing.override
     # Get the parameters for the colorspace module

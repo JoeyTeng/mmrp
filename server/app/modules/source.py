@@ -10,7 +10,7 @@ from app.modules.base_module import (
 class Source(ModuleBase):
     name = "source"
 
-    role = ModuleRole.INPUTNODE
+    role = ModuleRole.INPUT_NODE
 
     def get_parameters(self) -> list[ParameterDefinition[Any]]:
         return [
@@ -33,7 +33,7 @@ class Source(ModuleBase):
         return [
             FormatDefinition(
                 pixel_format="bgr24",  # default in openCV
-                color_space="sRGB",
+                color_space="BT.709 Full",
                 width=None,
                 height=None,
                 frame_rate=None,
@@ -46,4 +46,5 @@ class Source(ModuleBase):
 
     def process(self, input_data: Any, parameters: dict[str, Any]) -> None:
         # Entire‐video processing is handled by the pipeline service
+        # TODO: handle video read here
         raise NotImplementedError("Video read is handled by the pipeline service")

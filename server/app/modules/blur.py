@@ -14,7 +14,7 @@ import numpy as np
 class Blur(ModuleBase):
     name = "blur"
 
-    role = ModuleRole.PROCESSNODE
+    role = ModuleRole.PROCESS_NODE
 
     @typing.override
     # Get the parameters for the blur module
@@ -35,9 +35,9 @@ class Blur(ModuleBase):
     @typing.override
     def get_input_formats(self) -> list[FormatDefinition]:
         return [
-            FormatDefinition(pixel_format="bgr24", color_space="sRGB"),
-            FormatDefinition(pixel_format="rgb24", color_space="sRGB"),
-            FormatDefinition(pixel_format="gray8", color_space="sRGB"),
+            FormatDefinition(pixel_format="bgr24", color_space="BT.709 Full"),
+            FormatDefinition(pixel_format="rgb24", color_space="BT.709 Full"),
+            FormatDefinition(pixel_format="gray8", color_space="BT.709 Full"),
         ]
 
     @typing.override

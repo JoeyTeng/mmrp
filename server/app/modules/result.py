@@ -11,7 +11,7 @@ from app.modules.base_module import (
 class Result(ModuleBase):
     name = "result"
 
-    role = ModuleRole.OUTPUTNODE
+    role = ModuleRole.OUTPUT_NODE
 
     def get_parameters(self) -> list[ParameterDefinition[Any]]:
         return [
@@ -29,7 +29,7 @@ class Result(ModuleBase):
         return [
             FormatDefinition(
                 pixel_format="bgr24",
-                color_space="sRGB",
+                color_space="BT.709 Full",
                 width=None,
                 height=None,
                 frame_rate=None,
@@ -45,5 +45,5 @@ class Result(ModuleBase):
         raise NotImplementedError
 
     def process(self, input_data: Any, parameters: dict[str, Any]) -> None:
-        # Writing out is done by pipeline service’s writer logic
+        # TODO: Move Writing out logic from pipeline service to here
         raise NotImplementedError("Writing is handled by the pipeline service")

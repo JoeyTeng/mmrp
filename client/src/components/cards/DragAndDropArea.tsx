@@ -27,7 +27,7 @@ const initialNodes: Node<NodeData, NodeType>[] = [
           id: "output-0",
           formats: {
             pixelFormat: "bgr24",
-            colorSpace: "sRGB",
+            colorSpace: "BT.709 Full",
           },
         },
       ],
@@ -78,21 +78,21 @@ const initialNodes: Node<NodeData, NodeType>[] = [
           id: "input-0",
           formats: {
             pixelFormat: "bgr24",
-            colorSpace: "sRGB",
+            colorSpace: "BT.709 Full",
           },
         },
         {
           id: "input-1",
           formats: {
             pixelFormat: "rgb24",
-            colorSpace: "sRGB",
+            colorSpace: "BT.709 Full",
           },
         },
         {
           id: "input-2",
           formats: {
             pixelFormat: "gray8",
-            colorSpace: "sRGB",
+            colorSpace: "BT.709 Full",
           },
         },
       ],
@@ -101,21 +101,21 @@ const initialNodes: Node<NodeData, NodeType>[] = [
           id: "output-0",
           formats: {
             pixelFormat: "bgr24",
-            colorSpace: "sRGB",
+            colorSpace: "BT.709 Full",
           },
         },
         {
           id: "output-1",
           formats: {
             pixelFormat: "rgb24",
-            colorSpace: "sRGB",
+            colorSpace: "BT.709 Full",
           },
         },
         {
           id: "output-2",
           formats: {
             pixelFormat: "gray8",
-            colorSpace: "sRGB",
+            colorSpace: "BT.709 Full",
           },
         },
       ],
@@ -135,7 +135,7 @@ const initialNodes: Node<NodeData, NodeType>[] = [
           id: "input-0",
           formats: {
             pixelFormat: "bgr24",
-            colorSpace: "sRGB",
+            colorSpace: "BT.709 Full",
           },
         },
       ],

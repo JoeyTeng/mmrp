@@ -7,17 +7,12 @@ import {
   ParameterDefinition,
 } from "@/components/modules/modulesRegistry";
 import { camelizeKeys } from "@/utils/case";
-
-export enum ModuleRole {
-  InputNode = "inputNode",
-  ProcessNode = "processNode",
-  OutputNode = "outputNode",
-}
+import { NodeType } from "@/components/drag-and-drop/types";
 
 export interface ModuleMeta {
   id: number;
   name: string;
-  role: ModuleRole;
+  role: NodeType;
   parameters: ParameterDefinition[];
   inputFormats: FormatDefinition[];
   outputFormats: FormatDefinition[];

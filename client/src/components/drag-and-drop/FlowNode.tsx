@@ -4,6 +4,7 @@ import { DeleteOutlined as Trash } from "@mui/icons-material";
 
 import { NodeData, NodeType } from "./types";
 import { Port } from "../modules/modulesRegistry";
+import { Tooltip } from "@mui/material";
 
 type CustomNode = Node<NodeData>;
 
@@ -64,31 +65,43 @@ export default function FlowNode({
       </div>
       {type !== NodeType.InputNode
         ? inputFormats.map((port, index) => (
-            <Handle
+            <Tooltip
               key={port.id}
-              id={port.id}
-              title={tooltip(port)}
-              type="target"
-              position={Position.Left}
-              style={{
-                top: `${((index + 1) / (inputFormats.length + 1)) * 100}%`,
-              }}
-            />
+              title={
+                <span style={{ whiteSpace: "pre-line" }}>{tooltip(port)}</span>
+              }
+            >
+              <Handle
+                key={port.id}
+                id={port.id}
+                type="target"
+                position={Position.Left}
+                style={{
+                  top: `${((index + 1) / (inputFormats.length + 1)) * 100}%`,
+                }}
+              />
+            </Tooltip>
           ))
         : null}
 
       {type !== NodeType.OutputNode
         ? outputFormats.map((port, index) => (
-            <Handle
+            <Tooltip
               key={port.id}
-              id={port.id}
-              title={tooltip(port)}
-              type="source"
-              position={Position.Right}
-              style={{
-                top: `${((index + 1) / (outputFormats.length + 1)) * 100}%`,
-              }}
-            />
+              title={
+                <span style={{ whiteSpace: "pre-line" }}>{tooltip(port)}</span>
+              }
+            >
+              <Handle
+                key={port.id}
+                id={port.id}
+                type="source"
+                position={Position.Right}
+                style={{
+                  top: `${((index + 1) / (outputFormats.length + 1)) * 100}%`,
+                }}
+              />
+            </Tooltip>
           ))
         : null}
     </div>
