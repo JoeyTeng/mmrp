@@ -1,17 +1,14 @@
 "use client";
 
 import type { Node } from "@xyflow/react";
-import {
-  ParamValueType,
-  ParameterDefinition,
-} from "@/components/modules/modulesRegistry";
 import { InfoOutline as InfoIcon } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import { useContext } from "react";
 import { ModulesContext } from "@/contexts/ModulesContext";
+import { NodeData, ParameterDefinition, ParamValueType } from "./types";
 
 type ParameterConfigurationProps = {
-  node?: Node<{ label: string; params: Record<string, ParamValueType> }> | null;
+  node?: Node<NodeData> | null;
   onParamChange: (key: string, value: ParamValueType) => void;
 };
 

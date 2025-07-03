@@ -1,28 +1,11 @@
-export type ParamValueType = string | number | boolean;
-
-export interface ParameterDefinition {
-  name: string;
-  type: "int" | "float" | "str" | "bool";
-  description?: string | null;
-  default?: ParamValueType;
-  validValues?: ParamValueType[] | [number, number];
-  required: boolean;
-}
-
-export interface FormatDefinition {
-  pixelFormat?: string;
-  colorSpace?: string;
-  width?: number | string;
-  height?: number | string;
-  frameRate?: number;
-}
-
-export interface Port {
-  id: string;
-  formats: FormatDefinition;
-}
-
 /** Function that gets a single initial value for a param**/
+
+import {
+  FormatDefinition,
+  ParameterDefinition,
+  ParamValueType,
+  NodePort,
+} from "./types";
 
 export function getInitialNodeParamValue(
   parameters: ParameterDefinition[],
@@ -68,9 +51,9 @@ export function getInitialNodeParamValue(
 export function makePorts(
   formats: FormatDefinition[],
   prefix: "input" | "output",
-): Port[] {
+): NodePort[] {
   return formats.map((fmt, i) => ({
     id: `${prefix}-${i}`,
     formats: fmt,
-  })) as Port[];
+  })) as NodePort[];
 }

@@ -1,6 +1,6 @@
 "use client";
 
+import { ModuleMeta } from "@/types/module";
 import { createContext } from "react";
-import type { ModuleMeta } from "@/hooks/useModule";
 
 export const ModulesContext = createContext<ModuleMeta[]>([]);

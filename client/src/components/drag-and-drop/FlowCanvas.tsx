@@ -21,20 +21,16 @@ import {
 import type { Node, Edge } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-import {
-  getInitialNodeParamValue,
-  makePorts,
-  ParamValueType,
-} from "@/components/modules/modulesRegistry";
 
 import FlowNode from "@/components/drag-and-drop/FlowNode";
-import { NodeData, NodeType } from "./types";
+import { NodeData, NodeType, ParamValueType } from "./types";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { AppDrawer } from "@/components/sidebar/AppDrawer";
 import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import { ModulesContext } from "@/contexts/ModulesContext";
+import { getInitialNodeParamValue, makePorts } from "./util";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,

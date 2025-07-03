@@ -2,8 +2,7 @@
 import { Handle, Node, NodeProps, Position, useReactFlow } from "@xyflow/react";
 import { DeleteOutlined as Trash } from "@mui/icons-material";
 
-import { NodeData, NodeType } from "./types";
-import { Port } from "../modules/modulesRegistry";
+import { NodeData, NodePort, NodeType } from "./types";
 import { Tooltip } from "@mui/material";
 
 type CustomNode = Node<NodeData>;
@@ -18,7 +17,7 @@ export default function FlowNode({
 
   const MAX_VISIBLE = 4; //default no of params visible in node
 
-  function tooltip(port: Port) {
+  function tooltip(port: NodePort) {
     const { width, height, frameRate, pixelFormat, colorSpace } = port.formats;
     return [
       width && height && `Resolution: ${width}×${height}`,

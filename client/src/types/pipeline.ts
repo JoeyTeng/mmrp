@@ -1,4 +1,4 @@
-import { ParamValueType } from "@/components/modules/modulesRegistry";
+import { ParamValueType } from "@/components/drag-and-drop/types";
 
 export type PipelineParameter = {
   [key: string]: ParamValueType;

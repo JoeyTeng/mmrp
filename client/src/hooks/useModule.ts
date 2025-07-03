@@ -2,21 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { apiClient } from "@/services/apiClient";
-import {
-  FormatDefinition,
-  ParameterDefinition,
-} from "@/components/modules/modulesRegistry";
-import { camelizeKeys } from "@/utils/case";
-import { NodeType } from "@/components/drag-and-drop/types";
-
-export interface ModuleMeta {
-  id: number;
-  name: string;
-  role: NodeType;
-  parameters: ParameterDefinition[];
-  inputFormats: FormatDefinition[];
-  outputFormats: FormatDefinition[];
-}
+import { camelizeKeys } from "@/utils/camelize";
+import { ModuleMeta } from "@/types/module";
 
 export function useModules() {
   const [modules, setModules] = useState<ModuleMeta[]>([]);
