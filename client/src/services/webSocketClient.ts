@@ -14,7 +14,7 @@ export const createVideoWebSocket = (
   onClose?: () => void,
 ): WebSocket => {
   const url = `${process.env.NEXT_PUBLIC_WS_API_URL}/video`;
-  ws = new WebSocket(url);
+  ws ??= new WebSocket(url);
   ws.binaryType = "arraybuffer";
 
   ws.onopen = () => {
@@ -49,5 +49,7 @@ export const createVideoWebSocket = (
 };
 
 export const closeVideoWebSocket = () => {
+  if (ws?.CLOSED || ws?.CLOSING) return;
   ws?.close();
+  ws = null;
 };
