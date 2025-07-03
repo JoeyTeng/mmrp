@@ -26,8 +26,25 @@ class ParameterDefinition(Generic[ParameterType]):
 
 @dataclass
 class FormatDefinition:
-    pixel_format: Optional[Literal["bgr24", "rgb24", "gray8"]] | str = None
-    color_space: Optional[Literal["BT.709 Full", "BT.709", "BT.2020"]] | str = None
+    pixel_format: (
+        Optional[
+            Literal[
+                "bgr24",
+                "rgb24",
+                "gray8",
+                "yuv420p 8bit",
+                "yuv420p 10bit",
+                "yuv444p 8bit",
+            ]
+        ]
+        | str
+    ) = None
+    color_space: (
+        Optional[
+            Literal["BT.601 Full", "BT.601 Limited", "BT.709 Full", "BT.709 Limited"]
+        ]
+        | str
+    ) = None
     width: Optional[int] | str = None
     height: Optional[int] | str = None
     frame_rate: Optional[float] | str = None
