@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pathlib import Path
-import uvicorn
 import shutil
-from app.routers import pipeline, video, module, binaries
+import uvicorn
+from app.routers import pipeline, video, module, frame, binaries
 from app.services.module import load_modules
 from app.services.binaries import download_gist_files
 
@@ -52,8 +52,8 @@ app.add_middleware(
 app.include_router(pipeline.router)
 app.include_router(video.router)
 app.include_router(module.router)
+app.include_router(frame.router)
 app.include_router(binaries.router)
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

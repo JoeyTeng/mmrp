@@ -1,11 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Player, { PlayerHandle } from "./Player";
+import UnifiedPlayer from "./UnifiedPlayer";
+import { PlayerHandle } from "./VideoPlayer";
 import { Box } from "@mui/material";
 import { loadVideo } from "@/services/videoService";
+import { VideoType } from "./types";
 
-const SideBySide = () => {
+type Props = {
+  type: VideoType;
+};
+
+const SideBySide = ({ type }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -49,43 +55,45 @@ const SideBySide = () => {
     >
       {/* Video Container */}
       <Box className="relative flex flex-1">
-        {/* Status Overlay */}
-        {(isLoading || error) && (
-          <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
-            {isLoading ? (
-              <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              error
+        {type === VideoType.Video && (
+          <>
+            {/* Status Overlay */}
+            {(isLoading || error) && (
+              <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
+                {isLoading ? (
+                  <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  error
+                )}
+              </Box>
             )}
-          </Box>
+            {/* Left Video */}
+            <Box
+              component="video"
+              ref={videoARef}
+              className="w-1/2 h-full object-contain"
+              onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
+              onLoadStart={() => setIsLoading(true)}
+              onCanPlay={() => setIsLoading(false)}
+              onError={() => setError("Failed to load original video")}
+            />
+            {/* Right Video */}
+            <Box
+              component="video"
+              ref={videoBRef}
+              className="w-1/2 h-full object-contain"
+              muted
+              onError={() => setError("Failed to load filtered video")}
+            />
+          </>
         )}
-
-        {/* Left Video */}
-        <Box
-          component="video"
-          ref={videoARef}
-          className="w-1/2 h-full object-contain"
-          onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
-          onLoadStart={() => setIsLoading(true)}
-          onCanPlay={() => setIsLoading(false)}
-          onError={() => setError("Failed to load original video")}
-        />
-
-        {/* Right Video */}
-        <Box
-          component="video"
-          ref={videoBRef}
-          className="w-1/2 h-full object-contain"
-          muted
-          onError={() => setError("Failed to load filtered video")}
-        />
       </Box>
 
-      {/* Player Controls */}
-      <Player
-        ref={playerRef}
+      <UnifiedPlayer
+        type={type}
         videoRefs={[videoARef, videoBRef]}
         containerRef={containerRef}
+        ref={playerRef}
       />
     </Box>
   );

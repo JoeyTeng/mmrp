@@ -15,5 +15,24 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.402",
     "ruff>=0.11.13",
+]
+
+[tool.pyright]
+include = ["app", "main.py"]
+exclude = [
+    "**/__pycache__",
+]
+pythonPlatform = "All"
+reportMissingImports = "error"
+reportMissingTypeStubs = false
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+enableReachabilityAnalysis = true
+typeCheckingMode = "strict"
+
+executionEnvironments = [
+    { root = "." },
 ]
