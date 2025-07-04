@@ -390,9 +390,7 @@ export default function FlowCanvas({
         items={
           contextMenuState?.target === "node"
             ? NODE_CONTEXT_MENU
-            : contextMenuState?.target === "canvas"
-              ? CANVAS_CONTEXT_MENU
-              : NODE_CONTEXT_MENU
+            : CANVAS_CONTEXT_MENU
         }
         dense
         onAction={handleContextMenuAction}
