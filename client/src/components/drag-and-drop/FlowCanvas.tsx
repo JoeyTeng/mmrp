@@ -53,7 +53,7 @@ interface ContextMenuState {
     x: number;
     y: number;
   };
-  target: "canvas" | "node" | "edge";
+  target: "canvas" | "node";
   nodeId?: string;
 }
 
