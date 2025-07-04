@@ -1,81 +1,40 @@
 "use client";
-import { Handle, Node, NodeProps, Position, useReactFlow } from "@xyflow/react";
+import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { MoreVertOutlined as MenuIcon } from "@mui/icons-material";
 
-import { NodeAction, NodeData, NodeType } from "./types";
+import { NodeData, NodeType } from "./types";
 import { IconButton } from "@mui/material";
-import { useState } from "react";
-import NodeContextMenu from "./NodeContextMenu";
 
 type CustomNode = Node<NodeData>;
+
+export interface FlowNodeProps extends NodeProps<CustomNode> {
+  onOpenMenu?: (e: React.MouseEvent, nodeId: string) => void;
+}
 
 export default function FlowNode({
   id,
   type,
   data: { label, params },
   selected,
-}: NodeProps<CustomNode>) {
-  const { deleteElements, setNodes } = useReactFlow();
-
-  const [contextMenuPos, setContextMenuPos] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-
-  const setNodeSelected = (selected: boolean) => {
-    setNodes((nodes) =>
-      nodes.map((node) =>
-        node.id === id
-          ? { ...node, selected: selected }
-          : { ...node, selected: false },
-      ),
-    );
-  };
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    if (contextMenuPos) {
-      setContextMenuPos(null);
-      return;
-    }
-
-    e.preventDefault();
-    setNodeSelected(true);
-    setContextMenuPos({
-      x: e.clientX,
-      y: e.clientY,
-    });
-  };
-
-  const handleCloseMenu = () => setContextMenuPos(null);
-
-  const handleNodeAction = (action: NodeAction) => {
-    switch (action) {
-      case NodeAction.Delete:
-        deleteElements({ nodes: [{ id }] });
-        break;
-
-      default:
-        break;
-    }
-  }; // will implement other context menu actions here
-
+  onOpenMenu,
+}: FlowNodeProps) {
   const MAX_VISIBLE = 4; //default no of params visible in node
 
   return (
-    <div onContextMenu={handleContextMenu}>
+    <div>
       <div
-        className={`w-40 bg-white rounded-lg overflow-hidden text-sm ${selected ? "border border-black-100" : "border border-gray-300"}`}
+        className={`w-40 bg-white rounded-lg overflow-hidden text-sm border ${selected ? "border-black-100" : "border-gray-300"}`}
       >
-        <div className="px-3 py-1 font-semibold text-gray-800 flex justify-between items-center">
+        <div className="pl-3 pr-1 py-1 font-semibold text-gray-800 flex justify-between items-center">
           {label}
           <IconButton
             onClick={(e) => {
-              // e.stopPropagation();
-              setNodeSelected(true);
-              setContextMenuPos({ x: e.clientX, y: e.clientY });
+              e.preventDefault();
+              onOpenMenu?.(e, id);
             }}
             size="small"
             aria-label="Module options"
+            sx={{ padding: 0 }}
           >
             <MenuIcon />
           </IconButton>
@@ -105,12 +64,6 @@ export default function FlowNode({
           <Handle type="source" position={Position.Right} />
         ) : null}
       </div>
-      <NodeContextMenu
-        position={contextMenuPos}
-        onClose={handleCloseMenu}
-        onAction={handleNodeAction}
-        open={!!contextMenuPos}
-      />
     </div>
   );
 }
