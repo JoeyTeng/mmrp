@@ -47,7 +47,7 @@ const ContextMenu = <ActionType extends string>({
           dense={dense}
         >
           {item.icon && <ListItemIcon>{item.icon}</ListItemIcon>}
-          <ListItemText className={item.color ? `text-${item.color}-700` : ""}>
+          <ListItemText className={item.danger ? `text-red-700` : ""}>
             {item.label}
           </ListItemText>
         </MenuItem>,
