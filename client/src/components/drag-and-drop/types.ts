@@ -11,16 +11,6 @@ export enum NodeType {
   OutputNode = "outputNode",
 }
 
-export enum NodeAction {
-  Expand = "expand",
-  Duplicate = "duplicate",
-  Rename = "rename",
-  Color = "color",
-  Configure = "configure",
-  Export = "export",
-  Delete = "delete",
-}
-
 export type ContextMenuItem<ActionType extends string> = {
   id: ActionType;
   label: string;
@@ -29,27 +19,5 @@ export type ContextMenuItem<ActionType extends string> = {
   dividerAfter?: boolean;
   submenu?: ContextMenuItem<ActionType>[];
   dense?: boolean;
-  color?:
-    | "red"
-    | "orange"
-    | "amber"
-    | "yellow"
-    | "lime"
-    | "green"
-    | "emerald"
-    | "teal"
-    | "cyan"
-    | "sky"
-    | "blue"
-    | "indigo"
-    | "violet"
-    | "purple"
-    | "fuchsia"
-    | "pink"
-    | "rose"
-    | "slate"
-    | "gray"
-    | "zinc"
-    | "neutral"
-    | "stone";
+  danger?: boolean;
 };
