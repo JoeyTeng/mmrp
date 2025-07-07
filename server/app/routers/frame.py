@@ -1,5 +1,5 @@
 from contextlib import ExitStack
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pathlib import Path
 import cv2
 import asyncio
@@ -88,6 +88,8 @@ async def video_feed(websocket: WebSocket) -> None:
 
                 await asyncio.sleep(1 / fps)
 
+    except WebSocketDisconnect:
+        print("WebSocket disconnected by the client.")
     except Exception as e:
         print("WebSocket error:", e)
     finally:
