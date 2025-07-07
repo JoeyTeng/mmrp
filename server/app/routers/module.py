@@ -1,6 +1,7 @@
 import dataclasses
 from fastapi import APIRouter
 from typing import Any
+from pathlib import Path
 from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.schemas.module import ModuleParameter, Module, ModuleFormat
 from app.services.module import registry
@@ -10,6 +11,9 @@ router = APIRouter(
     tags=["module"],
     responses={404: {"description": "Not Found"}},
 )
+
+BASE_DIR: Path = Path(__file__).resolve().parents[2]
+BINARIES_DIR: Path = BASE_DIR / "binaries"
 
 
 # Returns all modules and their parameters

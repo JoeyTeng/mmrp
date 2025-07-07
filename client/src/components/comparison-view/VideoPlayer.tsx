@@ -6,16 +6,7 @@ import React, {
   forwardRef,
   useEffect,
 } from "react";
-
-import {
-  PlayArrowOutlined as PlayIcon,
-  PauseCircleOutline as PauseIcon,
-  Fullscreen as Maximize,
-  VolumeUpOutlined as Volume2,
-  VolumeOffOutlined as VolumeX,
-  ArrowLeftOutlined as StepBack,
-  ArrowRightOutlined as StepForward,
-} from "@mui/icons-material";
+import PlayerControls from "./PlayerControls";
 
 type Props = {
   videoRefs: React.RefObject<HTMLVideoElement | null>[];
@@ -29,7 +20,7 @@ export type PlayerHandle = {
   handleTimeUpdate: () => void;
 };
 
-const Player = forwardRef<PlayerHandle, Props>(
+const VideoPlayer = forwardRef<PlayerHandle, Props>(
   (
     {
       videoRefs,
@@ -46,19 +37,20 @@ const Player = forwardRef<PlayerHandle, Props>(
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
 
+    const mainVideo = videoRefs[0]?.current;
+
     useImperativeHandle(ref, () => ({
       handleTimeUpdate,
     }));
 
     useEffect(() => {
-      const mainVideo = videoRefs[0].current;
       if (!mainVideo) return;
       const onEnded = () => setIsPlaying(false);
       mainVideo.addEventListener("ended", onEnded);
       return () => {
         mainVideo.removeEventListener("ended", onEnded);
       };
-    }, [videoRefs]);
+    }, [mainVideo]);
 
     const handleTimeUpdate = () => {
       const mainVideo = videoRefs[0].current;
@@ -91,13 +83,15 @@ const Player = forwardRef<PlayerHandle, Props>(
       }
     };
 
-    const toggleMute = () => {
-      const mainVideo = videoRefs[0].current;
-      if (mainVideo) mainVideo.muted = !isMuted;
-      setIsMuted(!isMuted);
+    const handleMuteToggle = () => {
+      if (mainVideo) {
+        mainVideo.muted = !isMuted;
+        setIsMuted(!isMuted);
+      }
     };
 
-    const stepFrame = (direction: number) => {
+    const handleStepFrame = (direction: number) => {
+      if (!mainVideo) return;
       videoRefs.forEach((ref) => ref.current?.pause());
       const nextTime = Math.max(
         0,
@@ -111,13 +105,13 @@ const Player = forwardRef<PlayerHandle, Props>(
       setIsPlaying(false);
     };
 
-    const onSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const time = parseFloat(e.target.value);
+    const handleSliderChange = (value: number) => {
       videoRefs.forEach((ref) => {
-        const video = ref.current;
-        if (video) video.currentTime = time;
+        if (ref.current) {
+          ref.current.currentTime = value;
+        }
       });
-      setCurrentTime(time);
+      setCurrentTime(value);
     };
 
     const handleFullscreen = () => {
@@ -137,63 +131,26 @@ const Player = forwardRef<PlayerHandle, Props>(
     const sourceLabel = getSourceLabel?.(currentFrame);
 
     return (
-      <div className="w-full flex flex-col">
-        <div className="flex items-center justify-between bg-white px-4 py-3 border-t border-gray-300 w-full">
-          <div className="flex items-center">
-            <button
-              onClick={() => stepFrame(-1)}
-              className="text-gray-800 hover:text-black cursor-pointer px-2"
-            >
-              <StepBack />
-            </button>
-            <button
-              onClick={handlePlayPause}
-              className="text-gray-800 hover:text-black cursor-pointer px-2"
-            >
-              {isPlaying ? <PauseIcon /> : <PlayIcon />}
-            </button>
-            <button
-              onClick={() => stepFrame(1)}
-              className="text-gray-800 hover:text-black cursor-pointer px-2"
-            >
-              <StepForward />
-            </button>
-            <button
-              onClick={toggleMute}
-              className="text-gray-800 hover:text-black cursor-pointer px-2"
-              title={isMuted ? "Unmute" : "Mute"}
-            >
-              {isMuted ? <VolumeX /> : <Volume2 />}
-            </button>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={duration}
-            step={FRAME_DURATION}
-            value={currentTime}
-            onChange={onSliderChange}
-            className="flex-1 mx-4 accent-gray-700 cursor-pointer"
-          />
-          <span className="text-sm text-gray-600 w-50 text-center">
-            Frame: {currentFrame} / {totalFrames}
-          </span>
-          {showSource && sourceLabel && (
-            <span className="text-sm text-gray-600 w-30 px-2">
-              Source: {sourceLabel}
-            </span>
-          )}
-          <button
-            onClick={handleFullscreen}
-            className="ml-4 text-gray-800 hover:text-black cursor-pointer"
-          >
-            <Maximize />
-          </button>
-        </div>
-      </div>
+      <PlayerControls
+        currentFrame={currentFrame}
+        totalFrames={totalFrames}
+        isPlaying={isPlaying}
+        showMute={true}
+        isMuted={isMuted}
+        onPlayPause={handlePlayPause}
+        onStepFrame={handleStepFrame}
+        onMuteToggle={handleMuteToggle}
+        onSliderChange={handleSliderChange}
+        onFullscreen={handleFullscreen}
+        showSource={showSource}
+        sourceLabel={sourceLabel}
+        sliderValue={currentTime}
+        sliderMax={duration}
+        sliderStep={FRAME_DURATION}
+      />
     );
   },
 );
-Player.displayName = "Player";
+VideoPlayer.displayName = "Player";
 
-export default Player;
+export default VideoPlayer;
