@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Literal, Optional, Any
-from app.utils.enums import ModuleRole
+from app.utils.enums import ModuleRole, PixelFormats, ColorSpaces
 
 
 class ModuleParameter(BaseModel):
@@ -13,25 +13,8 @@ class ModuleParameter(BaseModel):
 
 
 class ModuleFormat(BaseModel):
-    pixel_format: (
-        Optional[
-            Literal[
-                "bgr24",
-                "rgb24",
-                "gray8",
-                "yuv420p 8bit",
-                "yuv420p 10bit",
-                "yuv444p 8bit",
-            ]
-        ]
-        | str
-    ) = None
-    color_space: (
-        Optional[
-            Literal["BT.601 Full", "BT.601 Limited", "BT.709 Full", "BT.709 Limited"]
-        ]
-        | str
-    ) = None
+    pixel_format: Optional[PixelFormats] | str = None
+    color_space: Optional[ColorSpaces] | str = None
     width: Optional[int] | str = None
     height: Optional[int] | str = None
     frame_rate: Optional[float] | str = None

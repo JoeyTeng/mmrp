@@ -14,7 +14,7 @@ export interface FormatDefinition {
   colorSpace?: string;
   width?: number | string;
   height?: number | string;
-  frameRate?: number;
+  frameRate?: number; //fps
 }
 
 export interface NodePort {

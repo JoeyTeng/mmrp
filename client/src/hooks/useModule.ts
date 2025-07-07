@@ -11,7 +11,7 @@ export function useModules() {
 
   useEffect(() => {
     apiClient
-      .get<ModuleMeta[]>("/module/")
+      .get<ModuleMeta[]>("/module/") // TODO: Validate response schema
       .then((res) => setModules(camelizeKeys(res.data) as ModuleMeta[]))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));

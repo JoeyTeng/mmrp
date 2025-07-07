@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import Literal, Optional, Any, TypeVar, Generic
 import numpy as np
-from app.utils.enums import ModuleRole
+from app.utils.enums import ModuleRole, PixelFormats, ColorSpaces
 
 ParameterType = TypeVar(
     "ParameterType",
@@ -26,25 +26,8 @@ class ParameterDefinition(Generic[ParameterType]):
 
 @dataclass
 class FormatDefinition:
-    pixel_format: (
-        Optional[
-            Literal[
-                "bgr24",
-                "rgb24",
-                "gray8",
-                "yuv420p 8bit",
-                "yuv420p 10bit",
-                "yuv444p 8bit",
-            ]
-        ]
-        | str
-    ) = None
-    color_space: (
-        Optional[
-            Literal["BT.601 Full", "BT.601 Limited", "BT.709 Full", "BT.709 Limited"]
-        ]
-        | str
-    ) = None
+    pixel_format: Optional[PixelFormats] | str = None
+    color_space: Optional[ColorSpaces] | str = None
     width: Optional[int] | str = None
     height: Optional[int] | str = None
     frame_rate: Optional[float] | str = None
