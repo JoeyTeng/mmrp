@@ -16,6 +16,7 @@ import {
   OnNodesChange,
   Panel,
   useReactFlow,
+  ControlButton,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
@@ -37,6 +38,7 @@ import { sendPipelineToBackend } from "@/services/pipelineService";
 import ContextMenu from "./ContextMenu";
 import { NODE_CONTEXT_MENU, NodeAction } from "./NodeContextMenu";
 import { CANVAS_CONTEXT_MENU, CanvasContextAction } from "./CanvasContextMenu";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 type FlowCanvasProps = {
   nodes: Node<NodeData, NodeType>[];
@@ -332,11 +334,21 @@ export default function FlowCanvas({
               width: 20,
               height: 20,
             },
+            interactionWidth: 20,
           }}
           fitView
           proOptions={{ hideAttribution: true }}
+          reconnectRadius={50}
         >
-          <Controls />
+          <Controls>
+            <ControlButton
+              onClick={() =>
+                canvasActionHandlers["clear" as CanvasContextAction]?.()
+              }
+            >
+              <DeleteIcon className="fill-red-700" sx={{ scale: 1.2 }} />
+            </ControlButton>
+          </Controls>
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           <Panel position="bottom-right">
             <Button
@@ -344,7 +356,7 @@ export default function FlowCanvas({
               className="bg-primary"
               onClick={onConfirm}
             >
-              Confirm
+              Run
             </Button>
           </Panel>
         </ReactFlow>
