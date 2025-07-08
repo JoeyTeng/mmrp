@@ -81,40 +81,12 @@ const initialNodes: Node<NodeData, NodeType>[] = [
             colorSpace: "BT.709 Full",
           },
         },
-        {
-          id: "input-1",
-          formats: {
-            pixelFormat: "rgb24",
-            colorSpace: "BT.709 Full",
-          },
-        },
-        {
-          id: "input-2",
-          formats: {
-            pixelFormat: "gray8",
-            colorSpace: "BT.709 Full",
-          },
-        },
       ],
       outputFormats: [
         {
           id: "output-0",
           formats: {
             pixelFormat: "bgr24",
-            colorSpace: "BT.709 Full",
-          },
-        },
-        {
-          id: "output-1",
-          formats: {
-            pixelFormat: "rgb24",
-            colorSpace: "BT.709 Full",
-          },
-        },
-        {
-          id: "output-2",
-          formats: {
-            pixelFormat: "gray8",
             colorSpace: "BT.709 Full",
           },
         },

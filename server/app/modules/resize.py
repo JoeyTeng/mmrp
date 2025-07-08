@@ -36,11 +36,7 @@ class Resize(ModuleBase):
 
     @typing.override
     def get_input_formats(self) -> list[FormatDefinition]:
-        return [
-            FormatDefinition(pixel_format="bgr24", color_space="BT.709 Full"),
-            FormatDefinition(pixel_format="rgb24", color_space="BT.709 Full"),
-            FormatDefinition(pixel_format="gray8", color_space="BT.709 Full"),
-        ]
+        return [FormatDefinition(pixel_format="bgr24", color_space="BT.709 Full")]
 
     @typing.override
     def get_output_formats(self) -> list[FormatDefinition]:
