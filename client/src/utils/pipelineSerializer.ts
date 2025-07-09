@@ -28,7 +28,7 @@ export function dumpPipelineToJson(
       node.data.params,
     ).map(([key, value]) => ({
       key,
-      value: String(value),
+      value: value,
     }));
 
     return {
@@ -40,7 +40,6 @@ export function dumpPipelineToJson(
   });
 
   return {
-    video: "./file",
     modules,
   };
 }

@@ -3,6 +3,7 @@ import cv2
 from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any
+from fastapi import HTTPException
 from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest
@@ -54,12 +55,6 @@ def process_pipeline_frame(
     for mod in ordered_modules:
         mod_id = mod.id
         mod_instance, params = module_map[mod_id]
-
-        # Get expected parameter definitions
-        param_defs = {p.name: p for p in mod_instance.get_parameters()}
-
-        # Validate each parameter
-        validate_parameters(params, param_defs, mod_instance)
 
         input_frames = [frame_cache[src_id] for src_id in (mod.source or [0])]
         frame_output = mod_instance.process_frame(input_frames[0], params)
@@ -116,30 +111,54 @@ def get_execution_order(modules: list[PipelineModule]):
 # Handle the pipeline request and process the video
 def handle_pipeline_request(request: PipelineRequest) -> bool:
     try:
-        # Get video and pipeline
-        selected_video: str = request.video
-        modules: list[PipelineModule] = request.modules
-        ordered_modules: list[PipelineModule] = get_execution_order(modules)
-        video_path: str = str(get_video_path(selected_video))
+        # Resolve pipeline modules
+        ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
+        # Check that the pipeline starts with a source module
+        if not ordered_modules or ordered_modules[0].name != "source":
+            raise ValueError("Pipeline must start with a source module")
+        if ordered_modules[-1].name != "result":
+            raise ValueError("Pipeline must end with a result module")
 
         # Registry lookup
         module_map: dict[int, tuple[ModuleBase, dict[str, Any]]] = {
             m.id: (registry[m.name](), {p.key: p.value for p in m.parameters})
-            for m in modules
+            for m in ordered_modules
         }
 
-        # Identify end modules (no children)
-        end_modules: set[int] = {m.id for m in modules} - {
-            d for m in modules for d in (m.source or [])
-        }
+        # Validate module parameters
+        for mod in ordered_modules:
+            mod_id = mod.id
+            mod_instance, params = module_map[mod_id]
+            # Get expected parameter definitions
+            param_defs = {p.name: p for p in mod_instance.get_parameters()}
+            # Validate each parameter
+            validate_parameters(params, param_defs, mod_instance)
 
-        # Output path
+        # Get the source (selected video)
+        source: PipelineModule = ordered_modules[0]
+        # Get the video path from the source module parameters
+        source_params = {p.key: p.value for p in source.parameters}
+        if "path" not in source_params:
+            raise ValueError("Source module must have a 'path' parameter")
+        # Get video path (parameter type has already been validated)
+        video_path: str = str(get_video_path(str(source_params["path"])))
+
+        # Get result module (output video and path)
+        output: PipelineModule = ordered_modules[-1]
+        result_params = {p.key: p.value for p in output.parameters}
+        if "path" not in result_params:
+            raise ValueError("Result module must have a 'path' parameter")
+        output_video: str = str(result_params["path"])
         output_path = (
-            Path(__file__).resolve().parent.parent.parent
-            / "output"
-            / f"{selected_video}_output.webm"
+            Path(__file__).resolve().parent.parent.parent / "output" / f"{output_video}"
         )
         output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Get end modules
+        end_modules = output.source
+
+        # Remove source and result modules from processing order
+        ordered_modules = ordered_modules[1:-1]
 
         # Context wrappers
         cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
@@ -160,7 +179,7 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
                 raise ValueError("Could not read first frame")
 
             # Process first frame
-            frame_cache: dict[int, np.ndarray] = {0: first_frame}
+            frame_cache: dict[int, np.ndarray] = {source.id: first_frame}
             process_pipeline_frame(frame_cache, ordered_modules, module_map)
 
             final_outputs = [frame_cache[mid] for mid in end_modules]
@@ -183,7 +202,7 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
                     if not ret:
                         break
 
-                    frame_cache = {0: frame}
+                    frame_cache = {source.id: frame}
                     process_pipeline_frame(frame_cache, ordered_modules, module_map)
 
                     for out_frame in [frame_cache[mid] for mid in end_modules]:
@@ -192,5 +211,4 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
         return True
 
     except Exception as e:
-        print(f"Pipeline processing error: {e}")
-        return False
+        raise HTTPException(500, detail=str(e))

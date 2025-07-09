@@ -3,7 +3,7 @@ import { apiClient } from "./apiClient";
 
 export async function sendPipelineToBackend(
   pipeline: PipelineRequest,
-): Promise<string[]> {
-  const response = await apiClient.post<string[]>("/pipeline", pipeline);
+): Promise<boolean> {
+  const response = await apiClient.post<boolean>("/pipeline/", pipeline);
   return response.data;
 }

@@ -31,6 +31,7 @@ import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import { ModulesContext } from "@/contexts/ModulesContext";
 import { getInitialNodeParamValue, makePorts } from "./util";
+import { useVideoReload } from "@/services/videoReloadContext";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
@@ -63,6 +64,7 @@ export default function FlowCanvas({
   const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
     null,
   );
+  const { triggerReload, setIsProcessing, setError } = useVideoReload();
 
   const handlePaneClick = () => {
     paneRef.current?.focus();
@@ -161,10 +163,16 @@ export default function FlowCanvas({
     const pipeline = dumpPipelineToJson(nodes, edges);
     console.log(JSON.stringify(pipeline, null, 2));
     try {
+      setIsProcessing(true);
       const res = await sendPipelineToBackend(pipeline);
-      console.log("Executing in order", res);
+      console.log("Pipeline processed successfully: ", res);
+      setError(false);
+      triggerReload();
     } catch (err) {
       console.error("Error sending pipleine to backend", err);
+      setError(true);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
