@@ -1,11 +1,14 @@
+import type { Node, Edge, OnNodesChange, OnEdgesChange } from "@xyflow/react";
+
 export type ParamValueType = string | number | boolean;
+export type NodeParamValue = ParamValueType | string[];
 
 export interface ParameterDefinition {
   name: string;
   type: "int" | "float" | "str" | "bool";
   description?: string | null;
   default?: ParamValueType;
-  validValues?: ParamValueType[] | [number, number];
+  constraints?: ParamValueType[] | [number, number];
   required: boolean;
 }
 
@@ -42,16 +45,13 @@ export type FlowCanvasProps = {
   onEdgesChange: OnEdgesChange;
   setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
-  onSelectNode: (id: string | null) => void;
+  onEditNode: (node: Node<NodeData, NodeType>) => void;
 };
 
 export type ParameterConfigurationProps = {
-  node?: Node<{ label: string; params: Record<string, NodeParamValue> }> | null;
+  node?: Node<NodeData, NodeType> | null;
 };
 
 export type ParameterConfigurationRef = {
-  getTempNode: () => Node<{
-    label: string;
-    params: Record<string, NodeParamValue>;
-  }> | null;
+  getTempNode: () => Node<NodeData, NodeType> | null;
 };

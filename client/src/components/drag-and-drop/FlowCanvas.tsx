@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useContext, useRef, useState } from "react";
+import React, { useCallback, useContext, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -18,18 +18,9 @@ import {
 
 import type { Node, Edge } from "@xyflow/react";
 
-import "@xyflow/react/dist/style.css";
-
 import FlowNode from "@/components/drag-and-drop/FlowNode";
-import {
-  FlowCanvasProps,
-  NodeData,
-  NodeType,
-  ParameterConfigurationRef,
-} from "./types";
+import { FlowCanvasProps, NodeData, NodeType } from "./types";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
-import { AppDrawer } from "@/components/sidebar/AppDrawer";
-import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import { ModulesContext } from "@/contexts/ModulesContext";
@@ -48,15 +39,10 @@ export default function FlowCanvas({
   onEdgesChange,
   setNodes,
   setEdges,
-  onSelectNode,
+  onEditNode,
 }: FlowCanvasProps) {
   const paneRef = useRef<HTMLDivElement>(null);
-  const paramsConfigRef = useRef<ParameterConfigurationRef>(null);
-
-  const [appDrawerOpen, setAppDrawerOpen] = useState(false);
-  const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
-    null,
-  );
+  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
   const handlePaneClick = () => {
     paneRef.current?.focus();
@@ -77,8 +63,6 @@ export default function FlowCanvas({
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges],
   );
-
-  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -166,31 +150,12 @@ export default function FlowCanvas({
     (event: React.MouseEvent, node: Node<NodeData, NodeType>) => {
       event.preventDefault();
       event.stopPropagation();
-      setTempNode({ ...node });
-      setAppDrawerOpen(true);
+      onEditNode(node);
     },
-    [],
+    [onEditNode],
   );
 
-  const handleConfirmParams = useCallback(() => {
-    const tempConfigNodeRef = paramsConfigRef.current?.getTempNode() as
-      | Node<NodeData, NodeType>
-      | undefined;
-
-    if (!tempConfigNodeRef) return;
-
-    setNodes((nds) =>
-      nds.map((n) => (n.id === tempConfigNodeRef.id ? tempConfigNodeRef : n)),
-    );
-    setAppDrawerOpen(false);
-  }, [setNodes]);
-
-  const handleCancelParams = useCallback(() => {
-    setAppDrawerOpen(false);
-    setTempNode(null);
-  }, []);
-
-  if (!modules) return;
+  if (!modules) return null;
 
   return (
     <Box className="w-full h-full relative bg-white rounded-lg border border-gray-300">
@@ -211,9 +176,6 @@ export default function FlowCanvas({
           onConnect={onConnect}
           onDragOver={onDragOver}
           onDrop={onDrop}
-          onSelectionChange={({ nodes: selected }) =>
-            onSelectNode(selected.length ? selected[0].id : null)
-          }
           onNodeDoubleClick={onNodeDoubleClickHandler}
           fitViewOptions={{
             padding: 1,
@@ -240,38 +202,6 @@ export default function FlowCanvas({
           </Panel>
         </ReactFlow>
       </Box>
-      <AppDrawer
-        open={appDrawerOpen}
-        onClose={handleCancelParams}
-        title={
-          tempNode
-            ? `Edit ${tempNode.data.label} Parameters`
-            : "Edit Parameters"
-        }
-        width={400}
-        anchor="right"
-      >
-        <Box display="flex" flexDirection="column" height="100%">
-          <Box flex={1} overflow="auto">
-            <ParameterConfiguration ref={paramsConfigRef} node={tempNode} />
-          </Box>
-          <Box
-            sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}
-          >
-            <Button variant="outlined" onClick={handleCancelParams}>
-              Cancel
-            </Button>
-            <Button
-              className="bg-primary"
-              variant="contained"
-              onClick={handleConfirmParams}
-              disabled={!tempNode}
-            >
-              Confirm
-            </Button>
-          </Box>
-        </Box>
-      </AppDrawer>
     </Box>
   );
 }

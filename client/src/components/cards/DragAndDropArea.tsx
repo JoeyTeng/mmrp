@@ -10,6 +10,8 @@ import {
 } from "@xyflow/react";
 
 import { NodeData, NodeType } from "../drag-and-drop/types";
+import ParameterConfigurationDrawer from "@/components/drag-and-drop/ParameterConfiguration/ParameterConfigurationDrawer";
+import { useCallback, useState } from "react";
 
 const initialNodes: Node<NodeData, NodeType>[] = [
   {
@@ -140,9 +142,31 @@ const initialEdges: Edge[] = [
   },
 ];
 
-const DragAndDropArea = () => {
+export default function DragAndDropArea() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [editingNode, setEditingNode] = useState<Node<
+    NodeData,
+    NodeType
+  > | null>(null);
+
+  const handleEditNode = useCallback((node: Node<NodeData, NodeType>) => {
+    setEditingNode({ ...node });
+  }, []);
+
+  const handleConfirm = useCallback(
+    (updatedNode: Node<NodeData, NodeType>) => {
+      setNodes((nodes) =>
+        nodes.map((n) => (n.id === updatedNode.id ? updatedNode : n)),
+      );
+      setEditingNode(null);
+    },
+    [setNodes],
+  );
+
+  const handleCancel = useCallback(() => {
+    setEditingNode(null);
+  }, []);
 
   return (
     <ReactFlowProvider>
@@ -153,9 +177,13 @@ const DragAndDropArea = () => {
         onEdgesChange={onEdgesChange}
         setNodes={setNodes}
         setEdges={setEdges}
-        onSelectNode={() => {}}
+        onEditNode={handleEditNode}
+      />
+      <ParameterConfigurationDrawer
+        editingNode={editingNode}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
       />
     </ReactFlowProvider>
   );
-};
-export default DragAndDropArea;
+}

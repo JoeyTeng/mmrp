@@ -4,11 +4,12 @@ import { useState, useCallback, useImperativeHandle, forwardRef } from "react";
 import { InfoOutline as InfoIcon } from "@mui/icons-material";
 import { Box, TextField, MenuItem } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
-import { NodeParamValue } from "../modules/modulesRegistry";
+import { NodeData, NodeParamValue, NodeType, ParamValueType } from "../types";
 import {
   ParameterConfigurationProps,
   ParameterConfigurationRef,
-} from "./types";
+} from "../types";
+import type { Node } from "@xyflow/react";
 
 const getInputType = (value: NodeParamValue) => {
   if (Array.isArray(value)) return "select";
@@ -17,12 +18,14 @@ const getInputType = (value: NodeParamValue) => {
   return "text";
 };
 
-const ParameterConfiguration = forwardRef<
-  ParameterConfigurationRef,
-  ParameterConfigurationProps
->(({ node }, ref) => {
-  const [tempNode, setTempNode] = useState(node);
+function ParameterConfiguration(
+  { node }: ParameterConfigurationProps,
+  ref: React.Ref<ParameterConfigurationRef>,
+) {
   const [error, setError] = useState<string | null>(null);
+  const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
+    node ?? null,
+  );
 
   useImperativeHandle(
     ref,
@@ -33,7 +36,7 @@ const ParameterConfiguration = forwardRef<
   );
 
   const handleParamChange = useCallback(
-    (key: string, value: NodeParamValue) => {
+    (key: string, value: ParamValueType) => {
       setTempNode((prev) => {
         if (!prev) return null;
 
@@ -103,6 +106,7 @@ const ParameterConfiguration = forwardRef<
       case "number":
         return (
           <Box
+            key={key}
             className={`relative mb-6 mt-2 ${error ? "text-red-600" : "text-gray-700"}`}
           >
             <NumberField.Root id={key} value={Number(value)} min={10} max={100}>
@@ -170,7 +174,6 @@ const ParameterConfiguration = forwardRef<
       )}
     </Box>
   );
-});
+}
 
-ParameterConfiguration.displayName = "ParameterConfiguration";
-export default ParameterConfiguration;
+export default forwardRef(ParameterConfiguration);
