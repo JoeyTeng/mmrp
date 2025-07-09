@@ -28,6 +28,7 @@ const SideBySide = ({ type }: Props) => {
   const currentFpsRef = useRef(30);
   const currentMimeRef = useRef("image/webp");
   const wsRef = useRef<WebSocket | null>(null);
+  const [isStreamActive, setIsStreamActive] = useState(true);
 
   useEffect(() => {
     const urls: string[] = [];
@@ -88,7 +89,9 @@ const SideBySide = ({ type }: Props) => {
       },
       undefined,
       undefined,
-      undefined,
+      () => {
+        setIsStreamActive(false);
+      },
       { mode: "dual" },
     );
 
@@ -161,6 +164,7 @@ const SideBySide = ({ type }: Props) => {
         frames={frames}
         containerRef={containerRef}
         ref={playerRef}
+        isStreamActive={isStreamActive}
       />
     </Box>
   );

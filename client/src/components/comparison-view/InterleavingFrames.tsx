@@ -26,6 +26,7 @@ const InterleavingFrames = ({ type }: Props) => {
   const currentFpsRef = useRef(30);
   const currentMimeRef = useRef("image/webp");
   const wsRef = useRef<WebSocket | null>(null);
+  const [isStreamActive, setIsStreamActive] = useState(true);
 
   useEffect(() => {
     let url: string = videoRef.current?.src || "";
@@ -81,7 +82,9 @@ const InterleavingFrames = ({ type }: Props) => {
       },
       undefined,
       undefined,
-      undefined,
+      () => {
+        setIsStreamActive(false);
+      },
       { mode: "single" },
     );
 
@@ -142,6 +145,7 @@ const InterleavingFrames = ({ type }: Props) => {
         getSourceLabel={(frame) => (frame % 2 === 0 ? "Video A" : "Video B")}
         containerRef={containerRef}
         ref={playerRef}
+        isStreamActive={isStreamActive}
       />
     </Box>
   );

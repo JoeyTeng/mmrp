@@ -14,6 +14,7 @@ type UnifiedPlayerProps = {
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
   ref?: React.RefObject<PlayerHandle | null>;
+  isStreamActive?: boolean;
 };
 
 const UnifiedPlayer = ({
@@ -25,6 +26,7 @@ const UnifiedPlayer = ({
   showSource,
   getSourceLabel,
   ref,
+  isStreamActive,
 }: UnifiedPlayerProps) => {
   const handleFullscreen = () => {
     const elem = containerRef.current;
@@ -57,6 +59,7 @@ const UnifiedPlayer = ({
       showSource={showSource}
       getSourceLabel={getSourceLabel}
       onFullscreen={handleFullscreen}
+      isStreamActive={isStreamActive}
     />
   );
 };

@@ -10,6 +10,7 @@ type Props = {
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
   onFullscreen: () => void;
+  isStreamActive?: boolean;
 };
 
 const FrameStreamPlayer = ({
@@ -18,10 +19,12 @@ const FrameStreamPlayer = ({
   showSource,
   getSourceLabel,
   onFullscreen,
+  isStreamActive = true,
 }: Props) => {
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentFrame, setCurrentFrame] = useState(0);
+  const [isUserPaused, setIsUserPaused] = useState(true);
 
   // Render frame at given index
   const renderFrame = useCallback(
@@ -53,14 +56,16 @@ const FrameStreamPlayer = ({
   );
 
   const handlePlayPause = () => {
-    if (isPlaying) {
+    if (!isUserPaused) {
       setIsPlaying(false);
+      setIsUserPaused(true);
     } else {
-      if (currentFrame >= frames.length) {
+      if (currentFrame >= frames.length && frames.length > 0) {
         setCurrentFrame(0);
         renderFrame(0);
       }
       setIsPlaying(true);
+      setIsUserPaused(false);
     }
   };
 
@@ -70,11 +75,14 @@ const FrameStreamPlayer = ({
     setCurrentFrame(next);
     renderFrame(next);
     setIsPlaying(false);
+    setIsUserPaused(true);
   };
 
   const onSliderChange = (value: number) => {
     setCurrentFrame(value);
     renderFrame(value);
+    setIsPlaying(false);
+    setIsUserPaused(true);
   };
 
   // Playback effect - dynamic frame timing by fps stored in each frame
@@ -89,6 +97,9 @@ const FrameStreamPlayer = ({
 
     if (currentFrame >= frames.length) {
       setIsPlaying(false);
+      if (!isStreamActive) {
+        setIsUserPaused(true);
+      }
       return;
     }
 
@@ -109,7 +120,7 @@ const FrameStreamPlayer = ({
         playbackTimer.current = null;
       }
     };
-  }, [isPlaying, currentFrame, frames, renderFrame]);
+  }, [isPlaying, currentFrame, frames, renderFrame, isStreamActive]);
 
   // When currentFrame changes and playback is paused, render frame immediately
   useEffect(() => {
@@ -118,6 +129,13 @@ const FrameStreamPlayer = ({
     }
   }, [currentFrame, isPlaying, frames, renderFrame]);
 
+  // Auto-resuming playback
+  useEffect(() => {
+    if (!isPlaying && !isUserPaused && frames.length > currentFrame) {
+      setIsPlaying(true);
+    }
+  }, [frames, isPlaying, isUserPaused, currentFrame]);
+
   const sourceLabel = getSourceLabel?.(currentFrame);
 
   return (
@@ -125,7 +143,7 @@ const FrameStreamPlayer = ({
       <PlayerControls
         currentFrame={Math.min(currentFrame + 1, frames.length)}
         totalFrames={frames.length}
-        isPlaying={isPlaying}
+        isPlaying={!isUserPaused}
         showMute={false}
         isMuted={true}
         onPlayPause={handlePlayPause}
