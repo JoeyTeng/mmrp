@@ -71,7 +71,7 @@ const FrameStreamPlayer = ({
 
   // Step forward/backward by delta frames
   const stepFrame = (delta: number) => {
-    const next = Math.min(Math.max(currentFrame + delta, 0), frames.length - 1);
+    const next = Math.min(Math.max(currentFrame + delta, 0), frames.length);
     setCurrentFrame(next);
     renderFrame(next);
     setIsPlaying(false);
@@ -141,7 +141,7 @@ const FrameStreamPlayer = ({
   return (
     <>
       <PlayerControls
-        currentFrame={Math.min(currentFrame + 1, frames.length)}
+        currentFrame={currentFrame}
         totalFrames={frames.length}
         isPlaying={!isUserPaused}
         showMute={false}
@@ -154,7 +154,7 @@ const FrameStreamPlayer = ({
         showSource={showSource}
         sourceLabel={sourceLabel}
         sliderValue={currentFrame}
-        sliderMax={frames.length - 1}
+        sliderMax={frames.length}
         sliderStep={1}
       />
     </>
