@@ -94,6 +94,9 @@ const SideBySide = ({ type }: Props) => {
                     <Box className="mt-4 text-lg font-medium">
                       Processing Pipeline...
                     </Box>
+                    <Box className="text-sm text-gray-300 mt-1">
+                      This might take some time.
+                    </Box>
                   </Box>
                 ) : isProcessingError ? (
                   <Box className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white p-4 text-center">

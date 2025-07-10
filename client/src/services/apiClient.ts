@@ -8,7 +8,7 @@ const DEFAULT_HEADERS = {
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: DEFAULT_HEADERS,
-  timeout: 60000, // 60 seconds timeout to handle longer pipeline processing times
+  timeout: 120000, // 2 minute timeout to handle longer pipeline processing times
 });
 
 // Interceptor to handle responses and error
