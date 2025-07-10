@@ -1,7 +1,7 @@
 import VideoPlayer from "@/components/layout/VideoPlayer";
 import DragAndDropArea from "@/components/cards/DragAndDropArea";
 import AppLayout from "@/components/layout/AppLayout";
-import { VideoReloadProvider } from "@/services/videoReloadContext";
+import { VideoReloadProvider } from "@/contexts/videoReloadContext";
 import { Box } from "@mui/material";
 
 export default function Home() {

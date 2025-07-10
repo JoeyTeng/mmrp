@@ -31,7 +31,7 @@ import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import { ModulesContext } from "@/contexts/ModulesContext";
 import { getInitialNodeParamValue, makePorts } from "./util";
-import { useVideoReload } from "@/services/videoReloadContext";
+import { useVideoReload } from "@/contexts/videoReloadContext";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,

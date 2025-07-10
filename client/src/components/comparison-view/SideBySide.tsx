@@ -5,7 +5,7 @@ import UnifiedPlayer from "./UnifiedPlayer";
 import { PlayerHandle } from "./VideoPlayer";
 import { Box } from "@mui/material";
 import { loadVideo } from "@/services/videoService";
-import { useVideoReload } from "@/services/videoReloadContext";
+import { useVideoReload } from "@/contexts/videoReloadContext";
 import { VideoType } from "./types";
 
 type Props = {
