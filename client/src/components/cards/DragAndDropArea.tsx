@@ -10,7 +10,7 @@ import {
 } from "@xyflow/react";
 
 import { NodeData, NodeType } from "../drag-and-drop/types";
-import ParameterConfigurationDrawer from "@/components/drag-and-drop/ParameterConfiguration/ParameterConfigurationDrawer";
+import ParameterConfigurationDrawer from "@/components/drag-and-drop/parameter-configuration/ParameterConfigurationDrawer";
 import { useCallback, useState } from "react";
 
 const initialNodes: Node<NodeData, NodeType>[] = [
