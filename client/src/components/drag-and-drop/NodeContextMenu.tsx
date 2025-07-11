@@ -1,10 +1,10 @@
 import {
-  // OpenInFullOutlined,
+  OpenInFullOutlined,
   FileCopyOutlined,
   DeleteOutlined,
   SettingsOutlined,
-  // EditOutlined,
-  // PaletteOutlined,
+  EditOutlined,
+  PaletteOutlined,
   FileDownloadOutlined,
 } from "@mui/icons-material";
 import type { ContextMenuItem } from "./types";
@@ -18,36 +18,39 @@ export type NodeAction =
   | "export"
   | "delete";
 
-/** The commented-out menu items are to be left in to be implemented in future iterations. */
+/** The disabled menu items are to be left in to be implemented in future iterations. */
 
 export const NODE_CONTEXT_MENU: ContextMenuItem<NodeAction>[] = [
-  // {
-  //   id: "expand",
-  //   label: "Expand",
-  //   icon: <OpenInFullOutlined />,
-  // },
+  {
+    id: "expand",
+    label: "Expand",
+    icon: <OpenInFullOutlined />,
+    disabled: true,
+  },
   {
     id: "duplicate",
     label: "Duplicate",
     icon: <FileCopyOutlined />,
     dividerAfter: true,
   },
-  // {
-  //   id: "rename",
-  //   label: "Rename",
-  //   icon: <EditOutlined />,
-  // },
+  {
+    id: "rename",
+    label: "Rename",
+    icon: <EditOutlined />,
+    disabled: true,
+  },
   {
     id: "configure",
     label: "Configure",
     icon: <SettingsOutlined />,
   },
-  // {
-  //   id: "color",
-  //   label: "Colour",
-  //   icon: <PaletteOutlined />,
-  //   dividerAfter: true,
-  // },
+  {
+    id: "color",
+    label: "Colour",
+    icon: <PaletteOutlined />,
+    dividerAfter: true,
+    disabled: true,
+  },
   {
     id: "export",
     label: "Export",
