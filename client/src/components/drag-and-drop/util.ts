@@ -94,7 +94,7 @@ export function checkPipeline(
 
   // Check that result was reached
   if (!visited.has(result.id)) {
-    toast.error("Result is not reachable from source.");
+    toast.error("Result node is not reachable from source node.");
     return false;
   }
 
