@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useCallback, useRef, useState, useReducer } from "react";
+import React, { useCallback, useContext, useRef, useState, useReducer } from "react";
+
 import {
   ReactFlow,
   Background,
@@ -22,14 +23,10 @@ import {
 import type { Node, Edge } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-import {
-  getInitialNodeParamValue,
-  moduleRegistry,
-  ParamValueType,
-} from "@/components/modules/modulesRegistry";
+
 
 import FlowNode, { FlowNodeProps } from "@/components/drag-and-drop/FlowNode";
-import { NodeData, NodeType } from "./types";
+import { NodeData, NodeType, ParamValueType } from "./types";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { AppDrawer } from "@/components/sidebar/AppDrawer";
 import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
@@ -49,6 +46,8 @@ import {
 } from "./context-menu/contextMenuReducer";
 import { useNodeActions } from "./context-menu/useNodeActions";
 import { useCanvasActions } from "./context-menu/useCanvasActions";
+import { ModulesContext } from "@/contexts/ModulesContext";
+import { getInitialNodeParamValue, makePorts } from "./util";
 
 type FlowCanvasProps = {
   nodes: Node<NodeData, NodeType>[];
@@ -204,6 +203,8 @@ export default function FlowCanvas({
     event.dataTransfer.dropEffect = "copy";
   }, []);
 
+  const modules = useContext(ModulesContext);
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -213,29 +214,38 @@ export default function FlowCanvas({
 
       const { type: typeValueStr, label } = JSON.parse(nodeData);
       const type = typeValueStr as NodeType;
+      const moduleDef = modules.find((m) => m.name === label)!;
+      if (!moduleDef) {
+        console.error("Modules not yet loaded or cannot find module name");
+        return;
+      }
 
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
 
-      const moduleParams = moduleRegistry[label];
-      const defaultParams = moduleParams
-        ? getInitialNodeParamValue(moduleParams.params)
-        : {};
+      const defaultParams = getInitialNodeParamValue(moduleDef.parameters);
+      const inputPorts = makePorts(moduleDef.inputFormats, "input");
+      const outputPorts = makePorts(moduleDef.outputFormats, "output");
 
-      const newNode = {
+      const newNode: Node<NodeData, NodeType> = {
         id: `${+new Date()}`,
         type,
         position,
-        data: { label: `${label}`, params: defaultParams },
+        data: {
+          label: `${label}`,
+          params: defaultParams,
+          inputFormats: inputPorts,
+          outputFormats: outputPorts,
+        },
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
       };
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [screenToFlowPosition, setNodes],
+    [screenToFlowPosition, setNodes, modules],
   );
 
   const isValidConnection: IsValidConnection<Edge> = useCallback(
@@ -308,6 +318,8 @@ export default function FlowCanvas({
     setAppDrawerOpen(false);
     setTempNode(null);
   }, []);
+
+  if (!modules) return;
 
   return (
     <Box
