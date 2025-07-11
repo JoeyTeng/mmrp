@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useRef, useState, useMemo } from "react";
+import React, {
+  useCallback,
+  useRef,
+  useState,
+  useMemo,
+  useReducer,
+} from "react";
 import {
   ReactFlow,
   Background,
@@ -39,6 +45,11 @@ import ContextMenu from "./ContextMenu";
 import { NODE_CONTEXT_MENU, NodeAction } from "./NodeContextMenu";
 import { CANVAS_CONTEXT_MENU, CanvasContextAction } from "./CanvasContextMenu";
 import DeleteIcon from "@mui/icons-material/Delete";
+import {
+  ContextMenuActionPayload,
+  contextMenuReducer,
+  initialContextMenuState,
+} from "./contextMenuReducer";
 
 type FlowCanvasProps = {
   nodes: Node<NodeData, NodeType>[];
@@ -49,15 +60,6 @@ type FlowCanvasProps = {
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onSelectNode: (id: string | null) => void;
 };
-
-interface ContextMenuState {
-  position: {
-    x: number;
-    y: number;
-  };
-  target: "canvas" | "node";
-  nodeId?: string;
-}
 
 export default function FlowCanvas({
   nodes,
@@ -72,6 +74,11 @@ export default function FlowCanvas({
     <FlowNode {...props} onOpenMenu={handleNodeOpenMenu} />
   );
 
+  const [contextMenuState, dispatchContextMenuState] = useReducer(
+    contextMenuReducer<NodeAction | CanvasContextAction>,
+    initialContextMenuState,
+  );
+
   const nodeTypes = {
     [NodeType.InputNode]: FlowNodeWithMenu,
     [NodeType.ProcessNode]: FlowNodeWithMenu,
@@ -81,20 +88,23 @@ export default function FlowCanvas({
   const paneRef = useRef<HTMLDivElement>(null);
 
   const [appDrawerOpen, setAppDrawerOpen] = useState(false);
-  const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
     null,
   );
 
-  const [contextMenuState, setContextMenuState] =
-    useState<ContextMenuState | null>(null);
+  const openContextMenu = useCallback(
+    (payload: ContextMenuActionPayload<NodeAction | CanvasContextAction>) => {
+      dispatchContextMenuState({
+        type: "open",
+        payload,
+      });
+    },
+    [],
+  );
 
-  const openContextMenu = useCallback((state: ContextMenuState) => {
-    setContextMenuState(state);
-    setContextMenuOpen(true);
-  }, []);
-
-  const closeContextMenu = () => setContextMenuOpen(false);
+  const closeContextMenu = () => {
+    dispatchContextMenuState({ type: "close" });
+  };
 
   const onNodeContextMenu = (event: React.MouseEvent, node: Node) => {
     event.preventDefault();
@@ -105,6 +115,7 @@ export default function FlowCanvas({
       },
       target: "node",
       nodeId: node.id,
+      items: NODE_CONTEXT_MENU,
     });
   };
 
@@ -120,6 +131,7 @@ export default function FlowCanvas({
       },
       target: "node",
       nodeId: nodeId,
+      items: NODE_CONTEXT_MENU,
     });
   };
 
@@ -131,6 +143,7 @@ export default function FlowCanvas({
         y: event.clientY,
       },
       target: "canvas",
+      items: CANVAS_CONTEXT_MENU,
     });
   };
 
@@ -301,7 +314,10 @@ export default function FlowCanvas({
   }, []);
 
   return (
-    <Box className="w-full h-full relative bg-white rounded-lg border border-gray-300">
+    <Box
+      className="w-full h-full relative bg-white rounded-lg border border-gray-300"
+      onContextMenu={(e) => e.preventDefault()}
+    >
       <Box
         className="w-full h-full"
         ref={paneRef}
@@ -397,13 +413,9 @@ export default function FlowCanvas({
         </Box>
       </AppDrawer>
       <ContextMenu<NodeAction | CanvasContextAction>
-        open={contextMenuOpen}
-        position={contextMenuState && contextMenuState.position}
-        items={
-          contextMenuState?.target === "node"
-            ? NODE_CONTEXT_MENU
-            : CANVAS_CONTEXT_MENU
-        }
+        open={contextMenuState.open}
+        position={contextMenuState.position}
+        items={contextMenuState.items}
         dense
         onAction={handleContextMenuAction}
         onClose={closeContextMenu}
