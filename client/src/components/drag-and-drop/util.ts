@@ -118,7 +118,7 @@ export function checkPipeline(
   // All nodes should be part of the chain
   const orphan = nodes.find((n) => !visited.has(n.id));
   if (orphan) {
-    toast.error(`Orphaned node detected.`);
+    toast.error("Orphaned node detected.");
     return false;
   }
 
