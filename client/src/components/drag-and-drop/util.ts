@@ -66,6 +66,12 @@ export function checkPipeline(
   nodes: Node<NodeData, NodeType>[],
   edges: Edge[],
 ): boolean {
+  // no nodes, empty canvas
+  if (nodes.length === 0) {
+    toast.error("Pipeline is empty. Add some modules first.");
+    return false;
+  }
+
   //  Find the one source
   const sources: Node[] = nodes.filter((n) => n.type === NodeType.InputNode);
   if (sources.length !== 1) {
@@ -82,6 +88,17 @@ export function checkPipeline(
 
   const source = sources[0];
   const result = results[0];
+
+  // check if source is directly connected to result
+  const directConn = edges.some(
+    (e) => e.source === source.id && e.target === result.id,
+  );
+  if (directConn) {
+    toast.error(
+      "Source cannot connect directly to Result. Add at least one processing module in between.",
+    );
+    return false;
+  }
 
   //  DFS from source
   const visited = new Set<string>();
