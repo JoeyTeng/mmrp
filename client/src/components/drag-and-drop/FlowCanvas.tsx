@@ -31,7 +31,7 @@ import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import { ModulesContext } from "@/contexts/ModulesContext";
 import { getInitialNodeParamValue, makePorts } from "./util";
-import { useVideoReload } from "@/contexts/videoReloadContext";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
@@ -64,11 +64,12 @@ export default function FlowCanvas({
   const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
     null,
   );
-  const { triggerReload, setIsProcessing, setError } = useVideoReload();
+  const { triggerReload, setIsProcessing, setError, isProcessing } =
+    useVideoReload();
 
-  const handlePaneClick = () => {
+  const handlePaneClick = useCallback(() => {
     paneRef.current?.focus();
-  };
+  }, []);
 
   const handlePaneKeyDown = useCallback(
     (evt: React.KeyboardEvent) => {
@@ -257,8 +258,11 @@ export default function FlowCanvas({
           <Panel position="bottom-right">
             <Button
               variant="contained"
-              className="bg-primary"
+              className={
+                isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
+              }
               onClick={onConfirm}
+              disabled={isProcessing}
             >
               Confirm
             </Button>

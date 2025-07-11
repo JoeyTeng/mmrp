@@ -5,7 +5,7 @@ import UnifiedPlayer from "./UnifiedPlayer";
 import { PlayerHandle } from "./VideoPlayer";
 import { Box } from "@mui/material";
 import { loadVideo } from "@/services/videoService";
-import { useVideoReload } from "@/contexts/videoReloadContext";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { VideoType } from "./types";
 
 type Props = {
@@ -23,7 +23,6 @@ const SideBySide = ({ type }: Props) => {
   const videoBRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<PlayerHandle>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const urls: string[] = [];
 
   // Group all loading and error states
   const isAnyLoading = isLoading || isProcessing;
@@ -31,6 +30,7 @@ const SideBySide = ({ type }: Props) => {
 
   // Load initial video
   useEffect(() => {
+    const urls: string[] = [];
     const loadInitialVideo = async () => {
       try {
         setIsLoading(true);
@@ -51,8 +51,9 @@ const SideBySide = ({ type }: Props) => {
     };
   }, []);
 
-  // Load processed video once the reload is triggered (reload key)
+  // When reload is triggered, load processed video
   useEffect(() => {
+    const urls: string[] = [];
     const loadOutputVideo = async () => {
       try {
         setIsLoading(true);

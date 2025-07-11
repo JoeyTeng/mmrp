@@ -29,7 +29,7 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
   const triggerReload = () => setReloadKey(Date.now());
 
   return (
-    <VideoReloadContext.Provider
+    <VideoReloadContext
       value={{
         reloadKey,
         triggerReload,
@@ -40,6 +40,6 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       {children}
-    </VideoReloadContext.Provider>
+    </VideoReloadContext>
   );
 };
