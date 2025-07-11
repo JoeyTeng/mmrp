@@ -5,6 +5,7 @@ from app.modules.base_module import (
     FormatDefinition,
     ModuleRole,
 )
+from pathlib import Path
 
 
 # visual purpose
@@ -44,6 +45,10 @@ class Result(ModuleBase):
         # Pass‐through
         raise NotImplementedError
 
-    def process(self, input_data: Any, parameters: dict[str, Any]) -> None:
-        # TODO: Move Writing out logic from pipeline service to here
-        raise NotImplementedError("Writing is handled by the pipeline service")
+    def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:
+        output_video: str = str(parameters["path"])
+        output_path = (
+            Path(__file__).resolve().parent.parent.parent / "output" / f"{output_video}"
+        )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        return str(output_path)

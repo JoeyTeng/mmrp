@@ -5,6 +5,7 @@ from app.modules.base_module import (
     FormatDefinition,
     ModuleRole,
 )
+from app.utils.shared_functionality import get_video_path
 
 
 class Source(ModuleBase):
@@ -44,7 +45,6 @@ class Source(ModuleBase):
         # Source frames are injected by the pipeline service, never called directly
         raise NotImplementedError("Frame injection is handled by the pipeline service")
 
-    def process(self, input_data: Any, parameters: dict[str, Any]) -> None:
-        # Entire‐video processing is handled by the pipeline service
-        # TODO: handle video read here
-        raise NotImplementedError("Video read is handled by the pipeline service")
+    # Process video path
+    def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:
+        return str(get_video_path(str(parameters["path"])))

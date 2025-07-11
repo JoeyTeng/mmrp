@@ -1,13 +1,11 @@
 import numpy as np
 import cv2
 from collections import defaultdict, deque
-from pathlib import Path
 from typing import Any
-from fastapi import HTTPException
 from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest
-from app.utils.shared_functionality import get_video_path, as_context
+from app.utils.shared_functionality import as_context
 from app.services.module import registry
 
 
@@ -110,105 +108,91 @@ def get_execution_order(modules: list[PipelineModule]):
 
 # Handle the pipeline request and process the video
 def handle_pipeline_request(request: PipelineRequest) -> bool:
-    try:
-        # Resolve pipeline modules
-        ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
-        # Check that the pipeline starts with a source module
-        if not ordered_modules or ordered_modules[0].name != "source":
-            raise ValueError("Pipeline must start with a source module")
-        if ordered_modules[-1].name != "result":
-            raise ValueError("Pipeline must end with a result module")
+    # Resolve pipeline modules
+    ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
+    # Check that the pipeline starts with a source module
+    if not ordered_modules or ordered_modules[0].name != "source":
+        raise ValueError("Pipeline must start with a source module")
+    if ordered_modules[-1].name != "result":
+        raise ValueError("Pipeline must end with a result module")
 
-        # Registry lookup
-        module_map: dict[int, tuple[ModuleBase, dict[str, Any]]] = {
-            m.id: (registry[m.name](), {p.key: p.value for p in m.parameters})
-            for m in ordered_modules
-        }
+    # Registry lookup
+    module_map: dict[int, tuple[ModuleBase, dict[str, Any]]] = {
+        m.id: (registry[m.name](), {p.key: p.value for p in m.parameters})
+        for m in ordered_modules
+    }
 
-        # Validate module parameters
-        for mod in ordered_modules:
-            mod_id = mod.id
-            mod_instance, params = module_map[mod_id]
-            # Get expected parameter definitions
-            param_defs = {p.name: p for p in mod_instance.get_parameters()}
-            # Validate each parameter
-            validate_parameters(params, param_defs, mod_instance)
+    # Validate module parameters
+    for mod in ordered_modules:
+        mod_id = mod.id
+        mod_instance, params = module_map[mod_id]
+        # Get expected parameter definitions
+        param_defs = {p.name: p for p in mod_instance.get_parameters()}
+        # Validate each parameter
+        validate_parameters(params, param_defs, mod_instance)
 
-        # Get the source (selected video)
-        source: PipelineModule = ordered_modules[0]
-        # Get the video path from the source module parameters
-        source_params = {p.key: p.value for p in source.parameters}
-        if "path" not in source_params:
-            raise ValueError("Source module must have a 'path' parameter")
-        # Get video path (parameter type has already been validated)
-        video_path: str = str(get_video_path(str(source_params["path"])))
+    # Get the source (selected video)
+    source: PipelineModule = ordered_modules[0]
+    source_instance, source_params = module_map[source.id]
+    video_path: str = source_instance.process("", source_params)
 
-        # Get result module (output video and path)
-        output: PipelineModule = ordered_modules[-1]
-        result_params = {p.key: p.value for p in output.parameters}
-        if "path" not in result_params:
-            raise ValueError("Result module must have a 'path' parameter")
-        output_video: str = str(result_params["path"])
-        output_path = (
-            Path(__file__).resolve().parent.parent.parent / "output" / f"{output_video}"
-        )
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+    # Get result module (output video and path)
+    output: PipelineModule = ordered_modules[-1]
+    result_instance, result_params = module_map[output.id]
+    output_path: str = result_instance.process("", result_params)
 
-        # Get end modules
-        end_modules = output.source
+    # Get end modules (last processing modules before output node)
+    if not output.source:
+        raise ValueError("Output source cannot be empty")
+    if source.id in output.source:
+        raise ValueError("Pipeline must have at least one processing node")
+    end_modules = output.source
 
-        # Remove source and result modules from processing order
-        ordered_modules = ordered_modules[1:-1]
+    # Remove source and result modules from processing order
+    ordered_modules = ordered_modules[1:-1]
 
-        # Context wrappers
-        cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
-        cv2VideoWriterContext = as_context(
-            cv2.VideoWriter, lambda writer: writer.release()
-        )
-        # FIXME: OpenCV warning (use a format that is supported with the codec)
-        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"VP80")
+    # Context wrappers
+    cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
+    cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda writer: writer.release())
+    # FIXME: OpenCV warning (use a format that is supported with the codec)
+    fourcc = getattr(cv2, "VideoWriter_fourcc")(*"VP80")
 
-        with cv2VideoCaptureContext(video_path) as cap:
-            if not cap.isOpened():
-                raise ValueError(f"Could not open video file: {video_path}")
-            fps = cap.get(cv2.CAP_PROP_FPS)
+    with cv2VideoCaptureContext(video_path) as cap:
+        if not cap.isOpened():
+            raise ValueError(f"Could not open video file: {video_path}")
+        fps = cap.get(cv2.CAP_PROP_FPS)
 
-            # Read and process first frame to get correct dimensions for writer
-            ret, first_frame = cap.read()
-            if not ret:
-                raise ValueError("Could not read first frame")
+        # Read and process first frame to get correct dimensions for writer
+        ret, first_frame = cap.read()
+        if not ret:
+            raise ValueError("Could not read first frame")
 
-            # Process first frame
-            frame_cache: dict[int, np.ndarray] = {source.id: first_frame}
-            process_pipeline_frame(frame_cache, ordered_modules, module_map)
+        # Process first frame
+        frame_cache: dict[int, np.ndarray] = {source.id: first_frame}
+        process_pipeline_frame(frame_cache, ordered_modules, module_map)
 
-            final_outputs = [frame_cache[mid] for mid in end_modules]
-            out_height, out_width = final_outputs[0].shape[:2]
+        final_outputs = [frame_cache[mid] for mid in end_modules]
+        out_height, out_width = final_outputs[0].shape[:2]
 
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            out_path = str(output_path)
+        # Initialise output writer with dimensions from processed first frame
+        with cv2VideoWriterContext(
+            output_path, fourcc, fps, (out_width, out_height)
+        ) as out:
+            print(output_path)
+            # Write the first frame(s)
+            for out_frame in final_outputs:
+                out.write(out_frame)
 
-            # Initialise output writer with dimensions from processed first frame
-            with cv2VideoWriterContext(
-                out_path, fourcc, fps, (out_width, out_height)
-            ) as out:
-                # Write the first frame(s)
-                for out_frame in final_outputs:
+            # Continue processing and writing remaining frames
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+
+                frame_cache = {source.id: frame}
+                process_pipeline_frame(frame_cache, ordered_modules, module_map)
+
+                for out_frame in [frame_cache[mid] for mid in end_modules]:
                     out.write(out_frame)
 
-                # Continue processing and writing remaining frames
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
-
-                    frame_cache = {source.id: frame}
-                    process_pipeline_frame(frame_cache, ordered_modules, module_map)
-
-                    for out_frame in [frame_cache[mid] for mid in end_modules]:
-                        out.write(out_frame)
-
-        return True
-
-    except Exception as e:
-        raise HTTPException(500, detail=str(e))
+    return True
