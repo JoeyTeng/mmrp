@@ -150,10 +150,6 @@ export default function DragAndDropArea() {
     NodeType
   > | null>(null);
 
-  const handleEditNode = useCallback((node: Node<NodeData, NodeType>) => {
-    setEditingNode({ ...node });
-  }, []);
-
   const handleConfirm = useCallback(
     (updatedNode: Node<NodeData, NodeType>) => {
       setNodes((nodes) =>
@@ -177,7 +173,7 @@ export default function DragAndDropArea() {
         onEdgesChange={onEdgesChange}
         setNodes={setNodes}
         setEdges={setEdges}
-        onEditNode={handleEditNode}
+        onEditNode={setEditingNode}
       />
       <ParameterConfigurationDrawer
         editingNode={editingNode}

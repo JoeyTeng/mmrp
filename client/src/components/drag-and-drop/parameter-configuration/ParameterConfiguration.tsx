@@ -5,8 +5,8 @@ import {
   useCallback,
   useImperativeHandle,
   forwardRef,
-  useEffect,
   useContext,
+  useMemo,
 } from "react";
 import { InfoOutline as InfoIcon } from "@mui/icons-material";
 import { Box, TextField, MenuItem } from "@mui/material";
@@ -29,25 +29,20 @@ function ParameterConfiguration(
   { node }: ParameterConfigurationProps,
   ref: React.Ref<ParameterConfigurationRef>,
 ) {
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
     node ?? null,
   );
   const modules = useContext(ModulesContext);
-  const [constraintsLookup, setConstraintsLookup] =
-    useState<ConstraintsLookupType>({});
 
-  useEffect(() => {
+  const constraintsLookup = useMemo(() => {
     const foundModule = modules.find((item) => item.name === node?.data.label);
-    const newLookup = foundModule?.parameters.reduce(
-      (acc, { name, constraints }) => {
+    return (
+      foundModule?.parameters.reduce((acc, { name, constraints }) => {
         acc[name] = constraints;
         return acc;
-      },
-      {} as ConstraintsLookupType,
+      }, {} as ConstraintsLookupType) ?? {}
     );
-
-    setConstraintsLookup(newLookup || {});
   }, [modules, node?.data.label]);
 
   useImperativeHandle(
@@ -89,17 +84,22 @@ function ParameterConfiguration(
 
   const handleInputNumber = (key: string, rawValue: string) => {
     const newValue = Number(rawValue);
-    const min = -1;
-    const max = 100;
 
-    if (newValue <= min) {
-      setError(`Must be greater than ${min}`);
-    } else if (newValue > max) {
-      setError(`Must be less than ${max}`);
-    } else {
-      setError(null);
-    }
-    handleParamChange(key, newValue);
+    const min = Number(constraintsLookup[key]?.[0]) ?? 0;
+    const max = Number(constraintsLookup[key]?.[1]) ?? 100;
+
+    setErrors((prev) => ({
+      ...prev,
+      [key]:
+        newValue < min
+          ? `Must be ≥ ${min}`
+          : newValue > max
+            ? `Must be ≤ ${max}`
+            : "",
+    }));
+
+    const clampedValue = Math.max(min, Math.min(max, newValue));
+    handleParamChange(key, clampedValue);
   };
 
   if (!tempNode) {
@@ -140,19 +140,20 @@ function ParameterConfiguration(
         return (
           <Box
             key={key}
-            className={`relative mb-6 mt-2 ${error ? "text-red-600" : "text-gray-700"}`}
+            className={`relative mb-6 mt-2 ${errors[key] ? "text-red-600 !mb-8" : "text-gray-700"}`}
           >
             <NumberField.Root
+              inputMode="numeric"
               key={key}
               id={key}
               value={Number(value)}
-              min={10}
-              max={100}
+              min={Number(constraintsLookup[key]?.[0] ?? 0)}
+              max={Number(constraintsLookup[key]?.[1]) ?? 100}
             >
               <NumberField.ScrubArea className="absolute -top-3.5 left-2 z-10 bg-white px-1">
                 <label
                   htmlFor={key}
-                  className={`text-xs font-medium transition-colors ${error ? "text-red-600" : "text-gray-500"}`}
+                  className={`text-xs font-medium transition-colors ${errors[key] ? "text-red-600" : "text-gray-500"}`}
                 >
                   {key}
                 </label>
@@ -163,15 +164,15 @@ function ParameterConfiguration(
                   onChange={(e) => handleInputNumber(key, e.target.value)}
                   className={`
                     w-full p-2 h-10 border-1 border-b rounded-sm text-sm
-                    ${error ? "!border-red-600 !ring-red-600" : "border-gray-300"}
+                    ${errors[key] ? "!border-red-600 !ring-red-600" : "border-gray-300"}
                     focus:outline-none focus:ring-1 focus:ring-blue-500
                   `}
                 />
               </NumberField.Group>
             </NumberField.Root>
-            {error && (
-              <Box className="absolute -bottom-5 left-0 text-xs text-red-600 mt-1">
-                {error}
+            {errors[key] && (
+              <Box className="absolute -bottom-5 left-0 text-xs text-red-600">
+                {errors[key]}
               </Box>
             )}
           </Box>

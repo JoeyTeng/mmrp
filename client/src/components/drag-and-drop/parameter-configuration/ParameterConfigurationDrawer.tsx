@@ -22,18 +22,9 @@ export default function ParameterConfigurationDrawer({
 
   const handleConfirm = useCallback(() => {
     const updatedNode = paramsConfigRef.current?.getTempNode();
-    if (updatedNode) {
-      const completeNode: Node<NodeData, NodeType> = {
-        ...updatedNode,
-        data: {
-          ...updatedNode.data,
-          inputFormats: editingNode?.data.inputFormats || [],
-          outputFormats: editingNode?.data.outputFormats || [],
-        },
-      };
-      onConfirm(completeNode);
-    }
-  }, [onConfirm, editingNode]);
+    if (!updatedNode) return;
+    onConfirm(updatedNode);
+  }, [onConfirm, paramsConfigRef?.current]);
 
   return (
     <AppDrawer
