@@ -18,6 +18,5 @@ export type ContextMenuItem<ActionType extends string> = {
   disabled?: boolean;
   dividerAfter?: boolean;
   submenu?: ContextMenuItem<ActionType>[];
-  dense?: boolean;
   danger?: boolean;
 };
