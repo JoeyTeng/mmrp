@@ -2,6 +2,10 @@ import type { Node, Edge, OnNodesChange, OnEdgesChange } from "@xyflow/react";
 
 export type ParamValueType = string | number | boolean;
 export type NodeParamValue = ParamValueType | string[];
+export type ConstraintsLookupType = Record<
+  string,
+  ParamValueType[] | [number, number] | undefined
+>;
 
 export interface ParameterDefinition {
   name: string;

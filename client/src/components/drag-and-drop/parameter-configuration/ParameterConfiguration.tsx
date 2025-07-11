@@ -1,22 +1,29 @@
 "use client";
 
-import { useState, useCallback, useImperativeHandle, forwardRef } from "react";
+import {
+  useState,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+  useEffect,
+  useContext,
+} from "react";
 import { InfoOutline as InfoIcon } from "@mui/icons-material";
 import { Box, TextField, MenuItem } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
-import { NodeData, NodeParamValue, NodeType, ParamValueType } from "../types";
+import {
+  ConstraintsLookupType,
+  NodeData,
+  NodeParamValue,
+  NodeType,
+  ParamValueType,
+} from "../types";
 import {
   ParameterConfigurationProps,
   ParameterConfigurationRef,
 } from "../types";
 import type { Node } from "@xyflow/react";
-
-const getInputType = (value: NodeParamValue) => {
-  if (Array.isArray(value)) return "select";
-  if (typeof value === "number") return "number";
-  if (typeof value === "boolean") return "boolean";
-  return "text";
-};
+import { ModulesContext } from "@/contexts/ModulesContext";
 
 function ParameterConfiguration(
   { node }: ParameterConfigurationProps,
@@ -26,6 +33,22 @@ function ParameterConfiguration(
   const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
     node ?? null,
   );
+  const modules = useContext(ModulesContext);
+  const [constraintsLookup, setConstraintsLookup] =
+    useState<ConstraintsLookupType>({});
+
+  useEffect(() => {
+    const foundModule = modules.find((item) => item.name === node?.data.label);
+    const newLookup = foundModule?.parameters.reduce(
+      (acc, { name, constraints }) => {
+        acc[name] = constraints;
+        return acc;
+      },
+      {} as ConstraintsLookupType,
+    );
+
+    setConstraintsLookup(newLookup || {});
+  }, [modules, node?.data.label]);
 
   useImperativeHandle(
     ref,
@@ -34,6 +57,15 @@ function ParameterConfiguration(
     }),
     [tempNode],
   );
+
+  const getInputType = (key: string, value: NodeParamValue) => {
+    if (typeof value === "string" && Array.isArray(constraintsLookup[key]))
+      return "select";
+    if (typeof value === "string") return "string";
+    if (typeof value === "number") return "number";
+    if (typeof value === "boolean") return "boolean";
+    return "text";
+  };
 
   const handleParamChange = useCallback(
     (key: string, value: ParamValueType) => {
@@ -80,7 +112,7 @@ function ParameterConfiguration(
   }
 
   const renderParamInput = (key: string, value: NodeParamValue) => {
-    const inputType = getInputType(value);
+    const inputType = getInputType(key, value);
 
     switch (inputType) {
       case "select":
@@ -89,14 +121,15 @@ function ParameterConfiguration(
             key={key}
             select
             fullWidth
+            size="small"
             label={key}
             value={value}
             onChange={(e) => handleParamChange(key, e.target.value)}
             sx={{ mb: 2 }}
           >
-            {Array.isArray(value) &&
-              value.map((option) => (
-                <MenuItem key={option} value={option}>
+            {Array.isArray(constraintsLookup[key]) &&
+              constraintsLookup[key].map((option) => (
+                <MenuItem key={`${key}-${option}`} value={String(option)}>
                   {option}
                 </MenuItem>
               ))}
@@ -109,7 +142,13 @@ function ParameterConfiguration(
             key={key}
             className={`relative mb-6 mt-2 ${error ? "text-red-600" : "text-gray-700"}`}
           >
-            <NumberField.Root id={key} value={Number(value)} min={10} max={100}>
+            <NumberField.Root
+              key={key}
+              id={key}
+              value={Number(value)}
+              min={10}
+              max={100}
+            >
               <NumberField.ScrubArea className="absolute -top-3.5 left-2 z-10 bg-white px-1">
                 <label
                   htmlFor={key}
@@ -123,8 +162,9 @@ function ParameterConfiguration(
                 <NumberField.Input
                   onChange={(e) => handleInputNumber(key, e.target.value)}
                   className={`
-                    w-full p-4 border-1 border-b rounded-sm
-                    ${error ? "!border-red-600" : "border-gray-300"} 
+                    w-full p-2 h-10 border-1 border-b rounded-sm text-sm
+                    ${error ? "!border-red-600 !ring-red-600" : "border-gray-300"}
+                    focus:outline-none focus:ring-1 focus:ring-blue-500
                   `}
                 />
               </NumberField.Group>
@@ -144,6 +184,7 @@ function ParameterConfiguration(
             select
             fullWidth
             label={key}
+            size="small"
             value={String(value)}
             onChange={(e) => handleParamChange(key, e.target.value === "true")}
             sx={{ mb: 2 }}
@@ -159,6 +200,7 @@ function ParameterConfiguration(
             key={key}
             fullWidth
             label={key}
+            size="small"
             value={String(value)}
             onChange={(e) => handleParamChange(key, e.target.value)}
             sx={{ mb: 2 }}
