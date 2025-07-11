@@ -174,7 +174,7 @@ export default function FlowCanvas({
       const pipeline = dumpPipelineToJson(nodes, edges);
       console.log(JSON.stringify(pipeline, null, 2));
       try {
-        toast.success("Pipeline valid, request sent");
+        toast.success("Pipeline valid, starting processing");
         const res = await sendPipelineToBackend(pipeline);
         console.log("Executing in order", res);
       } catch (err) {
