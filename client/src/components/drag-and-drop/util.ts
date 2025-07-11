@@ -1,11 +1,15 @@
 /** Function that gets a single initial value for a param**/
 
+import { Edge, getOutgoers, Node } from "@xyflow/react";
 import {
   FormatDefinition,
   ParameterDefinition,
   ParamValueType,
   NodePort,
+  NodeType,
+  NodeData,
 } from "./types";
+import { toast } from "react-toastify";
 
 export function getInitialNodeParamValue(
   parameters: ParameterDefinition[],
@@ -56,4 +60,50 @@ export function makePorts(
     id: `${prefix}-${i}`,
     formats: fmt,
   })) as NodePort[];
+}
+
+export function checkPipeline(
+  nodes: Node<NodeData, NodeType>[],
+  edges: Edge[],
+): boolean {
+  //  Find the one source
+  const sources: Node[] = nodes.filter((n) => n.type === NodeType.InputNode);
+  if (sources.length !== 1) {
+    toast.error("Exactly one connected source node required.");
+    return false;
+  }
+
+  //  Find the one result
+  const results: Node[] = nodes.filter((n) => n.type === NodeType.OutputNode);
+  if (results.length !== 1) {
+    toast.error("Exactly one connected result node required.");
+    return false;
+  }
+
+  const source = sources[0];
+  const result = results[0];
+
+  //  DFS from source
+  const visited = new Set<string>();
+  const dfs = (n: Node) => {
+    if (visited.has(n.id)) return;
+    visited.add(n.id);
+    getOutgoers(n, nodes, edges).forEach(dfs);
+  };
+  dfs(source);
+
+  // 4 Check that result was reached
+  if (!visited.has(result.id)) {
+    toast.error("Result is not reachable from source.");
+    return false;
+  }
+
+  // 5 All nodes should be part of the chain
+  const orphan = nodes.find((n) => !visited.has(n.id));
+  if (orphan) {
+    toast.error(`Orphaned node detected.`);
+    return false;
+  }
+
+  return true;
 }
