@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useCallback,
-  useRef,
-  useState,
-  useMemo,
-  useReducer,
-} from "react";
+import React, { useCallback, useRef, useState, useReducer } from "react";
 import {
   ReactFlow,
   Background,
@@ -41,15 +35,20 @@ import { AppDrawer } from "@/components/sidebar/AppDrawer";
 import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
-import ContextMenu from "./ContextMenu";
-import { NODE_CONTEXT_MENU, NodeAction } from "./NodeContextMenu";
-import { CANVAS_CONTEXT_MENU, CanvasContextAction } from "./CanvasContextMenu";
+import ContextMenu from "./context-menu/ContextMenu";
+import { NODE_CONTEXT_MENU, NodeAction } from "./context-menu/NodeContextMenu";
+import {
+  CANVAS_CONTEXT_MENU,
+  CanvasContextAction,
+} from "./context-menu/CanvasContextMenu";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
   ContextMenuActionPayload,
   contextMenuReducer,
   initialContextMenuState,
-} from "./contextMenuReducer";
+} from "./context-menu/contextMenuReducer";
+import { useNodeActions } from "./context-menu/useNodeActions";
+import { useCanvasActions } from "./context-menu/useCanvasActions";
 
 type FlowCanvasProps = {
   nodes: Node<NodeData, NodeType>[];
@@ -70,8 +69,9 @@ export default function FlowCanvas({
   setEdges,
   onSelectNode,
 }: FlowCanvasProps) {
-  const FlowNodeWithMenu = (props: FlowNodeProps) => (
-    <FlowNode {...props} onOpenMenu={handleNodeOpenMenu} />
+  const [appDrawerOpen, setAppDrawerOpen] = useState(false);
+  const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
+    null,
   );
 
   const [contextMenuState, dispatchContextMenuState] = useReducer(
@@ -79,18 +79,31 @@ export default function FlowCanvas({
     initialContextMenuState,
   );
 
+  const paneRef = useRef<HTMLDivElement>(null);
+
+  const handleConfigure = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((node) => node.id === nodeId);
+      if (node) {
+        setTempNode({ ...node });
+        setAppDrawerOpen(true);
+      }
+    },
+    [nodes],
+  );
+
+  const { handleNodeAction } = useNodeActions(handleConfigure);
+  const { handleCanvasAction } = useCanvasActions();
+
+  const FlowNodeWithMenu = (props: FlowNodeProps) => (
+    <FlowNode {...props} onOpenMenu={handleNodeOpenMenu} />
+  );
+
   const nodeTypes = {
     [NodeType.InputNode]: FlowNodeWithMenu,
     [NodeType.ProcessNode]: FlowNodeWithMenu,
     [NodeType.OutputNode]: FlowNodeWithMenu,
   };
-
-  const paneRef = useRef<HTMLDivElement>(null);
-
-  const [appDrawerOpen, setAppDrawerOpen] = useState(false);
-  const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
-    null,
-  );
 
   const openContextMenu = useCallback(
     (payload: ContextMenuActionPayload<NodeAction | CanvasContextAction>) => {
@@ -147,38 +160,21 @@ export default function FlowCanvas({
     });
   };
 
-  const nodeActionHandlers = useMemo<Record<NodeAction, () => void>>(
-    () => ({
-      expand: () => console.log("expand clicked"),
-      duplicate: () => console.log("duplicate clicked"),
-      rename: () => console.log("rename clicked"),
-      color: () => console.log("colour clicked"),
-      configure: () => console.log("configure clicked"),
-      export: () => console.log("export clicked"),
-      delete: () => console.log("delete clicked"),
-    }),
-    [],
-  );
-
-  const canvasActionHandlers = useMemo<Record<CanvasContextAction, () => void>>(
-    () => ({
-      clear: () => console.log("clear canvas"),
-      export: () => console.log("export all nodes"),
-      run: () => console.log("run pipeline"),
-      add_node: () => console.log("add node"),
-    }),
-    [],
-  );
-
   const handleContextMenuAction = useCallback(
-    (id: NodeAction | CanvasContextAction) => {
-      if (!contextMenuState) return;
-      if (contextMenuState.target === "node")
-        nodeActionHandlers[id as NodeAction]?.();
-      else if (contextMenuState.target === "canvas")
-        canvasActionHandlers[id as CanvasContextAction]?.();
+    (actionId: NodeAction | CanvasContextAction) => {
+      closeContextMenu();
+      if (contextMenuState.target === "node" && contextMenuState.nodeId) {
+        handleNodeAction(actionId as NodeAction, contextMenuState.nodeId);
+      } else if (contextMenuState.target === "canvas") {
+        handleCanvasAction(actionId as CanvasContextAction);
+      }
     },
-    [contextMenuState, nodeActionHandlers, canvasActionHandlers],
+    [
+      contextMenuState.target,
+      contextMenuState.nodeId,
+      handleNodeAction,
+      handleCanvasAction,
+    ],
   );
 
   const handlePaneClick = () => {
@@ -359,7 +355,7 @@ export default function FlowCanvas({
           <Controls>
             <ControlButton
               onClick={() =>
-                canvasActionHandlers["clear" as CanvasContextAction]?.()
+                handleContextMenuAction("clear" as CanvasContextAction)
               }
             >
               <DeleteIcon className="fill-red-700" sx={{ scale: 1.2 }} />

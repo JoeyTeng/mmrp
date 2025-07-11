@@ -1,6 +1,6 @@
 import { CanvasContextAction } from "./CanvasContextMenu";
 import { NodeAction } from "./NodeContextMenu";
-import { ContextMenuItem } from "./types";
+import { ContextMenuItem } from "../types";
 
 export type ContextMenuTarget = "canvas" | "node";
 

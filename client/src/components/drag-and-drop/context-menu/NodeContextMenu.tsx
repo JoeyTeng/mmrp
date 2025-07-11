@@ -7,7 +7,7 @@ import {
   PaletteOutlined,
   FileDownloadOutlined,
 } from "@mui/icons-material";
-import type { ContextMenuItem } from "./types";
+import type { ContextMenuItem } from "../types";
 
 export type NodeAction =
   | "expand"
