@@ -92,13 +92,13 @@ export function checkPipeline(
   };
   dfs(source);
 
-  // 4 Check that result was reached
+  // Check that result was reached
   if (!visited.has(result.id)) {
     toast.error("Result is not reachable from source.");
     return false;
   }
 
-  // 5 All nodes should be part of the chain
+  // All nodes should be part of the chain
   const orphan = nodes.find((n) => !visited.has(n.id));
   if (orphan) {
     toast.error(`Orphaned node detected.`);
