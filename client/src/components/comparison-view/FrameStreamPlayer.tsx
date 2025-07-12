@@ -2,29 +2,98 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import PlayerControls from "./PlayerControls";
-import { FrameData } from "./types";
+import { FrameData, ViewOptions } from "./types";
+import {
+  closeVideoWebSocket,
+  createVideoWebSocket,
+} from "@/services/webSocketClient";
 
 type Props = {
+  view: ViewOptions;
   canvasRefs: React.RefObject<HTMLCanvasElement | null>[];
-  frames: FrameData[];
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
   onFullscreen: () => void;
-  isStreamActive?: boolean;
 };
 
 const FrameStreamPlayer = ({
+  view,
   canvasRefs,
-  frames,
   showSource,
   getSourceLabel,
   onFullscreen,
-  isStreamActive = true,
 }: Props) => {
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isUserPaused, setIsUserPaused] = useState(true);
+  const [frames, setFrames] = useState<FrameData[]>([]);
+  const currentFpsRef = useRef(30);
+  const currentMimeRef = useRef("image/webp");
+  const wsRef = useRef<WebSocket | null>(null);
+  const [isStreamActive, setIsStreamActive] = useState(false);
+  const [filenames] = useState([
+    "example-video.mp4",
+    "example-video-filter.mp4",
+  ]);
+
+  // Establish WebSocket connection to receive video frame data
+  useEffect(() => {
+    const expectedFrames = 2;
+    let frameBuffer: Blob[] = [];
+
+    const ws = createVideoWebSocket(
+      (data) => {
+        if (data instanceof ArrayBuffer) {
+          const blob = new Blob([data], { type: currentMimeRef.current });
+          frameBuffer.push(blob);
+
+          if (frameBuffer.length === expectedFrames) {
+            const commonFrameData = {
+              fps: currentFpsRef.current,
+              mime: currentMimeRef.current,
+            };
+
+            if (view === ViewOptions.SideBySide) {
+              const newFrame = {
+                blob: [frameBuffer[0], frameBuffer[1]],
+                ...commonFrameData,
+              };
+              setFrames((prev) => [...prev, newFrame]);
+            } else {
+              const [original, filtered] = frameBuffer;
+
+              const newFrames = [
+                { blob: [original], ...commonFrameData },
+                { blob: [filtered], ...commonFrameData },
+              ];
+
+              setFrames((prev) => [...prev, ...newFrames]);
+            }
+
+            frameBuffer = [];
+          }
+        } else {
+          if (data.fps) currentFpsRef.current = data.fps;
+          if (data.mime) currentMimeRef.current = data.mime;
+        }
+      },
+      () => {
+        setIsStreamActive(true);
+      },
+      undefined,
+      () => {
+        setIsStreamActive(false);
+      },
+      { filenames },
+    );
+
+    wsRef.current = ws;
+
+    return () => {
+      closeVideoWebSocket();
+    };
+  }, [filenames, view]);
 
   // Render frame at given index
   const renderFrame = useCallback(
@@ -55,6 +124,7 @@ const FrameStreamPlayer = ({
     [frames, canvasRefs],
   );
 
+  // Handle play/pause
   const handlePlayPause = () => {
     if (!isUserPaused) {
       setIsPlaying(false);
@@ -71,15 +141,16 @@ const FrameStreamPlayer = ({
 
   // Step forward/backward by delta frames
   const stepFrame = (delta: number) => {
-    const next = Math.min(Math.max(currentFrame + delta, 0), frames.length);
+    const next = Math.min(Math.max(currentFrame + delta, 0), frames.length - 1);
     setCurrentFrame(next);
     renderFrame(next);
     setIsPlaying(false);
     setIsUserPaused(true);
   };
 
+  // Handle slider movement
   const onSliderChange = (value: number) => {
-    setCurrentFrame(value);
+    setCurrentFrame(Math.min(value, frames.length - 1));
     renderFrame(value);
     setIsPlaying(false);
     setIsUserPaused(true);
@@ -95,7 +166,7 @@ const FrameStreamPlayer = ({
       return;
     }
 
-    if (currentFrame >= frames.length) {
+    if (currentFrame >= frames.length - 1) {
       setIsPlaying(false);
       if (!isStreamActive) {
         setIsUserPaused(true);
@@ -138,11 +209,21 @@ const FrameStreamPlayer = ({
 
   const sourceLabel = getSourceLabel?.(currentFrame);
 
+  const currentFrameLabel =
+    view === ViewOptions.SideBySide
+      ? currentFrame + 1
+      : Math.ceil((currentFrame + 1) / 2);
+
+  const totalFramesLabel =
+    view === ViewOptions.SideBySide
+      ? frames.length
+      : Math.ceil(frames.length / 2);
+
   return (
     <>
       <PlayerControls
-        currentFrame={currentFrame}
-        totalFrames={frames.length}
+        currentFrame={currentFrameLabel}
+        totalFrames={totalFramesLabel}
         isPlaying={!isUserPaused}
         showMute={false}
         isMuted={true}
@@ -154,7 +235,7 @@ const FrameStreamPlayer = ({
         showSource={showSource}
         sourceLabel={sourceLabel}
         sliderValue={currentFrame}
-        sliderMax={frames.length}
+        sliderMax={frames.length - 1}
         sliderStep={1}
       />
     </>

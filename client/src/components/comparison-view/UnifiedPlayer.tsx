@@ -3,30 +3,28 @@
 import React from "react";
 import VideoPlayer, { PlayerHandle } from "./VideoPlayer";
 import FrameStreamPlayer from "./FrameStreamPlayer";
-import { FrameData, VideoType } from "./types";
+import { VideoType, ViewOptions } from "./types";
 
 type UnifiedPlayerProps = {
+  view: ViewOptions;
   type: VideoType;
   videoRefs?: React.RefObject<HTMLVideoElement | null>[];
   canvasRefs?: React.RefObject<HTMLCanvasElement | null>[];
-  frames: FrameData[];
   containerRef: React.RefObject<HTMLDivElement | null>;
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
   ref?: React.RefObject<PlayerHandle | null>;
-  isStreamActive?: boolean;
 };
 
 const UnifiedPlayer = ({
+  view,
   type,
   videoRefs,
   canvasRefs,
-  frames,
   containerRef,
   showSource,
   getSourceLabel,
   ref,
-  isStreamActive,
 }: UnifiedPlayerProps) => {
   const handleFullscreen = () => {
     const elem = containerRef.current;
@@ -54,12 +52,11 @@ const UnifiedPlayer = ({
 
   return (
     <FrameStreamPlayer
+      view={view}
       canvasRefs={canvasRefs!}
-      frames={frames}
       showSource={showSource}
       getSourceLabel={getSourceLabel}
       onFullscreen={handleFullscreen}
-      isStreamActive={isStreamActive}
     />
   );
 };

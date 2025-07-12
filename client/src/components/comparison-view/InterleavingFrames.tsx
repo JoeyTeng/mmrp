@@ -5,11 +5,7 @@ import { loadVideo } from "@/services/videoService";
 import { Box } from "@mui/material";
 import UnifiedPlayer from "./UnifiedPlayer";
 import { PlayerHandle } from "./VideoPlayer";
-import { FrameData, VideoType } from "./types";
-import {
-  closeVideoWebSocket,
-  createVideoWebSocket,
-} from "@/services/webSocketClient";
+import { VideoType, ViewOptions } from "./types";
 
 type Props = {
   type: VideoType;
@@ -22,11 +18,6 @@ const InterleavingFrames = ({ type }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [frames, setFrames] = useState<FrameData[]>([]);
-  const currentFpsRef = useRef(30);
-  const currentMimeRef = useRef("image/webp");
-  const wsRef = useRef<WebSocket | null>(null);
-  const [isStreamActive, setIsStreamActive] = useState(true);
 
   useEffect(() => {
     let url: string = videoRef.current?.src || "";
@@ -48,50 +39,6 @@ const InterleavingFrames = ({ type }: Props) => {
 
     return () => {
       URL.revokeObjectURL(url);
-    };
-  }, []);
-
-  useEffect(() => {
-    let expectedFrames = 1;
-    let frameBuffer: Blob[] = [];
-
-    const ws = createVideoWebSocket(
-      (data) => {
-        if (data instanceof ArrayBuffer) {
-          const blob = new Blob([data], { type: currentMimeRef.current });
-          frameBuffer.push(blob);
-
-          if (frameBuffer.length === expectedFrames) {
-            const [original] = frameBuffer;
-            setFrames((prev) => [
-              ...prev,
-              {
-                blob: [original],
-                fps: currentFpsRef.current,
-                mime: currentMimeRef.current,
-                count: expectedFrames,
-              },
-            ]);
-            frameBuffer = [];
-          }
-        } else {
-          if (data.fps) currentFpsRef.current = data.fps;
-          if (data.mime) currentMimeRef.current = data.mime;
-          if (data.count) expectedFrames = data.count;
-        }
-      },
-      undefined,
-      undefined,
-      () => {
-        setIsStreamActive(false);
-      },
-      { mode: "single" },
-    );
-
-    wsRef.current = ws;
-
-    return () => {
-      closeVideoWebSocket();
     };
   }, []);
 
@@ -137,15 +84,15 @@ const InterleavingFrames = ({ type }: Props) => {
         )}
       </Box>
       <UnifiedPlayer
+        key={`${type}-${ViewOptions.Interleaving}`}
+        view={ViewOptions.Interleaving}
         type={type}
         videoRefs={[videoRef]}
         canvasRefs={[canvasRef]}
-        frames={frames}
         showSource
         getSourceLabel={(frame) => (frame % 2 === 0 ? "Video A" : "Video B")}
         containerRef={containerRef}
         ref={playerRef}
-        isStreamActive={isStreamActive}
       />
     </Box>
   );

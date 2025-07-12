@@ -4,7 +4,6 @@ export type FrameMessage =
   | {
       fps?: number;
       mime?: string;
-      count?: number;
     }
   | ArrayBuffer;
 
@@ -22,7 +21,7 @@ export const createVideoWebSocket = (
   ws.onopen = () => {
     console.log("WebSocket connection opened");
     if (initMessage) {
-      ws?.send(JSON.stringify(initMessage)); // send mode info
+      ws?.send(JSON.stringify(initMessage)); // send filenames info
     }
     onOpen?.();
   };
@@ -46,7 +45,6 @@ export const createVideoWebSocket = (
   };
 
   ws.onclose = () => {
-    console.log("WebSocket closed");
     onClose?.();
   };
 
@@ -54,7 +52,11 @@ export const createVideoWebSocket = (
 };
 
 export const closeVideoWebSocket = () => {
-  if (ws?.CLOSED || ws?.CLOSING) return;
+  if (ws && ws.readyState === WebSocket.CONNECTING) {
+    console.log("WebSocket connecting");
+    return;
+  }
+  console.log("WebSocket closing");
   ws?.close();
   ws = null;
 };

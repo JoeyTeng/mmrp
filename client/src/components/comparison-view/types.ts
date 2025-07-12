@@ -21,5 +21,4 @@ export type FrameData = {
   blob: Blob[];
   fps: number;
   mime: string;
-  count: number;
 };

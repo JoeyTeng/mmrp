@@ -16,12 +16,13 @@ cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
 @router.websocket("/ws/video")
 async def video_feed(websocket: WebSocket) -> None:
     await websocket.accept()
+    print("WebSocket connection accepted")
 
-    # Wait for client to specify mode
+    # Wait for client to specify filenames
     try:
         init_msg: str = await websocket.receive_text()
         init_data = json.loads(init_msg)
-        mode: str = init_data.get("mode", "single")
+        filenames: str = init_data.get("filenames")
     except Exception:
         await websocket.close()
         return
@@ -29,9 +30,7 @@ async def video_feed(websocket: WebSocket) -> None:
     base_path: Path = (
         Path(__file__).resolve().parent.parent.parent.parent / "server" / "videos"
     )
-    video_paths: List[Path] = [base_path / "example-video.mp4"]
-    if mode == "dual":
-        video_paths.append(base_path / "example-video-filter.mp4")
+    video_paths: List[Path] = [base_path / name for name in filenames[:2]]
 
     try:
         with ExitStack() as stack:
@@ -78,7 +77,6 @@ async def video_feed(websocket: WebSocket) -> None:
                 metadata: Dict[str, Union[int, float, str]] = {
                     "fps": fps,
                     "mime": mime_type,
-                    "count": len(frames),
                 }
                 await websocket.send_text(json.dumps(metadata))
 
@@ -89,11 +87,12 @@ async def video_feed(websocket: WebSocket) -> None:
                 await asyncio.sleep(1 / fps)
 
     except WebSocketDisconnect:
-        print("WebSocket disconnected by the client.")
+        print("WebSocket disconnected by the client")
     except Exception as e:
         print("WebSocket error:", e)
     finally:
         try:
             await websocket.close()
+            print("WebSocket closed")
         except RuntimeError:
             pass  # already closed

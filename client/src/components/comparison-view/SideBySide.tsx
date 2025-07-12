@@ -5,11 +5,7 @@ import UnifiedPlayer from "./UnifiedPlayer";
 import { PlayerHandle } from "./VideoPlayer";
 import { Box } from "@mui/material";
 import { loadVideo } from "@/services/videoService";
-import { FrameData, VideoType } from "./types";
-import {
-  closeVideoWebSocket,
-  createVideoWebSocket,
-} from "@/services/webSocketClient";
+import { VideoType, ViewOptions } from "./types";
 
 type Props = {
   type: VideoType;
@@ -24,11 +20,6 @@ const SideBySide = ({ type }: Props) => {
   const canvasBRef = useRef<HTMLCanvasElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [frames, setFrames] = useState<FrameData[]>([]);
-  const currentFpsRef = useRef(30);
-  const currentMimeRef = useRef("image/webp");
-  const wsRef = useRef<WebSocket | null>(null);
-  const [isStreamActive, setIsStreamActive] = useState(true);
 
   useEffect(() => {
     const urls: string[] = [];
@@ -55,50 +46,6 @@ const SideBySide = ({ type }: Props) => {
 
     return () => {
       urls.forEach((url) => url && URL.revokeObjectURL(url));
-    };
-  }, []);
-
-  useEffect(() => {
-    let expectedFrames = 1;
-    let frameBuffer: Blob[] = [];
-
-    const ws = createVideoWebSocket(
-      (data) => {
-        if (data instanceof ArrayBuffer) {
-          const blob = new Blob([data], { type: currentMimeRef.current });
-          frameBuffer.push(blob);
-
-          if (frameBuffer.length === expectedFrames) {
-            const [original, filtered] = frameBuffer;
-            setFrames((prev) => [
-              ...prev,
-              {
-                blob: [original, filtered],
-                fps: currentFpsRef.current,
-                mime: currentMimeRef.current,
-                count: expectedFrames,
-              },
-            ]);
-            frameBuffer = [];
-          }
-        } else {
-          if (data.fps) currentFpsRef.current = data.fps;
-          if (data.mime) currentMimeRef.current = data.mime;
-          if (data.count) expectedFrames = data.count;
-        }
-      },
-      undefined,
-      undefined,
-      () => {
-        setIsStreamActive(false);
-      },
-      { mode: "dual" },
-    );
-
-    wsRef.current = ws;
-
-    return () => {
-      closeVideoWebSocket();
     };
   }, []);
 
@@ -158,13 +105,13 @@ const SideBySide = ({ type }: Props) => {
       </Box>
 
       <UnifiedPlayer
+        key={`${type}-${ViewOptions.SideBySide}`}
+        view={ViewOptions.SideBySide}
         type={type}
         videoRefs={[videoARef, videoBRef]}
         canvasRefs={[canvasARef, canvasBRef]}
-        frames={frames}
         containerRef={containerRef}
         ref={playerRef}
-        isStreamActive={isStreamActive}
       />
     </Box>
   );
