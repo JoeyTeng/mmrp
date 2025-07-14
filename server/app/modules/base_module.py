@@ -52,7 +52,7 @@ class ModuleBase(ABC):
         return []
 
     @abstractmethod
-    def process(self, input_data: str, parameters: dict[str, Any]) -> Any:
+    def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:
         raise NotImplementedError
 
     @abstractmethod

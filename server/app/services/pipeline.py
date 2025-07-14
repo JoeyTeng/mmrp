@@ -1,11 +1,9 @@
 import numpy as np
-import cv2
 from collections import defaultdict, deque
-from typing import Any
+from typing import Any, Iterator
 from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest
-from app.utils.shared_functionality import as_context
 from app.services.module import registry
 
 
@@ -131,68 +129,35 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
         # Validate each parameter
         validate_parameters(params, param_defs, mod_instance)
 
-    # Get the source (selected video)
-    source: PipelineModule = ordered_modules[0]
-    source_instance, source_params = module_map[source.id]
-    video_path: str = source_instance.process("", source_params)
-
-    # Get result module (output video and path)
-    output: PipelineModule = ordered_modules[-1]
-    result_instance, result_params = module_map[output.id]
-    output_path: str = result_instance.process("", result_params)
-
-    # Get end modules (last processing modules before output node)
-    if not output.source:
+    # Get source and result module
+    source_mod = ordered_modules[0]
+    result_mod = ordered_modules[-1]
+    processing_nodes = ordered_modules[1:-1]
+    result_sources = result_mod.source
+    # Check and validate pipeline
+    if not result_sources:
         raise ValueError("Output source cannot be empty")
-    if source.id in output.source:
+    if source_mod.id in result_mod.source:
         raise ValueError("Pipeline must have at least one processing node")
-    end_modules = output.source
 
-    # Remove source and result modules from processing order
-    ordered_modules = ordered_modules[1:-1]
+    # Process source module inside context manager
+    with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
+        fps,
+        frame_iter,
+    ):
 
-    # Context wrappers
-    cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
-    cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda writer: writer.release())
-    # FIXME: OpenCV warning (use a format that is supported with the codec)
-    fourcc = getattr(cv2, "VideoWriter_fourcc")(*"VP80")
+        def pipeline_iterator() -> Iterator[np.ndarray]:
+            yield fps
+            # Process frames
+            for frame in frame_iter:
+                frame_cache = {source_mod.id: frame}
+                process_pipeline_frame(frame_cache, processing_nodes, module_map)
+                for mid in result_sources:
+                    yield frame_cache[mid]
 
-    with cv2VideoCaptureContext(video_path) as cap:
-        if not cap.isOpened():
-            raise ValueError(f"Could not open video file: {video_path}")
-        fps = cap.get(cv2.CAP_PROP_FPS)
-
-        # Read and process first frame to get correct dimensions for writer
-        ret, first_frame = cap.read()
-        if not ret:
-            raise ValueError("Could not read first frame")
-
-        # Process first frame
-        frame_cache: dict[int, np.ndarray] = {source.id: first_frame}
-        process_pipeline_frame(frame_cache, ordered_modules, module_map)
-
-        final_outputs = [frame_cache[mid] for mid in end_modules]
-        out_height, out_width = final_outputs[0].shape[:2]
-
-        # Initialise output writer with dimensions from processed first frame
-        with cv2VideoWriterContext(
-            output_path, fourcc, fps, (out_width, out_height)
-        ) as out:
-            print(output_path)
-            # Write the first frame(s)
-            for out_frame in final_outputs:
-                out.write(out_frame)
-
-            # Continue processing and writing remaining frames
-            while True:
-                ret, frame = cap.read()
-                if not ret:
-                    break
-
-                frame_cache = {source.id: frame}
-                process_pipeline_frame(frame_cache, ordered_modules, module_map)
-
-                for out_frame in [frame_cache[mid] for mid in end_modules]:
-                    out.write(out_frame)
+        # Result module handles writing output
+        module_map[result_mod.id][0].process(
+            pipeline_iterator(), module_map[result_mod.id][1]
+        )
 
     return True
