@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
   useReducer,
+  useMemo,
 } from "react";
 
 import {
@@ -99,16 +100,6 @@ export default function FlowCanvas({
   const { handleNodeAction } = useNodeActions(handleConfigure);
   const { handleCanvasAction } = useCanvasActions();
 
-  const FlowNodeWithMenu = (props: FlowNodeProps) => (
-    <FlowNode {...props} onOpenMenu={handleNodeOpenMenu} />
-  );
-
-  const nodeTypes = {
-    [NodeType.InputNode]: FlowNodeWithMenu,
-    [NodeType.ProcessNode]: FlowNodeWithMenu,
-    [NodeType.OutputNode]: FlowNodeWithMenu,
-  };
-
   const openContextMenu = useCallback(
     (payload: ContextMenuActionPayload<NodeAction | CanvasContextAction>) => {
       dispatchContextMenuState({
@@ -117,6 +108,41 @@ export default function FlowCanvas({
       });
     },
     [],
+  );
+
+  const handleNodeOpenMenu = useCallback(
+    (event: React.MouseEvent, nodeId: string) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const coordinates = event.currentTarget.getBoundingClientRect();
+      openContextMenu({
+        position: {
+          x: coordinates.left,
+          y: coordinates.bottom + 6,
+        },
+        target: "node",
+        nodeId: nodeId,
+        items: NODE_CONTEXT_MENU,
+      });
+    },
+    [openContextMenu],
+  );
+
+  const FlowNodeWithMenu = useCallback(
+    (props: FlowNodeProps) => (
+      <FlowNode {...props} onOpenMenu={handleNodeOpenMenu} />
+    ),
+    [handleNodeOpenMenu],
+  );
+
+  const nodeTypes = useMemo(
+    () => ({
+      [NodeType.InputNode]: FlowNodeWithMenu,
+      [NodeType.ProcessNode]: FlowNodeWithMenu,
+      [NodeType.OutputNode]: FlowNodeWithMenu,
+    }),
+    [FlowNodeWithMenu],
   );
 
   const closeContextMenu = () => {
@@ -132,22 +158,6 @@ export default function FlowCanvas({
       },
       target: "node",
       nodeId: node.id,
-      items: NODE_CONTEXT_MENU,
-    });
-  };
-
-  const handleNodeOpenMenu = (event: React.MouseEvent, nodeId: string) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const coordinates = event.currentTarget.getBoundingClientRect();
-    openContextMenu({
-      position: {
-        x: coordinates.left,
-        y: coordinates.bottom + 6,
-      },
-      target: "node",
-      nodeId: nodeId,
       items: NODE_CONTEXT_MENU,
     });
   };
