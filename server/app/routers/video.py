@@ -34,8 +34,6 @@ def get_video(video_name: str):
         else:
             video_path = get_video_path(video_name)
 
-        print(f"Resolved video path: {video_path}")
-
         if not video_path.exists():
             raise HTTPException(404, detail=f"Video not found at {video_path}")
 

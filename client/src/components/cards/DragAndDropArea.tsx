@@ -42,7 +42,7 @@ const initialNodes: Node<NodeData, NodeType>[] = [
     data: {
       label: "colorspace",
       params: {
-        input_colorspace: "YCrCb",
+        input_colorspace: "RGB",
         output_colorspace: "YCrCb",
       },
       inputFormats: [

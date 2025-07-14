@@ -1,10 +1,14 @@
-from typing import Any
+from typing import Any, Iterator
 from app.modules.base_module import (
     ModuleBase,
     ParameterDefinition,
     FormatDefinition,
     ModuleRole,
 )
+from app.utils.shared_functionality import get_video_path, as_context
+import cv2
+import contextlib
+import numpy as np
 
 
 class Source(ModuleBase):
@@ -44,7 +48,29 @@ class Source(ModuleBase):
         # Source frames are injected by the pipeline service, never called directly
         raise NotImplementedError("Frame injection is handled by the pipeline service")
 
-    def process(self, input_data: Any, parameters: dict[str, Any]) -> None:
-        # Entire‐video processing is handled by the pipeline service
-        # TODO: handle video read here
-        raise NotImplementedError("Video read is handled by the pipeline service")
+    # Process video path
+    def process(
+        self, input_data: Any, parameters: dict[str, Any]
+    ) -> contextlib.AbstractContextManager[tuple[float, Iterator[np.ndarray]]]:
+        video_path = get_video_path(str(parameters["path"]))
+
+        cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
+
+        # Return a generator function that opens and yields frames
+        @contextlib.contextmanager
+        def generator_context():
+            with cv2VideoCaptureContext(str(video_path)) as cap:
+                if not cap.isOpened():
+                    raise ValueError(f"Could not open video file: {video_path}")
+                fps = cap.get(cv2.CAP_PROP_FPS)
+
+                def frame_generator():
+                    while True:
+                        ret, frame = cap.read()
+                        if not ret:
+                            break
+                        yield frame
+
+                yield fps, frame_generator()
+
+        return generator_context()

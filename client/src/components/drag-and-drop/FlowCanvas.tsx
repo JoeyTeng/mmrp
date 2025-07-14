@@ -25,6 +25,7 @@ import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import { ModulesContext } from "@/contexts/ModulesContext";
+import { useVideoReload } from "@/contexts/videoReloadContext";
 import { checkPipeline, getInitialNodeParamValue, makePorts } from "./util";
 import { toast } from "react-toastify/unstyled";
 
@@ -44,11 +45,14 @@ export default function FlowCanvas({
   onEditNode,
 }: FlowCanvasProps) {
   const paneRef = useRef<HTMLDivElement>(null);
+
+  const { triggerReload, setIsProcessing, setError, isProcessing } =
+    useVideoReload();
   const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
-  const handlePaneClick = () => {
+  const handlePaneClick = useCallback(() => {
     paneRef.current?.focus();
-  };
+  }, []);
 
   const handlePaneKeyDown = useCallback(
     (evt: React.KeyboardEvent) => {
@@ -153,10 +157,16 @@ export default function FlowCanvas({
       console.log(JSON.stringify(pipeline, null, 2));
       try {
         toast.success("Pipeline valid, starting processing");
+        setIsProcessing(true);
         const res = await sendPipelineToBackend(pipeline);
-        console.log("Executing in order", res);
+        console.log("Pipeline processed successfully: ", res);
+        setError(false);
+        triggerReload();
       } catch (err) {
-        console.error("Error sending pipleine to backend", err);
+        console.error("Error sending pipeline to backend", err);
+        setError(true);
+      } finally {
+        setIsProcessing(false);
       }
     }
   };
@@ -209,8 +219,11 @@ export default function FlowCanvas({
           <Panel position="bottom-right">
             <Button
               variant="contained"
-              className="bg-primary"
+              className={
+                isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
+              }
               onClick={onConfirm}
+              disabled={isProcessing}
             >
               Confirm
             </Button>
