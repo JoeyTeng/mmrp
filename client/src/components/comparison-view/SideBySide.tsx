@@ -84,42 +84,42 @@ const SideBySide = ({ type }: Props) => {
     >
       {/* Video Container */}
       <Box className="relative flex flex-1">
+        {/* Status Overlay */}
+        {(isAnyLoading || isAnyError) && (
+          <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
+            {isLoading ? (
+              <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            ) : isProcessing ? (
+              <Box className="flex flex-col items-center justify-center">
+                <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                <Box className="mt-4 text-lg font-medium">
+                  Processing Pipeline...
+                </Box>
+                <Box className="text-sm text-gray-300 mt-1">
+                  This might take some time.
+                </Box>
+              </Box>
+            ) : isProcessingError ? (
+              <Box className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white p-4 text-center">
+                {/* Error Icon */}
+                <Box className="flex items-center justify-center h-10 w-10 rounded-full bg-red-600 mb-4">
+                  <span className="text-3xl font-bold">!</span>
+                </Box>
+                {/* Error Text */}
+                <Box className="text-lg font-semibold">
+                  Error processing pipeline
+                </Box>
+                <Box className="text-sm text-gray-300 mt-1">
+                  Please try again or check your pipeline.
+                </Box>
+              </Box>
+            ) : (
+              error
+            )}
+          </Box>
+        )}
         {type === VideoType.Video && (
           <>
-            {/* Status Overlay */}
-            {(isAnyLoading || isAnyError) && (
-              <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
-                {isLoading ? (
-                  <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                ) : isProcessing ? (
-                  <Box className="flex flex-col items-center justify-center">
-                    <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                    <Box className="mt-4 text-lg font-medium">
-                      Processing Pipeline...
-                    </Box>
-                    <Box className="text-sm text-gray-300 mt-1">
-                      This might take some time.
-                    </Box>
-                  </Box>
-                ) : isProcessingError ? (
-                  <Box className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white p-4 text-center">
-                    {/* Error Icon */}
-                    <Box className="flex items-center justify-center h-10 w-10 rounded-full bg-red-600 mb-4">
-                      <span className="text-3xl font-bold">!</span>
-                    </Box>
-                    {/* Error Text */}
-                    <Box className="text-lg font-semibold">
-                      Error processing pipeline
-                    </Box>
-                    <Box className="text-sm text-gray-300 mt-1">
-                      Please try again or check your pipeline.
-                    </Box>
-                  </Box>
-                ) : (
-                  error
-                )}
-              </Box>
-            )}
             {/* Left Video */}
             <Box
               component="video"
