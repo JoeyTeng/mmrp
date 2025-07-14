@@ -32,7 +32,7 @@ import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import { ModulesContext } from "@/contexts/ModulesContext";
 import { checkPipeline, getInitialNodeParamValue, makePorts } from "./util";
-import { toast } from "react-toastify";
+import { toast } from "react-toastify/unstyled";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,

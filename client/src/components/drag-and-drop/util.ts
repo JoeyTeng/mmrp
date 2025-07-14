@@ -9,7 +9,7 @@ import {
   NodeType,
   NodeData,
 } from "./types";
-import { toast } from "react-toastify";
+import { toast } from "react-toastify/unstyled";
 
 export function getInitialNodeParamValue(
   parameters: ParameterDefinition[],
