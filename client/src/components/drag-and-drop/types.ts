@@ -52,7 +52,13 @@ export type FlowCanvasProps = {
   onEditNode: (node: Node<NodeData, NodeType>) => void;
 };
 
+export interface ParameterConfigurationDrawerProps {
+  editingNode: Node<NodeData, NodeType>;
+  onConfirm: (node: Node<NodeData, NodeType>) => void;
+  onCancel: () => void;
+}
+
 export type ParameterConfigurationProps = {
-  node: Node<NodeData, NodeType> | null;
+  node: Node<NodeData, NodeType>;
   onParamChange: (key: string, value: ParamValueType) => void;
 };
