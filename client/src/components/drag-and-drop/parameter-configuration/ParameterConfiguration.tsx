@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useContext, useMemo } from "react";
-import { InfoOutline as InfoIcon } from "@mui/icons-material";
 import { Box, TextField, MenuItem } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
 import {
@@ -64,15 +63,6 @@ export default function ParameterConfiguration({
     const clampedValue = Math.max(min, Math.min(max, newValue));
     onParamChange(key, clampedValue);
   };
-
-  if (!node) {
-    return (
-      <Box display="flex" alignItems="center" gap={2} p={2}>
-        <InfoIcon color="action" />
-        <span>Select pipeline module to edit parameters</span>
-      </Box>
-    );
-  }
 
   const renderParamInput = (key: string, value: NodeParamValue) => {
     const inputType = getInputType(key, value);

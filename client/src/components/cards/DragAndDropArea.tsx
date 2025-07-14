@@ -175,11 +175,13 @@ export default function DragAndDropArea() {
         setEdges={setEdges}
         onEditNode={setEditingNode}
       />
-      <ParameterConfigurationDrawer
-        editingNode={editingNode}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-      />
+      {editingNode && (
+        <ParameterConfigurationDrawer
+          editingNode={editingNode}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
+      )}
     </ReactFlowProvider>
   );
 }
