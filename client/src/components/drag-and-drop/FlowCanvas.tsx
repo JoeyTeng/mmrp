@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useContext, useRef, useState } from "react";
+import React, { useCallback, useContext, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -12,40 +12,26 @@ import {
   Position,
   MarkerType,
   getOutgoers,
-  OnEdgesChange,
-  OnNodesChange,
   Panel,
   useReactFlow,
+  getIncomers,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
 
-import "@xyflow/react/dist/style.css";
-
 import FlowNode from "@/components/drag-and-drop/FlowNode";
-import { NodeData, NodeType, ParamValueType } from "./types";
+import { FlowCanvasProps, NodeData, NodeType } from "./types";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
-import { AppDrawer } from "@/components/sidebar/AppDrawer";
-import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import { ModulesContext } from "@/contexts/ModulesContext";
-import { getInitialNodeParamValue, makePorts } from "./util";
+import { checkPipeline, getInitialNodeParamValue, makePorts } from "./util";
+import { toast } from "react-toastify/unstyled";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
   [NodeType.ProcessNode]: FlowNode,
   [NodeType.OutputNode]: FlowNode,
-};
-
-type FlowCanvasProps = {
-  nodes: Node<NodeData, NodeType>[];
-  edges: Edge[];
-  onNodesChange: OnNodesChange<Node<NodeData, NodeType>>;
-  onEdgesChange: OnEdgesChange;
-  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
-  onSelectNode: (id: string | null) => void;
 };
 
 export default function FlowCanvas({
@@ -55,14 +41,10 @@ export default function FlowCanvas({
   onEdgesChange,
   setNodes,
   setEdges,
-  onSelectNode,
+  onEditNode,
 }: FlowCanvasProps) {
   const paneRef = useRef<HTMLDivElement>(null);
-
-  const [appDrawerOpen, setAppDrawerOpen] = useState(false);
-  const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
-    null,
-  );
+  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
   const handlePaneClick = () => {
     paneRef.current?.focus();
@@ -83,8 +65,6 @@ export default function FlowCanvas({
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges],
   );
-
-  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -141,8 +121,9 @@ export default function FlowCanvas({
       const conn = connection as Connection;
       const nodes = getNodes();
       const edges = getEdges();
-      const target = nodes.find((node) => node.id == connection.target);
-      if (!target || target.id == connection.source) return false;
+      const source = nodes.find((node) => node.id == conn.source);
+      const target = nodes.find((node) => node.id == conn.target);
+      if (!source || !target || source.id == target.id) return false;
       const hasCycle = (node: Node, visited = new Set<string>()) => {
         if (visited.has(node.id)) return false;
         visited.add(node.id);
@@ -152,19 +133,31 @@ export default function FlowCanvas({
         }
         return false;
       };
-      return !hasCycle(target);
+      const hasOneEdge = (src: Node, tgt: Node): boolean => {
+        if (
+          getOutgoers(src, nodes, edges).length >= 1 ||
+          getIncomers(tgt, nodes, edges).length >= 1
+        ) {
+          return false;
+        }
+        return true;
+      };
+      return !hasCycle(target) && hasOneEdge(source, target);
     },
     [getNodes, getEdges],
   );
 
   const onConfirm = async () => {
-    const pipeline = dumpPipelineToJson(nodes, edges);
-    console.log(JSON.stringify(pipeline, null, 2));
-    try {
-      const res = await sendPipelineToBackend(pipeline);
-      console.log("Executing in order", res);
-    } catch (err) {
-      console.error("Error sending pipleine to backend", err);
+    if (checkPipeline(nodes, edges)) {
+      const pipeline = dumpPipelineToJson(nodes, edges);
+      console.log(JSON.stringify(pipeline, null, 2));
+      try {
+        toast.success("Pipeline valid, starting processing");
+        const res = await sendPipelineToBackend(pipeline);
+        console.log("Executing in order", res);
+      } catch (err) {
+        console.error("Error sending pipleine to backend", err);
+      }
     }
   };
 
@@ -172,42 +165,12 @@ export default function FlowCanvas({
     (event: React.MouseEvent, node: Node<NodeData, NodeType>) => {
       event.preventDefault();
       event.stopPropagation();
-      setTempNode({ ...node });
-      setAppDrawerOpen(true);
+      onEditNode(node);
     },
-    [],
+    [onEditNode],
   );
 
-  const handleParamChange = useCallback(
-    (key: string, value: ParamValueType) => {
-      setTempNode((prev) =>
-        prev
-          ? {
-              ...prev,
-              data: {
-                ...prev.data,
-                params: { ...prev.data.params, [key]: value },
-              },
-            }
-          : null,
-      );
-    },
-    [],
-  );
-
-  const handleConfirmParams = useCallback(() => {
-    if (!tempNode) return;
-
-    setNodes((nds) => nds.map((n) => (n.id === tempNode.id ? tempNode : n)));
-    setAppDrawerOpen(false);
-  }, [tempNode, setNodes]);
-
-  const handleCancelParams = useCallback(() => {
-    setAppDrawerOpen(false);
-    setTempNode(null);
-  }, []);
-
-  if (!modules) return;
+  if (!modules) return null;
 
   return (
     <Box className="w-full h-full relative bg-white rounded-lg border border-gray-300">
@@ -228,9 +191,6 @@ export default function FlowCanvas({
           onConnect={onConnect}
           onDragOver={onDragOver}
           onDrop={onDrop}
-          onSelectionChange={({ nodes: selected }) =>
-            onSelectNode(selected.length ? selected[0].id : null)
-          }
           onNodeDoubleClick={onNodeDoubleClickHandler}
           fitViewOptions={{
             padding: 1,
@@ -257,41 +217,6 @@ export default function FlowCanvas({
           </Panel>
         </ReactFlow>
       </Box>
-      <AppDrawer
-        open={appDrawerOpen}
-        onClose={handleCancelParams}
-        title={
-          tempNode
-            ? `Edit ${tempNode.data.label} Parameters`
-            : "Edit Parameters"
-        }
-        width={400}
-        anchor="right"
-      >
-        <Box display="flex" flexDirection="column" height="100%">
-          <Box flex={1} overflow="auto">
-            <ParameterConfiguration
-              node={tempNode}
-              onParamChange={handleParamChange}
-            />
-          </Box>
-          <Box
-            sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}
-          >
-            <Button variant="outlined" onClick={handleCancelParams}>
-              Cancel
-            </Button>
-            <Button
-              className="bg-primary"
-              variant="contained"
-              onClick={handleConfirmParams}
-              disabled={!tempNode}
-            >
-              Confirm
-            </Button>
-          </Box>
-        </Box>
-      </AppDrawer>
     </Box>
   );
 }
