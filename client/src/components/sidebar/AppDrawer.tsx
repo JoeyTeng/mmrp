@@ -1,6 +1,7 @@
 "use client";
 
-import { Drawer, Typography, Box } from "@mui/material";
+import { Drawer, Typography, Box, IconButton } from "@mui/material";
+import { CloseRounded as CloseIcon } from "@mui/icons-material";
 
 import { AppDrawerProps } from "./types";
 
@@ -64,11 +65,21 @@ export const AppDrawer = ({
       <Box className="h-full flex flex-col">
         {title && (
           <Box className="flex justify-between items-center mb-4" sx={headerSx}>
-            {title && (
-              <Typography variant="h6" className="capitalize text-primary">
-                {title}
-              </Typography>
-            )}
+            <Typography variant="h6" className="capitalize text-primary">
+              {title}
+            </Typography>
+            <IconButton
+              onClick={onClose}
+              size="small"
+              sx={{
+                color: "text.secondary",
+                "&:hover": {
+                  backgroundColor: "action.hover",
+                },
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
           </Box>
         )}
         <Box className="flex-1 overflow-y-auto" sx={contentSx}>

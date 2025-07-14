@@ -25,20 +25,20 @@ class Resize(ModuleBase):
                 type="int",
                 required=True,
                 default=1280,
-                valid_values=(1, 4096),
+                constraints=(1, 4096),
             ),
             ParameterDefinition(
                 name="height",
                 type="int",
                 required=True,
                 default=720,
-                valid_values=(1, 4096),
+                constraints=(1, 4096),
             ),
             ParameterDefinition(
                 name="interpolation",
                 type="str",
                 required=True,
-                valid_values=["nearest", "linear", "cubic", "area", "lanczos4"],
+                constraints=["nearest", "linear", "cubic", "area", "lanczos4"],
             ),
         ]
 
