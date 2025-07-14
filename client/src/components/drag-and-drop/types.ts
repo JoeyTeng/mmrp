@@ -1,11 +1,18 @@
+import type { Node, Edge, OnNodesChange, OnEdgesChange } from "@xyflow/react";
+
 export type ParamValueType = string | number | boolean;
+export type NodeParamValue = ParamValueType | string[];
+export type ConstraintsLookupType = Record<
+  string,
+  ParamValueType[] | [number, number] | undefined
+>;
 
 export interface ParameterDefinition {
   name: string;
   type: "int" | "float" | "str" | "bool";
   description?: string | null;
   default?: ParamValueType;
-  validValues?: ParamValueType[] | [number, number];
+  constraints?: ParamValueType[] | [number, number];
   required: boolean;
 }
 
@@ -34,3 +41,18 @@ export enum NodeType {
   ProcessNode = "processNode",
   OutputNode = "outputNode",
 }
+
+export type FlowCanvasProps = {
+  nodes: Node<NodeData, NodeType>[];
+  edges: Edge[];
+  onNodesChange: OnNodesChange<Node<NodeData, NodeType>>;
+  onEdgesChange: OnEdgesChange;
+  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
+  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  onEditNode: (node: Node<NodeData, NodeType>) => void;
+};
+
+export type ParameterConfigurationProps = {
+  node: Node<NodeData, NodeType> | null;
+  onParamChange: (key: string, value: ParamValueType) => void;
+};

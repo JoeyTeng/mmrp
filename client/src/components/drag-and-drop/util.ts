@@ -22,9 +22,9 @@ export function getInitialNodeParamValue(
       if (p.default != null || p.default != undefined) {
         val = p.default as ParamValueType;
       }
-      // 2) else pick the first validValues entry (if any)
-      else if (Array.isArray(p.validValues) && p.validValues.length > 0) {
-        val = p.validValues[0] as ParamValueType;
+      // 2) else pick the first constraints entry (if any)
+      else if (Array.isArray(p.constraints) && p.constraints.length > 0) {
+        val = p.constraints[0] as ParamValueType;
       }
       // 3) final fallback
       else {
@@ -33,11 +33,11 @@ export function getInitialNodeParamValue(
 
       // 4) additional check if default is in [min,max] range
       if (
-        Array.isArray(p.validValues) &&
-        p.validValues.length === 2 &&
+        Array.isArray(p.constraints) &&
+        p.constraints.length === 2 &&
         (p.type === "int" || p.type === "float")
       ) {
-        const [min, max] = p.validValues as [number, number];
+        const [min, max] = p.constraints as [number, number];
         if (typeof val !== "number") {
           val = min;
         } else {

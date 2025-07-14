@@ -27,7 +27,7 @@ class Blur(ModuleBase):
                 name="method",
                 type="str",
                 default="gaussian",
-                valid_values=["gaussian", "median", "bilateral"],
+                constraints=["gaussian", "median", "bilateral"],
                 required=True,
             ),
         ]

@@ -21,16 +21,16 @@ class Resize(ModuleBase):
     def get_parameters(self) -> list[ParameterDefinition[typing.Any]]:
         return [
             ParameterDefinition(
-                name="width", type="int", required=True, valid_values=(1, 4096)
+                name="width", type="int", required=True, constraints=(1, 4096)
             ),
             ParameterDefinition(
-                name="height", type="int", required=True, valid_values=(1, 4096)
+                name="height", type="int", required=True, constraints=(1, 4096)
             ),
             ParameterDefinition(
                 name="interpolation",
                 type="str",
                 required=True,
-                valid_values=["nearest", "linear", "cubic", "area", "lanczos4"],
+                constraints=["nearest", "linear", "cubic", "area", "lanczos4"],
             ),
         ]
 
