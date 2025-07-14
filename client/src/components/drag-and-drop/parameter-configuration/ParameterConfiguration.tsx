@@ -1,39 +1,25 @@
 "use client";
 
-import {
-  useState,
-  useCallback,
-  useImperativeHandle,
-  forwardRef,
-  useContext,
-  useMemo,
-} from "react";
+import { useState, useContext, useMemo } from "react";
 import { InfoOutline as InfoIcon } from "@mui/icons-material";
 import { Box, TextField, MenuItem } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
 import {
   ConstraintsLookupType,
-  NodeData,
   NodeParamValue,
-  NodeType,
-  ParamValueType,
-} from "../types";
-import {
   ParameterConfigurationProps,
-  ParameterConfigurationRef,
 } from "../types";
-import type { Node } from "@xyflow/react";
 import { ModulesContext } from "@/contexts/ModulesContext";
 
-function ParameterConfiguration(
-  { node }: ParameterConfigurationProps,
-  ref: React.Ref<ParameterConfigurationRef>,
-) {
+export default function ParameterConfiguration({
+  node,
+  onParamChange,
+}: ParameterConfigurationProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
-    node ?? null,
-  );
   const modules = useContext(ModulesContext);
+
+  const MIN_VALUE = 0;
+  const MAX_VALUE = 100;
 
   const constraintsLookup = useMemo(() => {
     const foundModule = modules.find((item) => item.name === node?.data.label);
@@ -45,14 +31,6 @@ function ParameterConfiguration(
     );
   }, [modules, node?.data.label]);
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      getTempNode: () => tempNode ?? null,
-    }),
-    [tempNode],
-  );
-
   const getInputType = (key: string, value: NodeParamValue) => {
     if (typeof value === "string" && Array.isArray(constraintsLookup[key]))
       return "select";
@@ -62,31 +40,16 @@ function ParameterConfiguration(
     return "text";
   };
 
-  const handleParamChange = useCallback(
-    (key: string, value: ParamValueType) => {
-      setTempNode((prev) => {
-        if (!prev) return null;
-
-        return {
-          ...prev,
-          data: {
-            ...prev.data,
-            params: {
-              ...prev.data.params,
-              [key]: value,
-            },
-          },
-        };
-      });
-    },
-    [],
-  );
-
   const handleInputNumber = (key: string, rawValue: string) => {
     const newValue = Number(rawValue);
 
-    const min = Number(constraintsLookup[key]?.[0]) ?? 0;
-    const max = Number(constraintsLookup[key]?.[1]) ?? 100;
+    let min = MIN_VALUE;
+    let max = MAX_VALUE;
+
+    if (constraintsLookup[key]?.length === 2) {
+      min = Number(constraintsLookup[key][0]);
+      max = Number(constraintsLookup[key][1]);
+    }
 
     setErrors((prev) => ({
       ...prev,
@@ -99,10 +62,10 @@ function ParameterConfiguration(
     }));
 
     const clampedValue = Math.max(min, Math.min(max, newValue));
-    handleParamChange(key, clampedValue);
+    onParamChange(key, clampedValue);
   };
 
-  if (!tempNode) {
+  if (!node) {
     return (
       <Box display="flex" alignItems="center" gap={2} p={2}>
         <InfoIcon color="action" />
@@ -124,7 +87,7 @@ function ParameterConfiguration(
             size="small"
             label={key}
             value={value}
-            onChange={(e) => handleParamChange(key, e.target.value)}
+            onChange={(e) => onParamChange(key, e.target.value)}
             sx={{ mb: 2 }}
           >
             {Array.isArray(constraintsLookup[key]) &&
@@ -147,8 +110,8 @@ function ParameterConfiguration(
               key={key}
               id={key}
               value={Number(value)}
-              min={Number(constraintsLookup[key]?.[0] ?? 0)}
-              max={Number(constraintsLookup[key]?.[1]) ?? 100}
+              min={Number(constraintsLookup[key]?.[0] ?? MIN_VALUE)}
+              max={Number(constraintsLookup[key]?.[1]) ?? MAX_VALUE}
             >
               <NumberField.ScrubArea className="absolute -top-3.5 left-2 z-10 bg-white px-1">
                 <label
@@ -187,7 +150,7 @@ function ParameterConfiguration(
             label={key}
             size="small"
             value={String(value)}
-            onChange={(e) => handleParamChange(key, e.target.value === "true")}
+            onChange={(e) => onParamChange(key, e.target.value === "true")}
             sx={{ mb: 2 }}
           >
             <MenuItem value="true">True</MenuItem>
@@ -203,7 +166,7 @@ function ParameterConfiguration(
             label={key}
             size="small"
             value={String(value)}
-            onChange={(e) => handleParamChange(key, e.target.value)}
+            onChange={(e) => onParamChange(key, e.target.value)}
             sx={{ mb: 2 }}
           />
         );
@@ -212,11 +175,9 @@ function ParameterConfiguration(
 
   return (
     <Box sx={{ p: 2, height: "100%", overflowY: "auto" }}>
-      {Object.entries(tempNode.data.params).map(([key, value]) =>
+      {Object.entries(node.data.params).map(([key, value]) =>
         renderParamInput(key, value),
       )}
     </Box>
   );
 }
-
-export default forwardRef(ParameterConfiguration);

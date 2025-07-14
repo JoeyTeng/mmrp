@@ -53,9 +53,6 @@ export type FlowCanvasProps = {
 };
 
 export type ParameterConfigurationProps = {
-  node?: Node<NodeData, NodeType> | null;
-};
-
-export type ParameterConfigurationRef = {
-  getTempNode: () => Node<NodeData, NodeType> | null;
+  node: Node<NodeData, NodeType> | null;
+  onParamChange: (key: string, value: ParamValueType) => void;
 };

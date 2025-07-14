@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Node } from "@xyflow/react";
 import { AppDrawer } from "@/components/sidebar/AppDrawer";
-import { NodeData, NodeType, ParameterConfigurationRef } from "../types";
+import { NodeData, NodeType, ParamValueType } from "../types";
 import ParameterConfiguration from "./ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 
@@ -18,13 +18,39 @@ export default function ParameterConfigurationDrawer({
   onConfirm,
   onCancel,
 }: ParameterConfigurationDrawerProps) {
-  const paramsConfigRef = useRef<ParameterConfigurationRef>(null);
+  const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setTempNode(editingNode);
+  }, [editingNode]);
+
+  const handleParamChange = useCallback(
+    (key: string, value: ParamValueType) => {
+      setTempNode((prev) => {
+        if (!prev) return null;
+
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            params: {
+              ...prev.data.params,
+              [key]: value,
+            },
+          },
+        };
+      });
+    },
+    [],
+  );
 
   const handleConfirm = useCallback(() => {
-    const updatedNode = paramsConfigRef.current?.getTempNode();
-    if (!updatedNode) return;
-    onConfirm(updatedNode);
-  }, [onConfirm, paramsConfigRef?.current]);
+    if (!tempNode) return;
+    onConfirm(tempNode);
+    setTempNode(null);
+  }, [tempNode, onConfirm]);
 
   return (
     <AppDrawer
@@ -36,7 +62,10 @@ export default function ParameterConfigurationDrawer({
     >
       <Box display="flex" flexDirection="column" height="100%">
         <Box flex={1} overflow="auto">
-          <ParameterConfiguration ref={paramsConfigRef} node={editingNode} />
+          <ParameterConfiguration
+            node={tempNode}
+            onParamChange={handleParamChange}
+          />
         </Box>
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}
