@@ -32,6 +32,7 @@ export const NODE_CONTEXT_MENU: ContextMenuItem<NodeAction>[] = [
     label: "Duplicate",
     icon: <FileCopyOutlined />,
     dividerAfter: true,
+    disabled: true,
   },
   {
     id: "rename",
@@ -55,6 +56,7 @@ export const NODE_CONTEXT_MENU: ContextMenuItem<NodeAction>[] = [
     id: "export",
     label: "Export",
     icon: <FileDownloadOutlined />,
+    disabled: true,
   },
   {
     id: "delete",
