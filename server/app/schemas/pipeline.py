@@ -14,5 +14,4 @@ class PipelineModule(BaseModel):
 
 
 class PipelineRequest(BaseModel):
-    video: str
     modules: list[PipelineModule]

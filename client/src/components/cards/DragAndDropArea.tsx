@@ -42,7 +42,7 @@ const initialNodes: Node<NodeData, NodeType>[] = [
     data: {
       label: "colorspace",
       params: {
-        input_colorspace: "YCrCb",
+        input_colorspace: "RGB",
         output_colorspace: "YCrCb",
       },
       inputFormats: [
@@ -175,11 +175,13 @@ export default function DragAndDropArea() {
         setEdges={setEdges}
         onEditNode={setEditingNode}
       />
-      <ParameterConfigurationDrawer
-        editingNode={editingNode}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-      />
+      {editingNode && (
+        <ParameterConfigurationDrawer
+          editingNode={editingNode}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
+      )}
     </ReactFlowProvider>
   );
 }
