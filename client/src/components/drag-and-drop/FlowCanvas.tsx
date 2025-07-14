@@ -16,6 +16,7 @@ import {
   OnNodesChange,
   Panel,
   useReactFlow,
+  getIncomers,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
@@ -30,7 +31,8 @@ import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfigur
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import { ModulesContext } from "@/contexts/ModulesContext";
-import { getInitialNodeParamValue, makePorts } from "./util";
+import { checkPipeline, getInitialNodeParamValue, makePorts } from "./util";
+import { toast } from "react-toastify/unstyled";
 
 const nodeTypes = {
   [NodeType.InputNode]: FlowNode,
@@ -141,8 +143,9 @@ export default function FlowCanvas({
       const conn = connection as Connection;
       const nodes = getNodes();
       const edges = getEdges();
-      const target = nodes.find((node) => node.id == connection.target);
-      if (!target || target.id == connection.source) return false;
+      const source = nodes.find((node) => node.id == conn.source);
+      const target = nodes.find((node) => node.id == conn.target);
+      if (!source || !target || source.id == target.id) return false;
       const hasCycle = (node: Node, visited = new Set<string>()) => {
         if (visited.has(node.id)) return false;
         visited.add(node.id);
@@ -152,19 +155,31 @@ export default function FlowCanvas({
         }
         return false;
       };
-      return !hasCycle(target);
+      const hasOneEdge = (src: Node, tgt: Node): boolean => {
+        if (
+          getOutgoers(src, nodes, edges).length >= 1 ||
+          getIncomers(tgt, nodes, edges).length >= 1
+        ) {
+          return false;
+        }
+        return true;
+      };
+      return !hasCycle(target) && hasOneEdge(source, target);
     },
     [getNodes, getEdges],
   );
 
   const onConfirm = async () => {
-    const pipeline = dumpPipelineToJson(nodes, edges);
-    console.log(JSON.stringify(pipeline, null, 2));
-    try {
-      const res = await sendPipelineToBackend(pipeline);
-      console.log("Executing in order", res);
-    } catch (err) {
-      console.error("Error sending pipleine to backend", err);
+    if (checkPipeline(nodes, edges)) {
+      const pipeline = dumpPipelineToJson(nodes, edges);
+      console.log(JSON.stringify(pipeline, null, 2));
+      try {
+        toast.success("Pipeline valid, starting processing");
+        const res = await sendPipelineToBackend(pipeline);
+        console.log("Executing in order", res);
+      } catch (err) {
+        console.error("Error sending pipleine to backend", err);
+      }
     }
   };
 
