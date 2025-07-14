@@ -2,6 +2,8 @@ import VideoPlayer from "@/components/layout/VideoPlayer";
 import DragAndDropArea from "@/components/cards/DragAndDropArea";
 import AppLayout from "@/components/layout/AppLayout";
 import { Box } from "@mui/material";
+import { ToastContainer } from "react-toastify/unstyled";
+import "react-toastify/ReactToastify.css";
 
 export default function Home() {
   return (
@@ -16,6 +18,7 @@ export default function Home() {
           <DragAndDropArea />
         </Box>
       </Box>
+      <ToastContainer />
     </AppLayout>
   );
 }
