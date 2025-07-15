@@ -36,20 +36,22 @@ const nodeTypes = {
 };
 
 export default function FlowCanvas({
-  nodes,
-  edges,
-  onNodesChange,
-  onEdgesChange,
-  setNodes,
-  setEdges,
+  defaultNodes,
+  defaultEdges,
   onEditNode,
 }: FlowCanvasProps) {
   const paneRef = useRef<HTMLDivElement>(null);
 
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();
-  const { screenToFlowPosition, getNodes, getEdges, deleteElements } =
-    useReactFlow();
+  const {
+    screenToFlowPosition,
+    getNodes,
+    getEdges,
+    deleteElements,
+    setEdges,
+    setNodes,
+  } = useReactFlow();
 
   const handlePaneClick = useCallback(() => {
     paneRef.current?.focus();
@@ -160,6 +162,11 @@ export default function FlowCanvas({
   );
 
   const onConfirm = async () => {
+    const nodes: Node<NodeData, NodeType>[] = getNodes() as Node<
+      NodeData,
+      NodeType
+    >[];
+    const edges: Edge[] = getEdges();
     if (checkPipeline(nodes, edges)) {
       const pipeline = dumpPipelineToJson(nodes, edges);
       console.log(JSON.stringify(pipeline, null, 2));
@@ -201,11 +208,9 @@ export default function FlowCanvas({
       >
         <ReactFlow
           nodeTypes={nodeTypes}
-          nodes={nodes}
-          edges={edges}
+          defaultNodes={defaultNodes}
+          defaultEdges={defaultEdges}
           isValidConnection={isValidConnection}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onDragOver={onDragOver}
           onDrop={onDrop}
