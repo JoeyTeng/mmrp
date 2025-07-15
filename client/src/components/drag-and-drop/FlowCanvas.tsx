@@ -162,13 +162,11 @@ export default function FlowCanvas({
 
   const onConfirm = async () => {
     const pipeline = dumpPipelineToJson(nodes, edges);
-    console.log(JSON.stringify(pipeline, null, 2));
     try {
       setIsProcessing(true);
       const res = await sendPipelineToBackend(pipeline);
-      console.log("Pipeline processed successfully: ", res);
       setError(false);
-      triggerReload();
+      triggerReload(res);
     } catch (err) {
       console.error("Error sending pipleine to backend", err);
       setError(true);

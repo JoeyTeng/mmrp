@@ -5,6 +5,7 @@ from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest
 from app.services.module import registry
+from itertools import tee
 
 
 # Validate pipeline parameters
@@ -105,7 +106,7 @@ def get_execution_order(modules: list[PipelineModule]):
 
 
 # Handle the pipeline request and process the video
-def handle_pipeline_request(request: PipelineRequest) -> bool:
+def handle_pipeline_request(request: PipelineRequest) -> dict[str, str]:
     # Resolve pipeline modules
     ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
     # Check that the pipeline starts with a source module
@@ -131,33 +132,64 @@ def handle_pipeline_request(request: PipelineRequest) -> bool:
 
     # Get source and result module
     source_mod = ordered_modules[0]
-    result_mod = ordered_modules[-1]
-    processing_nodes = ordered_modules[1:-1]
-    result_sources = result_mod.source
-    # Check and validate pipeline
-    if not result_sources:
-        raise ValueError("Output source cannot be empty")
-    if source_mod.id in result_mod.source:
-        raise ValueError("Pipeline must have at least one processing node")
+    result_modules = [module for module in ordered_modules if module.name == "result"]
 
-    # Process source module inside context manager
+    # Check and validate result modules
+    if not result_modules:
+        raise ValueError("Pipeline must end with at least one result module")
+    if len(result_modules) > 2:
+        raise ValueError("A maximum of two processed results is supported")
+    for result_mod in result_modules:
+        if not result_mod.source:
+            raise ValueError("Output source cannot be empty")
+        if source_mod.id in result_mod.source:
+            raise ValueError("Pipeline must have at least one processing node")
+
+    # Get processing nodes (remove source and result modules)
+    processing_nodes = [
+        m for m in ordered_modules if m.name not in {"source", "result"}
+    ]
+
+    # Source module processes video input and yeilds framerate
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
         fps,
         frame_iter,
     ):
-
-        def pipeline_iterator() -> Iterator[np.ndarray]:
-            yield fps
-            # Process frames
+        # Run frames through whole pipeline and return the frames that need to be written
+        def base_pipeline_iterator() -> Iterator[tuple[int, np.ndarray]]:
             for frame in frame_iter:
                 frame_cache = {source_mod.id: frame}
+                # Process frames and save them to a frame cache
                 process_pipeline_frame(frame_cache, processing_nodes, module_map)
-                for mid in result_sources:
-                    yield frame_cache[mid]
+                for result_mod in result_modules:
+                    for sid in result_mod.source:
+                        # Yield the result module and the corresponding frames to be written
+                        yield (result_mod.id, frame_cache[sid])
 
-        # Result module handles writing output
-        module_map[result_mod.id][0].process(
-            pipeline_iterator(), module_map[result_mod.id][1]
-        )
+        # Create two iterators for the two result modules that can read from the data stream independently
+        piped_iters = tee(base_pipeline_iterator(), 2)
 
-    return True
+        outputs: list[dict[str, str]] = []
+
+        # Result module(s) write the output video file(s)
+        for result_mod, mod_iter in zip(result_modules, piped_iters):
+            mod_instance, params = module_map[result_mod.id]
+
+            # Pass only the frames for the specific result module
+            def filtered_iter(
+                mod_id: int, it: Iterator[tuple[int, np.ndarray]]
+            ) -> Iterator[np.ndarray]:
+                yield fps
+                for mid, frame in it:
+                    if mid == mod_id:
+                        yield frame
+
+            mod_instance.process(filtered_iter(result_mod.id, mod_iter), params)
+
+            # Return the video player side and video file name
+            outputs.append(
+                {"video_player": params["video_player"], "path": params["path"]}
+            )
+
+    output_map = {entry["video_player"]: entry["path"] for entry in outputs}
+    return output_map

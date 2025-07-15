@@ -22,10 +22,18 @@ class Result(ModuleBase):
             ParameterDefinition(
                 name="path",
                 type="str",
-                required=False,
-                description="Optional output .mp4 file path",  # for now, we can choose to remove this if output path will be hardcoded
+                required=True,
+                description="Output name and format for result",
                 default="example_output.webm",
-            )
+            ),
+            ParameterDefinition(
+                name="video_player",
+                type="str",
+                required=False,
+                description="Select on which side the video should be played (only for two pipelines)",
+                valid_values=["left", "right"],
+                default="right",
+            ),
         ]
 
     def get_input_formats(self) -> list[FormatDefinition]:
@@ -50,7 +58,7 @@ class Result(ModuleBase):
 
     def process(
         self, input_data: Iterator[Union[float, np.ndarray]], parameters: dict[str, Any]
-    ) -> str:
+    ) -> Any:
         out_path = (
             Path(__file__).resolve().parent.parent.parent
             / "output"
@@ -89,5 +97,3 @@ class Result(ModuleBase):
                 if not isinstance(frame, np.ndarray):
                     raise ValueError(f"Expected np.ndarray, got {type(frame)}")
                 out.write(frame)
-
-        return out_path

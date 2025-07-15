@@ -14,3 +14,8 @@ export type PipelineModule = {
 export type PipelineRequest = {
   modules: PipelineModule[];
 };
+
+export type PipelineResponse = {
+  left: string;
+  right: string;
+};
