@@ -6,6 +6,8 @@ from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest
 from app.services.module import registry
 from itertools import tee
+import uuid
+import base64
 
 
 # Validate pipeline parameters
@@ -152,6 +154,7 @@ def handle_pipeline_request(request: PipelineRequest) -> dict[str, str]:
 
     # Source module processes video input and yeilds framerate
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
+        source_file,
         fps,
         frame_iter,
     ):
@@ -175,6 +178,15 @@ def handle_pipeline_request(request: PipelineRequest) -> dict[str, str]:
         for result_mod, mod_iter in zip(result_modules, piped_iters):
             mod_instance, params = module_map[result_mod.id]
 
+            # Create video file name
+            unique_id = uuid.uuid4()
+            filename_base64 = (
+                base64.urlsafe_b64encode(unique_id.bytes).decode("utf-8").rstrip("=")
+            )
+            filename = f"{source_file}-{filename_base64}.webm"
+
+            params["path"] = filename
+
             # Pass only the frames for the specific result module
             def filtered_iter(
                 mod_id: int, it: Iterator[tuple[int, np.ndarray]]
@@ -187,9 +199,7 @@ def handle_pipeline_request(request: PipelineRequest) -> dict[str, str]:
             mod_instance.process(filtered_iter(result_mod.id, mod_iter), params)
 
             # Return the video player side and video file name
-            outputs.append(
-                {"video_player": params["video_player"], "path": params["path"]}
-            )
+            outputs.append({"video_player": params["video_player"], "path": filename})
 
     output_map = {entry["video_player"]: entry["path"] for entry in outputs}
     return output_map

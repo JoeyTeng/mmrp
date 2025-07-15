@@ -20,13 +20,6 @@ class Result(ModuleBase):
     def get_parameters(self) -> list[ParameterDefinition[Any]]:
         return [
             ParameterDefinition(
-                name="path",
-                type="str",
-                required=True,
-                description="Output name and format for result",
-                default="example_output.webm",
-            ),
-            ParameterDefinition(
                 name="video_player",
                 type="str",
                 required=False,

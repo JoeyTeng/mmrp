@@ -102,7 +102,6 @@ const initialNodes: Node<NodeData, NodeType>[] = [
     data: {
       label: "result",
       params: {
-        path: "example_output.webm",
         video_player: "right",
       },
       inputFormats: [

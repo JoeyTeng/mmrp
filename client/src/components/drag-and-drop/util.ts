@@ -86,19 +86,8 @@ export function checkPipeline(
     return false;
   }
 
+  // only one source exists
   const source = sources[0];
-  const result = results[0];
-
-  // check if source is directly connected to result
-  const directConn = edges.some(
-    (e) => e.source === source.id && e.target === result.id,
-  );
-  if (directConn) {
-    toast.error(
-      "Source cannot connect directly to Result. Add at least one processing module in between.",
-    );
-    return false;
-  }
 
   //  DFS from source
   const visited = new Set<string>();
@@ -109,10 +98,42 @@ export function checkPipeline(
   };
   dfs(source);
 
-  // Check that result was reached
-  if (!visited.has(result.id)) {
-    toast.error("Result node is not reachable from source node.");
-    return false;
+  // validate result nodes
+  const specified_player = new Set<string>();
+
+  for (const result of results) {
+    // check if source is directly connected to result
+    const directConn = edges.some(
+      (e) => e.source === source.id && e.target === result.id,
+    );
+    if (directConn) {
+      toast.error(
+        "Source cannot connect directly to Result. Add at least one processing module in between.",
+      );
+      return false;
+    }
+    // Check that result was reached
+    if (!visited.has(result.id)) {
+      toast.error("Result node is not reachable from source node.");
+      return false;
+    }
+    // check that the specified video player is okay
+    const params = result.data.params as { video_player: string; path: string };
+    if (results.length == 1) {
+      // if there is only one result node, it must be displayed on the right
+      if (!(params.video_player === "right")) {
+        toast.error("Your result must be displayed in the right player.");
+        return false;
+      }
+    } else {
+      // if there are two result nodes, they must have different video players specified
+      if (specified_player.size === 0) {
+        specified_player.add(params.video_player);
+      } else if (specified_player.has(params.video_player)) {
+        toast.error("Your results must be displayed in two different players.");
+        return false;
+      }
+    }
   }
 
   // All nodes should be part of the chain
