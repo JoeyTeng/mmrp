@@ -31,7 +31,7 @@ class Result(ModuleBase):
                 type="str",
                 required=False,
                 description="Select on which side the video should be played (only for two pipelines)",
-                valid_values=["left", "right"],
+                constraints=["left", "right"],
                 default="right",
             ),
         ]

@@ -8,7 +8,7 @@ class ModuleParameter(BaseModel):
     type: Literal["int", "float", "str", "bool"]
     description: Optional[str] = None
     default: Optional[Any] = None
-    valid_values: Optional[tuple[Any, Any] | list[Any]] = None
+    constraints: Optional[tuple[Any, Any] | list[Any]] = None
     required: bool = True
 
 
