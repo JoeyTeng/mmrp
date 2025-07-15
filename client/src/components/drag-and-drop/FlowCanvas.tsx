@@ -48,7 +48,8 @@ export default function FlowCanvas({
 
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();
-  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
+  const { screenToFlowPosition, getNodes, getEdges, deleteElements } =
+    useReactFlow();
 
   const handlePaneClick = useCallback(() => {
     paneRef.current?.focus();
@@ -57,12 +58,19 @@ export default function FlowCanvas({
   const handlePaneKeyDown = useCallback(
     (evt: React.KeyboardEvent) => {
       if (evt.key === "Delete" || evt.key === "Backspace") {
-        setNodes((nds) => nds.filter((n) => !n.selected));
-        setEdges((eds) => eds.filter((e) => !e.selected));
+        //get current state
+        const nodes = getNodes();
+        const edges = getEdges();
+
+        const selectedNode = nodes.filter((node) => node.selected);
+        const selectedEdge = edges.filter((edge) => edge.selected);
+
+        deleteElements({ nodes: selectedNode, edges: selectedEdge });
+
         evt.preventDefault();
       }
     },
-    [setNodes, setEdges],
+    [getNodes, getEdges, deleteElements],
   );
 
   const onConnect = useCallback(
