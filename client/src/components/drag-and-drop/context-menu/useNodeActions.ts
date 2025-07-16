@@ -1,5 +1,5 @@
 import { useReactFlow } from "@xyflow/react";
-import { NodeAction } from "./NodeContextMenu";
+import { NodeAction } from "./NodeContextMenuConfig";
 import { useCallback } from "react";
 
 export const useNodeActions = (onConfigure: (nodeId: string) => void) => {

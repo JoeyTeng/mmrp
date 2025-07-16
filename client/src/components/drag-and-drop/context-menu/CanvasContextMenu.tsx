@@ -1,39 +1,68 @@
+import { useCallback, useImperativeHandle, useReducer } from "react";
 import {
-  Add,
-  DeleteOutlined,
-  FileDownloadOutlined,
-  PlayCircle,
-} from "@mui/icons-material";
-import { ContextMenuItem } from "../types";
+  ContextMenuActionPayload,
+  contextMenuReducer,
+  initialContextMenuState,
+} from "./contextMenuReducer";
+import { useCanvasActions } from "./useCanvasActions";
+import {
+  CANVAS_CONTEXT_MENU,
+  CanvasContextAction,
+} from "./CanvasContextMenuConfig";
+import ContextMenu from "./ContextMenu";
 
-export type CanvasContextAction = "clear" | "export" | "run" | "add_node";
+export type CanvasContextMenuHandle = {
+  open: (payload: ContextMenuActionPayload) => void;
+  close: () => void;
+  clearAll: () => void;
+};
 
-export const CANVAS_CONTEXT_MENU: ContextMenuItem<CanvasContextAction>[] = [
-  {
-    id: "add_node",
-    label: "Add Module",
-    icon: <Add />,
-    disabled: true,
-  },
-  {
-    id: "run",
-    label: "Run",
-    icon: <PlayCircle />,
-    dividerAfter: true,
-    disabled: true,
-  },
-  {
-    id: "export",
-    label: "Export Pipeline",
-    icon: <FileDownloadOutlined />,
-    dividerAfter: true,
-    disabled: true,
-  },
-  {
-    id: "clear",
-    label: "Delete All",
-    icon: <DeleteOutlined className="fill-red-700" />,
-    danger: true,
-    disabled: true,
-  },
-];
+interface CanvasContextMenuProps {
+  ref: React.RefObject<CanvasContextMenuHandle | null>;
+}
+
+const CanvasContextMenu = ({ ref }: CanvasContextMenuProps) => {
+  const { handleCanvasAction } = useCanvasActions();
+
+  const [contextMenuState, dispatchContextMenuState] = useReducer(
+    contextMenuReducer,
+    initialContextMenuState,
+  );
+
+  const handleCloseMenu = () => dispatchContextMenuState({ type: "close" });
+
+  const handleAction = useCallback(
+    (actionId: CanvasContextAction) => {
+      handleCloseMenu();
+      handleCanvasAction(actionId as CanvasContextAction);
+    },
+    [handleCanvasAction],
+  );
+
+  useImperativeHandle(ref, () => {
+    return {
+      open(payload: ContextMenuActionPayload) {
+        dispatchContextMenuState({ type: "open", payload: payload });
+      },
+      close() {
+        handleCloseMenu();
+      },
+      clearAll() {
+        handleCanvasAction("clear" as CanvasContextAction);
+      },
+    };
+  });
+
+  return (
+    <ContextMenu
+      open={contextMenuState.open}
+      dense
+      position={contextMenuState.position}
+      items={CANVAS_CONTEXT_MENU}
+      onAction={handleAction}
+      onClose={handleCloseMenu}
+    />
+  );
+};
+
+export default CanvasContextMenu;

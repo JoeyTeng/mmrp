@@ -1,67 +1,68 @@
+import { useCallback, useImperativeHandle, useReducer } from "react";
 import {
-  OpenInFullOutlined,
-  FileCopyOutlined,
-  DeleteOutlined,
-  SettingsOutlined,
-  EditOutlined,
-  PaletteOutlined,
-  FileDownloadOutlined,
-} from "@mui/icons-material";
-import type { ContextMenuItem } from "../types";
+  contextMenuReducer,
+  initialNodeContextMenuState,
+  NodeContextMenuActionPayload,
+} from "./contextMenuReducer";
+import { NODE_CONTEXT_MENU, NodeAction } from "./NodeContextMenuConfig";
+import ContextMenu from "./ContextMenu";
+import { useNodeActions } from "./useNodeActions";
 
-export type NodeAction =
-  | "expand"
-  | "duplicate"
-  | "rename"
-  | "color"
-  | "configure"
-  | "export"
-  | "delete";
+export type NodeContextMenuHandle = {
+  open: (payload: NodeContextMenuActionPayload) => void;
+  close: () => void;
+};
 
-/** The disabled menu items are to be left in to be implemented in future iterations. */
+interface NodeContextMenuProps {
+  ref: React.RefObject<NodeContextMenuHandle | null>;
+  handleConfigure: (nodeId: string) => void;
+}
 
-export const NODE_CONTEXT_MENU: ContextMenuItem<NodeAction>[] = [
-  {
-    id: "expand",
-    label: "Expand",
-    icon: <OpenInFullOutlined />,
-    disabled: true,
-  },
-  {
-    id: "duplicate",
-    label: "Duplicate",
-    icon: <FileCopyOutlined />,
-    dividerAfter: true,
-    disabled: true,
-  },
-  {
-    id: "rename",
-    label: "Rename",
-    icon: <EditOutlined />,
-    disabled: true,
-  },
-  {
-    id: "configure",
-    label: "Configure",
-    icon: <SettingsOutlined />,
-  },
-  {
-    id: "color",
-    label: "Colour",
-    icon: <PaletteOutlined />,
-    dividerAfter: true,
-    disabled: true,
-  },
-  {
-    id: "export",
-    label: "Export",
-    icon: <FileDownloadOutlined />,
-    disabled: true,
-  },
-  {
-    id: "delete",
-    label: "Delete",
-    icon: <DeleteOutlined className="fill-red-700" />,
-    danger: true,
-  },
-];
+const NodeContextMenu = ({ ref, handleConfigure }: NodeContextMenuProps) => {
+  const { handleNodeAction } = useNodeActions(handleConfigure);
+
+  const [contextMenuState, dispatchContextMenuState] = useReducer(
+    contextMenuReducer,
+    initialNodeContextMenuState,
+  );
+
+  const handleCloseMenu = () => dispatchContextMenuState({ type: "close" });
+
+  const handleAction = useCallback(
+    (actionId: NodeAction) => {
+      if (!contextMenuState.nodeId) {
+        console.error(
+          `Tried to execute NodeAction "${actionId}" with no NodeID.`,
+        );
+        return;
+      }
+      handleCloseMenu();
+      handleNodeAction(actionId as NodeAction, contextMenuState.nodeId);
+    },
+    [contextMenuState.nodeId, handleNodeAction],
+  );
+
+  useImperativeHandle(ref, () => {
+    return {
+      open(payload: NodeContextMenuActionPayload) {
+        dispatchContextMenuState({ type: "open", payload: payload });
+      },
+      close() {
+        handleCloseMenu();
+      },
+    };
+  });
+
+  return (
+    <ContextMenu
+      open={contextMenuState.open}
+      dense
+      position={contextMenuState.position}
+      items={NODE_CONTEXT_MENU}
+      onAction={handleAction}
+      onClose={handleCloseMenu}
+    />
+  );
+};
+
+export default NodeContextMenu;
