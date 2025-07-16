@@ -20,6 +20,10 @@ const InterleavingFrames = ({ type }: Props) => {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (type === VideoType.Stream) {
+      return () => {};
+    }
+
     let url: string = videoRef.current?.src || "";
 
     const initializeVideos = async () => {
@@ -40,7 +44,7 @@ const InterleavingFrames = ({ type }: Props) => {
     return () => {
       URL.revokeObjectURL(url);
     };
-  }, []);
+  }, [type]);
 
   return (
     <Box
@@ -93,6 +97,7 @@ const InterleavingFrames = ({ type }: Props) => {
         getSourceLabel={(frame) => (frame % 2 === 0 ? "Video A" : "Video B")}
         containerRef={containerRef}
         ref={playerRef}
+        onFirstFrame={() => setIsLoading(false)}
       />
     </Box>
   );

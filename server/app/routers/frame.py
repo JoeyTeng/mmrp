@@ -84,7 +84,7 @@ async def video_feed(websocket: WebSocket) -> None:
                     if buf is not None:
                         await websocket.send_bytes(buf.tobytes())
 
-                await asyncio.sleep(1 / fps)
+                await asyncio.sleep(0)
 
     except WebSocketDisconnect:
         print("WebSocket disconnected by the client")

@@ -14,6 +14,7 @@ type Props = {
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
   onFullscreen: () => void;
+  onFirstFrame?: () => void;
 };
 
 const FrameStreamPlayer = ({
@@ -22,10 +23,11 @@ const FrameStreamPlayer = ({
   showSource,
   getSourceLabel,
   onFullscreen,
+  onFirstFrame,
 }: Props) => {
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentFrame, setCurrentFrame] = useState(0);
+  const [currentFrame, setCurrentFrame] = useState(0); // Frame index in range [0, frames.length)
   const [isUserPaused, setIsUserPaused] = useState(true);
   const [frames, setFrames] = useState<FrameData[]>([]);
   const currentFpsRef = useRef(30);
@@ -36,6 +38,14 @@ const FrameStreamPlayer = ({
     "example-video.mp4",
     "example-video-filter.mp4",
   ]);
+  const hasCalledFirstFrame = useRef(false);
+
+  useEffect(() => {
+    if (!hasCalledFirstFrame.current && frames.length > 0) {
+      onFirstFrame?.();
+      hasCalledFirstFrame.current = true;
+    }
+  }, [frames.length, onFirstFrame]);
 
   // Establish WebSocket connection to receive video frame data
   useEffect(() => {
@@ -92,12 +102,13 @@ const FrameStreamPlayer = ({
 
     return () => {
       closeVideoWebSocket();
+      wsRef.current = null;
     };
   }, [filenames, view]);
 
   // Render frame at given index
   const renderFrame = useCallback(
-    async (index: number): Promise<void> => {
+    (index: number): void => {
       if (index >= frames.length) return;
 
       const frame = frames[index];
@@ -130,9 +141,8 @@ const FrameStreamPlayer = ({
       setIsPlaying(false);
       setIsUserPaused(true);
     } else {
-      if (currentFrame >= frames.length && frames.length > 0) {
+      if (currentFrame >= frames.length - 1 && frames.length > 0) {
         setCurrentFrame(0);
-        renderFrame(0);
       }
       setIsPlaying(true);
       setIsUserPaused(false);
@@ -143,7 +153,6 @@ const FrameStreamPlayer = ({
   const stepFrame = (delta: number) => {
     const next = Math.min(Math.max(currentFrame + delta, 0), frames.length - 1);
     setCurrentFrame(next);
-    renderFrame(next);
     setIsPlaying(false);
     setIsUserPaused(true);
   };
@@ -151,7 +160,6 @@ const FrameStreamPlayer = ({
   // Handle slider movement
   const onSliderChange = (value: number) => {
     setCurrentFrame(Math.min(value, frames.length - 1));
-    renderFrame(value);
     setIsPlaying(false);
     setIsUserPaused(true);
   };
@@ -209,6 +217,7 @@ const FrameStreamPlayer = ({
 
   const sourceLabel = getSourceLabel?.(currentFrame);
 
+  // Frame label in range [1, frames.length]
   const currentFrameLabel =
     view === ViewOptions.SideBySide
       ? currentFrame + 1
@@ -220,25 +229,23 @@ const FrameStreamPlayer = ({
       : Math.ceil(frames.length / 2);
 
   return (
-    <>
-      <PlayerControls
-        currentFrame={currentFrameLabel}
-        totalFrames={totalFramesLabel}
-        isPlaying={!isUserPaused}
-        showMute={false}
-        isMuted={true}
-        onPlayPause={handlePlayPause}
-        onMuteToggle={() => {}}
-        onStepFrame={stepFrame}
-        onSliderChange={onSliderChange}
-        onFullscreen={onFullscreen}
-        showSource={showSource}
-        sourceLabel={sourceLabel}
-        sliderValue={currentFrame}
-        sliderMax={frames.length - 1}
-        sliderStep={1}
-      />
-    </>
+    <PlayerControls
+      currentFrame={currentFrameLabel}
+      totalFrames={totalFramesLabel}
+      isPlaying={!isUserPaused}
+      showMute={false}
+      isMuted={true}
+      onPlayPause={handlePlayPause}
+      onMuteToggle={() => {}}
+      onStepFrame={stepFrame}
+      onSliderChange={onSliderChange}
+      onFullscreen={onFullscreen}
+      showSource={showSource}
+      sourceLabel={sourceLabel}
+      sliderValue={currentFrame}
+      sliderMax={frames.length - 1}
+      sliderStep={1}
+    />
   );
 };
 

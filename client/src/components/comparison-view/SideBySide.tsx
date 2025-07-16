@@ -32,6 +32,10 @@ const SideBySide = ({ type }: Props) => {
 
   // Load initial video
   useEffect(() => {
+    if (type === VideoType.Stream) {
+      return;
+    }
+
     const urls: string[] = [];
     const loadInitialVideo = async () => {
       try {
@@ -51,10 +55,14 @@ const SideBySide = ({ type }: Props) => {
     return () => {
       urls.forEach((url) => url && URL.revokeObjectURL(url));
     };
-  }, []);
+  }, [type]);
 
   // When reload is triggered, load processed video
   useEffect(() => {
+    if (type === VideoType.Stream) {
+      return;
+    }
+
     const urls: string[] = [];
     const loadOutputVideo = async () => {
       try {
@@ -75,7 +83,7 @@ const SideBySide = ({ type }: Props) => {
     return () => {
       urls.forEach((url) => url && URL.revokeObjectURL(url));
     };
-  }, [reloadKey]);
+  }, [reloadKey, type]);
 
   return (
     <Box
@@ -165,6 +173,7 @@ const SideBySide = ({ type }: Props) => {
         canvasRefs={[canvasARef, canvasBRef]}
         containerRef={containerRef}
         ref={playerRef}
+        onFirstFrame={() => setIsLoading(false)}
       />
     </Box>
   );
