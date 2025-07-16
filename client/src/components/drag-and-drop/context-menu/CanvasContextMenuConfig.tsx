@@ -20,7 +20,6 @@ export const CANVAS_CONTEXT_MENU: ContextMenuItem<CanvasContextAction>[] = [
     label: "Run",
     icon: <PlayCircle />,
     dividerAfter: true,
-    disabled: true,
   },
   {
     id: "export",

@@ -19,10 +19,11 @@ export type CanvasContextMenuHandle = {
 
 interface CanvasContextMenuProps {
   ref: React.RefObject<CanvasContextMenuHandle | null>;
+  onRun: () => void;
 }
 
-const CanvasContextMenu = ({ ref }: CanvasContextMenuProps) => {
-  const { handleCanvasAction } = useCanvasActions();
+const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
+  const { handleCanvasAction } = useCanvasActions(onRun);
 
   const [contextMenuState, dispatchContextMenuState] = useReducer(
     contextMenuReducer,

@@ -236,7 +236,7 @@ export default function FlowCanvas({
     [getNodes, getEdges],
   );
 
-  const onConfirm = async () => {
+  const onRun = async () => {
     const pipeline = dumpPipelineToJson(nodes, edges);
     console.log(JSON.stringify(pipeline, null, 2));
     try {
@@ -340,11 +340,7 @@ export default function FlowCanvas({
           </Controls>
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           <Panel position="bottom-right">
-            <Button
-              variant="contained"
-              className="bg-primary"
-              onClick={onConfirm}
-            >
+            <Button variant="contained" className="bg-primary" onClick={onRun}>
               Run
             </Button>
           </Panel>
@@ -389,7 +385,7 @@ export default function FlowCanvas({
         ref={nodeContextMenuRef}
         handleConfigure={handleConfigure}
       />
-      <CanvasContextMenu ref={canvasContextMenuRef} />
+      <CanvasContextMenu ref={canvasContextMenuRef} onRun={onRun} />
     </Box>
   );
 }
