@@ -50,9 +50,7 @@ export type FlowCanvasProps = {
 
 export interface ParameterConfigurationDrawerProps {
   editingNode: Node<NodeData, NodeType>;
-  setEditingNode: React.Dispatch<
-    React.SetStateAction<Node<NodeData, NodeType> | null>
-  >;
+  clearEditingNode: () => void;
 }
 
 export type ParameterConfigurationProps = {

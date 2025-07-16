@@ -152,7 +152,7 @@ export default function DragAndDropArea() {
       {editingNode && (
         <ParameterConfigurationDrawer
           editingNode={editingNode}
-          setEditingNode={setEditingNode}
+          clearEditingNode={() => setEditingNode(null)}
         />
       )}
     </ReactFlowProvider>

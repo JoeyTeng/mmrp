@@ -14,7 +14,7 @@ import { Box, Button } from "@mui/material";
 
 export default function ParameterConfigurationDrawer({
   editingNode,
-  setEditingNode,
+  clearEditingNode,
 }: ParameterConfigurationDrawerProps) {
   const [tempNode, setTempNode] =
     useState<Node<NodeData, NodeType>>(editingNode);
@@ -30,14 +30,14 @@ export default function ParameterConfigurationDrawer({
       setNodes((nodes) =>
         nodes.map((n) => (n.id === updatedNode.id ? updatedNode : n)),
       );
-      setEditingNode(null);
+      clearEditingNode();
     },
-    [setNodes],
+    [setNodes, clearEditingNode],
   );
 
-  const handleCancel = useCallback(() => {
-    setEditingNode(null);
-  }, []);
+  const handleCancel = () => {
+    clearEditingNode();
+  };
 
   const handleParamChange = useCallback(
     (key: string, value: ParamValueType) => {
