@@ -1,46 +1,42 @@
-import { CanvasContextAction } from "./CanvasContextMenu";
-import { NodeAction } from "./NodeContextMenu";
-import { ContextMenuItem } from "../types";
-
-export type ContextMenuTarget = "canvas" | "node";
-
-export type ContextMenuState<ActionType extends string> = {
+export type ContextMenuState = {
   open: boolean;
-  items: ContextMenuItem<ActionType>[];
   position: {
     x: number;
     y: number;
   };
-  target: ContextMenuTarget | null;
   nodeId?: string;
 };
 
-export const initialContextMenuState: ContextMenuState<
-  NodeAction | CanvasContextAction
-> = {
+export const initialContextMenuState = {
   open: false,
-  items: [],
   position: { x: 0, y: 0 },
-  target: null,
 };
 
-export type ContextMenuActionPayload<ActionType extends string> = {
-  items: ContextMenuItem<ActionType>[];
+export const initialNodeContextMenuState = {
+  open: false,
+  position: { x: 0, y: 0 },
+  nodeId: "",
+};
+
+export type NodeContextMenuActionPayload = {
   position: { x: number; y: number };
-  target: ContextMenuTarget;
-  nodeId?: string;
+  nodeId: string;
 };
 
-export type ContextMenuAction<ActionType extends string> =
+export type ContextMenuActionPayload = {
+  position: { x: number; y: number };
+};
+
+export type ContextMenuAction =
   | {
       type: "open";
-      payload: ContextMenuActionPayload<ActionType>;
+      payload: ContextMenuActionPayload | NodeContextMenuActionPayload;
     }
   | { type: "close" };
 
-export function contextMenuReducer<ActionType extends string>(
-  state: ContextMenuState<ActionType>,
-  action: ContextMenuAction<ActionType>,
+export function contextMenuReducer(
+  state: ContextMenuState,
+  action: ContextMenuAction,
 ) {
   switch (action.type) {
     case "open": {
