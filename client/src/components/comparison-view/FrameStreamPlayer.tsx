@@ -2,72 +2,146 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import PlayerControls from "./PlayerControls";
+import { FrameData, ViewOptions } from "./types";
 import {
   closeVideoWebSocket,
   createVideoWebSocket,
 } from "@/services/webSocketClient";
 
 type Props = {
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  view: ViewOptions;
+  canvasRefs: React.RefObject<HTMLCanvasElement | null>[];
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
-  isFullscreen?: boolean;
-};
-
-type FrameData = {
-  blob: Blob;
-  fps: number;
-  mime: string;
+  onFullscreen: () => void;
+  onFirstFrame?: () => void;
 };
 
 const FrameStreamPlayer = ({
-  containerRef,
+  view,
+  canvasRefs,
   showSource,
   getSourceLabel,
-  isFullscreen,
+  onFullscreen,
+  onFirstFrame,
 }: Props) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentFrame, setCurrentFrame] = useState(0); // Frame index in range [0, frames.length)
+  const [isUserPaused, setIsUserPaused] = useState(true);
+  const [frames, setFrames] = useState<FrameData[]>([]);
   const currentFpsRef = useRef(30);
   const currentMimeRef = useRef("image/webp");
+  const [isStreamActive, setIsStreamActive] = useState(false);
+  const [filenames] = useState([
+    "example-video.mp4",
+    "example-video-filter.mp4",
+  ]);
+  const hasCalledFirstFrame = useRef(false);
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [frames, setFrames] = useState<FrameData[]>([]);
-  const [currentFrame, setCurrentFrame] = useState(0);
+  useEffect(() => {
+    if (!hasCalledFirstFrame.current && frames.length > 0) {
+      onFirstFrame?.();
+      hasCalledFirstFrame.current = true;
+    }
+  }, [frames.length, onFirstFrame]);
+
+  // Establish WebSocket connection to receive video frame data
+  useEffect(() => {
+    const expectedFrames = 2;
+    let frameBuffer: Blob[] = [];
+
+    createVideoWebSocket(
+      (data) => {
+        if (data instanceof ArrayBuffer) {
+          const blob = new Blob([data], { type: currentMimeRef.current });
+          frameBuffer.push(blob);
+
+          if (frameBuffer.length === expectedFrames) {
+            const commonFrameData = {
+              fps: currentFpsRef.current,
+              mime: currentMimeRef.current,
+            };
+
+            if (view === ViewOptions.SideBySide) {
+              const newFrame = {
+                blob: [frameBuffer[0], frameBuffer[1]],
+                ...commonFrameData,
+              };
+              setFrames((prev) => [...prev, newFrame]);
+            } else {
+              const [original, filtered] = frameBuffer;
+
+              const newFrames = [
+                { blob: [original], ...commonFrameData },
+                { blob: [filtered], ...commonFrameData },
+              ];
+
+              setFrames((prev) => [...prev, ...newFrames]);
+            }
+
+            frameBuffer = [];
+          }
+        } else {
+          if (data.fps) currentFpsRef.current = data.fps;
+          if (data.mime) currentMimeRef.current = data.mime;
+        }
+      },
+      () => {
+        setIsStreamActive(true);
+      },
+      undefined,
+      () => {
+        setIsStreamActive(false);
+      },
+      { filenames },
+    );
+
+    return () => {
+      closeVideoWebSocket();
+    };
+  }, [filenames, view]);
 
   // Render frame at given index
   const renderFrame = useCallback(
-    (index: number): Promise<void> => {
-      return new Promise((resolve) => {
-        if (!canvasRef.current || index >= frames.length) return resolve();
-        const ctx = canvasRef.current.getContext("2d");
-        const { blob } = frames[index];
+    (index: number): void => {
+      if (index >= frames.length) return;
+
+      const frame = frames[index];
+
+      for (let i = 0; i < canvasRefs.length; i++) {
+        const canvas = canvasRefs[i]?.current;
+        const blob = frame.blob[i]; // Match frame blob to canvas
+
+        if (!canvas || !blob) continue;
+
         const url = URL.createObjectURL(blob);
         const img = new Image();
         img.onload = () => {
-          if (!canvasRef.current) return resolve();
-          canvasRef.current.width = img.width;
-          canvasRef.current.height = img.height;
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          ctx?.clearRect(0, 0, canvas.width, canvas.height);
           ctx?.drawImage(img, 0, 0);
           URL.revokeObjectURL(url);
-          resolve();
         };
         img.src = url;
-      });
+      }
     },
-    [frames],
+    [frames, canvasRefs],
   );
 
+  // Handle play/pause
   const handlePlayPause = () => {
-    if (isPlaying) {
+    if (!isUserPaused) {
       setIsPlaying(false);
+      setIsUserPaused(true);
     } else {
-      if (currentFrame >= frames.length) {
+      if (currentFrame >= frames.length - 1 && frames.length > 0) {
         setCurrentFrame(0);
-        renderFrame(0);
       }
       setIsPlaying(true);
+      setIsUserPaused(false);
     }
   };
 
@@ -75,45 +149,16 @@ const FrameStreamPlayer = ({
   const stepFrame = (delta: number) => {
     const next = Math.min(Math.max(currentFrame + delta, 0), frames.length - 1);
     setCurrentFrame(next);
-    renderFrame(next);
     setIsPlaying(false);
+    setIsUserPaused(true);
   };
 
+  // Handle slider movement
   const onSliderChange = (value: number) => {
-    setCurrentFrame(value);
-    renderFrame(value);
+    setCurrentFrame(Math.min(value, frames.length - 1));
+    setIsPlaying(false);
+    setIsUserPaused(true);
   };
-
-  const handleFullscreen = () => {
-    const elem = containerRef.current;
-    if (!elem) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      elem.requestFullscreen();
-    }
-  };
-
-  useEffect(() => {
-    const ws = createVideoWebSocket((data) => {
-      if (data instanceof ArrayBuffer) {
-        const blob = new Blob([data], { type: currentMimeRef.current });
-        setFrames((prev) => [
-          ...prev,
-          { blob, fps: currentFpsRef.current, mime: currentMimeRef.current },
-        ]);
-      } else {
-        if (data.fps) currentFpsRef.current = data.fps;
-        if (data.mime) currentMimeRef.current = data.mime;
-      }
-    });
-
-    wsRef.current = ws;
-
-    return () => {
-      closeVideoWebSocket();
-    };
-  }, []);
 
   // Playback effect - dynamic frame timing by fps stored in each frame
   useEffect(() => {
@@ -125,8 +170,11 @@ const FrameStreamPlayer = ({
       return;
     }
 
-    if (currentFrame >= frames.length) {
+    if (currentFrame >= frames.length - 1) {
       setIsPlaying(false);
+      if (!isStreamActive) {
+        setIsUserPaused(true);
+      }
       return;
     }
 
@@ -147,7 +195,7 @@ const FrameStreamPlayer = ({
         playbackTimer.current = null;
       }
     };
-  }, [isPlaying, currentFrame, frames, renderFrame]);
+  }, [isPlaying, currentFrame, frames, renderFrame, isStreamActive]);
 
   // When currentFrame changes and playback is paused, render frame immediately
   useEffect(() => {
@@ -156,34 +204,44 @@ const FrameStreamPlayer = ({
     }
   }, [currentFrame, isPlaying, frames, renderFrame]);
 
+  // Auto-resuming playback
+  useEffect(() => {
+    if (!isPlaying && !isUserPaused && frames.length > currentFrame) {
+      setIsPlaying(true);
+    }
+  }, [frames, isPlaying, isUserPaused, currentFrame]);
+
   const sourceLabel = getSourceLabel?.(currentFrame);
 
+  // Frame label in range [1, frames.length]
+  const currentFrameLabel =
+    view === ViewOptions.SideBySide
+      ? currentFrame + 1
+      : Math.ceil((currentFrame + 1) / 2);
+
+  const totalFramesLabel =
+    view === ViewOptions.SideBySide
+      ? frames.length
+      : Math.ceil(frames.length / 2);
+
   return (
-    <>
-      <div className="flex justify-center items-center w-full h-full">
-        <canvas
-          ref={canvasRef}
-          className={`object-contain bg-black ${isFullscreen ? "w-full h-full" : "w-1/2 h-full"}`}
-        />
-      </div>
-      <PlayerControls
-        currentFrame={Math.min(currentFrame + 1, frames.length)}
-        totalFrames={frames.length}
-        isPlaying={isPlaying}
-        showMute={false}
-        isMuted={true}
-        onPlayPause={handlePlayPause}
-        onMuteToggle={() => {}}
-        onStepFrame={stepFrame}
-        onSliderChange={onSliderChange}
-        onFullscreen={handleFullscreen}
-        showSource={showSource}
-        sourceLabel={sourceLabel}
-        sliderValue={currentFrame}
-        sliderMax={frames.length - 1}
-        sliderStep={1}
-      />
-    </>
+    <PlayerControls
+      currentFrame={currentFrameLabel}
+      totalFrames={totalFramesLabel}
+      isPlaying={!isUserPaused}
+      showMute={false}
+      isMuted={true}
+      onPlayPause={handlePlayPause}
+      onMuteToggle={() => {}}
+      onStepFrame={stepFrame}
+      onSliderChange={onSliderChange}
+      onFullscreen={onFullscreen}
+      showSource={showSource}
+      sourceLabel={sourceLabel}
+      sliderValue={currentFrame}
+      sliderMax={frames.length - 1}
+      sliderStep={1}
+    />
   );
 };
 

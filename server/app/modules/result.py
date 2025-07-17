@@ -1,4 +1,4 @@
-from typing import Any, Iterator, Union
+from typing import Any, Iterator
 from app.modules.base_module import (
     ModuleBase,
     ParameterDefinition,
@@ -20,12 +20,13 @@ class Result(ModuleBase):
     def get_parameters(self) -> list[ParameterDefinition[Any]]:
         return [
             ParameterDefinition(
-                name="path",
+                name="video_player",
                 type="str",
                 required=False,
-                description="Optional output .mp4 file path",  # for now, we can choose to remove this if output path will be hardcoded
-                default="example_output.webm",
-            )
+                description="Select on which side the video should be played (only for two pipelines)",
+                constraints=["left", "right"],
+                default="right",
+            ),
         ]
 
     def get_input_formats(self) -> list[FormatDefinition]:
@@ -49,8 +50,8 @@ class Result(ModuleBase):
         raise NotImplementedError
 
     def process(
-        self, input_data: Iterator[Union[float, np.ndarray]], parameters: dict[str, Any]
-    ) -> str:
+        self, input_data: Iterator[np.ndarray], parameters: dict[str, Any]
+    ) -> Any:
         out_path = (
             Path(__file__).resolve().parent.parent.parent
             / "output"
@@ -63,14 +64,12 @@ class Result(ModuleBase):
         input_data = iter(input_data)
 
         # First value is FPS
-        fps = next(input_data)
+        fps = parameters["fps"]
         if not isinstance(fps, float):
             raise ValueError(f"Expected fps as float, got {type(fps)}")
 
         # Second value is the first frame
         first_frame = next(input_data)
-        if not isinstance(first_frame, np.ndarray):
-            raise ValueError("Expected a video frame (np.ndarray), got something else.")
 
         h, w = first_frame.shape[:2]
         # FIXME: OpenCV warning (use a format that is supported with the codec)
@@ -86,8 +85,4 @@ class Result(ModuleBase):
             out.write(first_frame)
             # Write the remaining frames
             for frame in input_data:
-                if not isinstance(frame, np.ndarray):
-                    raise ValueError(f"Expected np.ndarray, got {type(frame)}")
                 out.write(frame)
-
-        return out_path
