@@ -1,9 +1,12 @@
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, Node } from "@xyflow/react";
 import { NodeAction } from "./NodeContextMenuConfig";
 import { useCallback } from "react";
+import { NodeData, NodeType } from "../types";
 
-export const useNodeActions = (onConfigure: (nodeId: string) => void) => {
-  const { deleteElements } = useReactFlow();
+export const useNodeActions = (
+  onEditNode: (node: Node<NodeData, NodeType>) => void,
+) => {
+  const { getNode, deleteElements } = useReactFlow();
 
   const handleNodeAction = useCallback(
     (action: NodeAction, nodeId: string) => {
@@ -25,7 +28,8 @@ export const useNodeActions = (onConfigure: (nodeId: string) => void) => {
           return;
         }
         case "configure": {
-          onConfigure(nodeId);
+          const node = getNode(nodeId) as Node<NodeData, NodeType>;
+          if (node) onEditNode(node);
           return;
         }
         case "export": {
@@ -40,7 +44,7 @@ export const useNodeActions = (onConfigure: (nodeId: string) => void) => {
           return;
       }
     },
-    [deleteElements, onConfigure],
+    [deleteElements, getNode, onEditNode],
   );
   return { handleNodeAction };
 };

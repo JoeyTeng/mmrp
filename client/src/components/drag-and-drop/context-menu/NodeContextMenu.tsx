@@ -7,6 +7,8 @@ import {
 import { NODE_CONTEXT_MENU, NodeAction } from "./NodeContextMenuConfig";
 import ContextMenu from "./ContextMenu";
 import { useNodeActions } from "./useNodeActions";
+import { Node } from "@xyflow/react";
+import { NodeData, NodeType } from "../types";
 
 export type NodeContextMenuHandle = {
   open: (payload: NodeContextMenuActionPayload) => void;
@@ -15,11 +17,11 @@ export type NodeContextMenuHandle = {
 
 interface NodeContextMenuProps {
   ref: React.RefObject<NodeContextMenuHandle | null>;
-  handleConfigure: (nodeId: string) => void;
+  onEditNode: (node: Node<NodeData, NodeType>) => void;
 }
 
-const NodeContextMenu = ({ ref, handleConfigure }: NodeContextMenuProps) => {
-  const { handleNodeAction } = useNodeActions(handleConfigure);
+const NodeContextMenu = ({ ref, onEditNode }: NodeContextMenuProps) => {
+  const { handleNodeAction } = useNodeActions(onEditNode);
 
   const [contextMenuState, dispatchContextMenuState] = useReducer(
     contextMenuReducer,

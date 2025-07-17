@@ -46,7 +46,7 @@ export default function FlowCanvas({
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
   const paneRef = useRef<HTMLDivElement>(null);
-  
+
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();
   const {
@@ -318,10 +318,7 @@ export default function FlowCanvas({
           </Panel>
         </ReactFlow>
       </Box>
-      <NodeContextMenu
-        ref={nodeContextMenuRef}
-        handleConfigure={handleConfigure}
-      />
+      <NodeContextMenu ref={nodeContextMenuRef} onEditNode={onEditNode} />
       <CanvasContextMenu ref={canvasContextMenuRef} onRun={onRun} />
     </Box>
   );
