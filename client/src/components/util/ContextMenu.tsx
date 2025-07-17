@@ -2,7 +2,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { ListItemIcon, ListItemText, Divider } from "@mui/material";
 
-import { ContextMenuItem } from "../types";
+import { ContextMenuItem } from "./types";
 import React from "react";
 
 interface ContextMenuProps<ActionType extends string> {

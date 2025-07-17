@@ -4,7 +4,7 @@ import {
   CANVAS_CONTEXT_MENU,
   CanvasContextAction,
 } from "./CanvasContextMenuConfig";
-import ContextMenu from "./ContextMenu";
+import ContextMenu from "../../util/ContextMenu";
 
 export type CanvasContextMenuHandle = {
   open: (position: { x: number; y: number }) => void;

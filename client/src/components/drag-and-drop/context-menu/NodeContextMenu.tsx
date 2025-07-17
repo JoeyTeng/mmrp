@@ -1,6 +1,6 @@
 import { useCallback, useImperativeHandle, useRef, useState } from "react";
 import { NODE_CONTEXT_MENU, NodeAction } from "./NodeContextMenuConfig";
-import ContextMenu from "./ContextMenu";
+import ContextMenu from "../../util/ContextMenu";
 import { useNodeActions } from "./useNodeActions";
 import { Node } from "@xyflow/react";
 import { ModuleData, ModuleType } from "@/types/module";

@@ -1,3 +1,4 @@
+import { ContextMenuItem } from "@/components/util/types";
 import {
   OpenInFullOutlined,
   FileCopyOutlined,
@@ -7,7 +8,6 @@ import {
   PaletteOutlined,
   FileDownloadOutlined,
 } from "@mui/icons-material";
-import type { ContextMenuItem } from "../types";
 
 export type NodeAction =
   | "expand"

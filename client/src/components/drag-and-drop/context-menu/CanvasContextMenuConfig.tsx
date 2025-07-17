@@ -4,7 +4,7 @@ import {
   FileDownloadOutlined,
   PlayCircle,
 } from "@mui/icons-material";
-import { ContextMenuItem } from "../types";
+import { ContextMenuItem } from "@/components/util/types";
 
 export type CanvasContextAction = "clear" | "export" | "run" | "add_node";
 
