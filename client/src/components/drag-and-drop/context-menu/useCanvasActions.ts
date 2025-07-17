@@ -27,5 +27,7 @@ export const useCanvasActions = (onRun: () => void) => {
     [deleteElements, getNodes, onRun],
   );
 
-  return { handleCanvasAction };
+  const isEmpty = getNodes().length === 0;
+
+  return { handleCanvasAction, isEmpty };
 };
