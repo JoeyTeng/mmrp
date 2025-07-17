@@ -1,17 +1,17 @@
-import { useCallback, useImperativeHandle, useReducer } from "react";
-import {
-  contextMenuReducer,
-  initialNodeContextMenuState,
-  NodeContextMenuActionPayload,
-} from "./contextMenuReducer";
+import { useCallback, useImperativeHandle, useRef, useState } from "react";
 import { NODE_CONTEXT_MENU, NodeAction } from "./NodeContextMenuConfig";
 import ContextMenu from "./ContextMenu";
 import { useNodeActions } from "./useNodeActions";
 import { Node } from "@xyflow/react";
 import { NodeData, NodeType } from "../types";
 
+type MenuPayload = {
+  position: { x: number; y: number };
+  nodeId: string;
+};
+
 export type NodeContextMenuHandle = {
-  open: (payload: NodeContextMenuActionPayload) => void;
+  open: (payload: MenuPayload) => void;
   close: () => void;
 };
 
@@ -23,31 +23,32 @@ interface NodeContextMenuProps {
 const NodeContextMenu = ({ ref, onEditNode }: NodeContextMenuProps) => {
   const { handleNodeAction } = useNodeActions(onEditNode);
 
-  const [contextMenuState, dispatchContextMenuState] = useReducer(
-    contextMenuReducer,
-    initialNodeContextMenuState,
-  );
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const menuPositionRef = useRef<{ x: number; y: number }>(null);
+  const nodeIdRef = useRef<string>(null);
 
-  const handleCloseMenu = () => dispatchContextMenuState({ type: "close" });
+  const handleCloseMenu = () => setIsOpen(false);
 
   const handleAction = useCallback(
     (actionId: NodeAction) => {
-      if (!contextMenuState.nodeId) {
+      if (!nodeIdRef.current) {
         console.error(
           `Tried to execute NodeAction "${actionId}" with no NodeID.`,
         );
         return;
       }
       handleCloseMenu();
-      handleNodeAction(actionId as NodeAction, contextMenuState.nodeId);
+      handleNodeAction(actionId as NodeAction, nodeIdRef.current);
     },
-    [contextMenuState.nodeId, handleNodeAction],
+    [handleNodeAction],
   );
 
   useImperativeHandle(ref, () => {
     return {
-      open(payload: NodeContextMenuActionPayload) {
-        dispatchContextMenuState({ type: "open", payload: payload });
+      open(payload: MenuPayload) {
+        menuPositionRef.current = payload.position;
+        nodeIdRef.current = payload.nodeId;
+        setIsOpen(true);
       },
       close() {
         handleCloseMenu();
@@ -57,9 +58,9 @@ const NodeContextMenu = ({ ref, onEditNode }: NodeContextMenuProps) => {
 
   return (
     <ContextMenu
-      open={contextMenuState.open}
+      open={isOpen}
       dense
-      position={contextMenuState.position}
+      position={menuPositionRef.current}
       items={NODE_CONTEXT_MENU}
       onAction={handleAction}
       onClose={handleCloseMenu}

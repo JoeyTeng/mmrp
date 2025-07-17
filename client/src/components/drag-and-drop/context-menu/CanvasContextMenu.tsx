@@ -1,9 +1,4 @@
-import { useCallback, useImperativeHandle, useReducer } from "react";
-import {
-  ContextMenuActionPayload,
-  contextMenuReducer,
-  initialContextMenuState,
-} from "./contextMenuReducer";
+import { useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useCanvasActions } from "./useCanvasActions";
 import {
   CANVAS_CONTEXT_MENU,
@@ -12,7 +7,7 @@ import {
 import ContextMenu from "./ContextMenu";
 
 export type CanvasContextMenuHandle = {
-  open: (payload: ContextMenuActionPayload) => void;
+  open: (position: { x: number; y: number }) => void;
   close: () => void;
   clearAll: () => void;
 };
@@ -25,12 +20,10 @@ interface CanvasContextMenuProps {
 const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
   const { handleCanvasAction } = useCanvasActions(onRun);
 
-  const [contextMenuState, dispatchContextMenuState] = useReducer(
-    contextMenuReducer,
-    initialContextMenuState,
-  );
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const menuPositionRef = useRef<{ x: number; y: number }>(null);
 
-  const handleCloseMenu = () => dispatchContextMenuState({ type: "close" });
+  const handleCloseMenu = () => setIsOpen(false);
 
   const handleAction = useCallback(
     (actionId: CanvasContextAction) => {
@@ -42,8 +35,9 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
 
   useImperativeHandle(ref, () => {
     return {
-      open(payload: ContextMenuActionPayload) {
-        dispatchContextMenuState({ type: "open", payload: payload });
+      open(position: { x: number; y: number }) {
+        menuPositionRef.current = position;
+        setIsOpen(true);
       },
       close() {
         handleCloseMenu();
@@ -56,9 +50,9 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
 
   return (
     <ContextMenu
-      open={contextMenuState.open}
+      open={isOpen}
       dense
-      position={contextMenuState.position}
+      position={menuPositionRef.current}
       items={CANVAS_CONTEXT_MENU}
       onAction={handleAction}
       onClose={handleCloseMenu}

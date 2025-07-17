@@ -105,12 +105,9 @@ export default function FlowCanvas({
 
   const onPaneContextMenu = (event: React.MouseEvent | MouseEvent) => {
     event.preventDefault();
-
     canvasContextMenuRef.current?.open({
-      position: {
-        x: event.clientX,
-        y: event.clientY,
-      },
+      x: event.clientX,
+      y: event.clientY,
     });
   };
 
