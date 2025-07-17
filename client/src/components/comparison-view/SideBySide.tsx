@@ -6,7 +6,7 @@ import { PlayerHandle } from "./VideoPlayer";
 import { Box } from "@mui/material";
 import { loadVideo } from "@/services/videoService";
 import { useVideoReload } from "@/contexts/videoReloadContext";
-import { VideoType } from "./types";
+import { VideoType, ViewOptions } from "./types";
 
 type Props = {
   type: VideoType;
@@ -23,6 +23,8 @@ const SideBySide = ({ type }: Props) => {
   const videoBRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<PlayerHandle>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasARef = useRef<HTMLCanvasElement>(null);
+  const canvasBRef = useRef<HTMLCanvasElement>(null);
 
   // Group all loading and error states
   const isAnyLoading = isLoading || isProcessing;
@@ -30,6 +32,10 @@ const SideBySide = ({ type }: Props) => {
 
   // Load initial video
   useEffect(() => {
+    if (type === VideoType.Stream) {
+      return;
+    }
+
     const urls: string[] = [];
     const loadInitialVideo = async () => {
       try {
@@ -53,10 +59,14 @@ const SideBySide = ({ type }: Props) => {
     return () => {
       urls.forEach((url) => url && URL.revokeObjectURL(url));
     };
-  }, []);
+  }, [type]);
 
   // When reload is triggered, load processed video(s)
   useEffect(() => {
+    if (type === VideoType.Stream) {
+      return;
+    }
+
     const urls: string[] = [];
     const loadOutputVideos = async () => {
       try {
@@ -91,7 +101,8 @@ const SideBySide = ({ type }: Props) => {
     return () => {
       urls.forEach((url) => url && URL.revokeObjectURL(url));
     };
-  }, [latestResponse]);
+
+  }, [latestResponse, type]);
 
   return (
     <Box
@@ -100,42 +111,42 @@ const SideBySide = ({ type }: Props) => {
     >
       {/* Video Container */}
       <Box className="relative flex flex-1">
+        {/* Status Overlay */}
+        {(isAnyLoading || isAnyError) && (
+          <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
+            {isLoading ? (
+              <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            ) : isProcessing ? (
+              <Box className="flex flex-col items-center justify-center">
+                <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                <Box className="mt-4 text-lg font-medium">
+                  Processing Pipeline...
+                </Box>
+                <Box className="text-sm text-gray-300 mt-1">
+                  This might take some time.
+                </Box>
+              </Box>
+            ) : isProcessingError ? (
+              <Box className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white p-4 text-center">
+                {/* Error Icon */}
+                <Box className="flex items-center justify-center h-10 w-10 rounded-full bg-red-600 mb-4">
+                  <span className="text-3xl font-bold">!</span>
+                </Box>
+                {/* Error Text */}
+                <Box className="text-lg font-semibold">
+                  Error processing pipeline
+                </Box>
+                <Box className="text-sm text-gray-300 mt-1">
+                  Please try again or check your pipeline.
+                </Box>
+              </Box>
+            ) : (
+              error
+            )}
+          </Box>
+        )}
         {type === VideoType.Video && (
           <>
-            {/* Status Overlay */}
-            {(isAnyLoading || isAnyError) && (
-              <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
-                {isLoading ? (
-                  <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                ) : isProcessing ? (
-                  <Box className="flex flex-col items-center justify-center">
-                    <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                    <Box className="mt-4 text-lg font-medium">
-                      Processing Pipeline...
-                    </Box>
-                    <Box className="text-sm text-gray-300 mt-1">
-                      This might take some time.
-                    </Box>
-                  </Box>
-                ) : isProcessingError ? (
-                  <Box className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white p-4 text-center">
-                    {/* Error Icon */}
-                    <Box className="flex items-center justify-center h-10 w-10 rounded-full bg-red-600 mb-4">
-                      <span className="text-3xl font-bold">!</span>
-                    </Box>
-                    {/* Error Text */}
-                    <Box className="text-lg font-semibold">
-                      Error processing pipeline
-                    </Box>
-                    <Box className="text-sm text-gray-300 mt-1">
-                      Please try again or check your pipeline.
-                    </Box>
-                  </Box>
-                ) : (
-                  error
-                )}
-              </Box>
-            )}
             {/* Left Video */}
             <Box
               component="video"
@@ -156,14 +167,32 @@ const SideBySide = ({ type }: Props) => {
             />
           </>
         )}
+        {type === VideoType.Stream && (
+          <>
+            <Box
+              component="canvas"
+              ref={canvasARef}
+              className="w-1/2 h-full bg-black object-contain"
+            />
+            <Box
+              component="canvas"
+              ref={canvasBRef}
+              className="w-1/2 h-full bg-black object-contain"
+            />
+          </>
+        )}
       </Box>
 
       {/* Player Controls */}
       <UnifiedPlayer
+        key={`${type}-${ViewOptions.SideBySide}`}
+        view={ViewOptions.SideBySide}
         type={type}
         videoRefs={[videoARef, videoBRef]}
+        canvasRefs={[canvasARef, canvasBRef]}
         containerRef={containerRef}
         ref={playerRef}
+        onFirstFrame={() => setIsLoading(false)}
       />
     </Box>
   );
