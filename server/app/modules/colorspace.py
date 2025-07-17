@@ -23,15 +23,15 @@ class Colorspace(ModuleBase):
             ParameterDefinition(
                 name="input_colorspace",
                 type="str",
-                default="rgb",
-                valid_values=["YCrCb", "HSV", "Lab", "RGB", "BGR"],
+                default="RGB",
+                constraints=["YCrCb", "HSV", "Lab", "RGB", "BGR"],
                 required=True,
             ),
             ParameterDefinition(
                 name="output_colorspace",
                 type="str",
-                default="rgb",
-                valid_values=["YCrCb", "HSV", "Lab", "RGB", "BGR"],
+                default="RGB",
+                constraints=["YCrCb", "HSV", "Lab", "RGB", "BGR"],
                 required=True,
             ),
         ]

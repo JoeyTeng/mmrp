@@ -16,9 +16,7 @@ ParameterType = TypeVar(
 class ParameterDefinition(Generic[ParameterType]):
     name: str
     type: Literal["int", "float", "str", "bool"]
-    valid_values: tuple[ParameterType, ParameterType] | list[ParameterType] | None = (
-        None
-    )
+    constraints: tuple[ParameterType, ParameterType] | list[ParameterType] | None = None
     description: Optional[str] = None
     default: Optional[Any] = None
     required: bool = True
@@ -52,7 +50,7 @@ class ModuleBase(ABC):
         return []
 
     @abstractmethod
-    def process(self, input_data: str, parameters: dict[str, Any]) -> None:
+    def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:
         raise NotImplementedError
 
     @abstractmethod

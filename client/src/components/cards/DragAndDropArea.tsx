@@ -1,15 +1,11 @@
 "use client";
 
 import FlowCanvas from "@/components/drag-and-drop/FlowCanvas";
-import {
-  ReactFlowProvider,
-  type Node,
-  type Edge,
-  useNodesState,
-  useEdgesState,
-} from "@xyflow/react";
+import { ReactFlowProvider, type Node, type Edge } from "@xyflow/react";
 
 import { NodeData, NodeType } from "../drag-and-drop/types";
+import ParameterConfigurationDrawer from "@/components/drag-and-drop/parameter-configuration/ParameterConfigurationDrawer";
+import { useState } from "react";
 
 const initialNodes: Node<NodeData, NodeType>[] = [
   {
@@ -40,7 +36,7 @@ const initialNodes: Node<NodeData, NodeType>[] = [
     data: {
       label: "colorspace",
       params: {
-        input_colorspace: "YCrCb",
+        input_colorspace: "RGB",
         output_colorspace: "YCrCb",
       },
       inputFormats: [
@@ -140,22 +136,25 @@ const initialEdges: Edge[] = [
   },
 ];
 
-const DragAndDropArea = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+export default function DragAndDropArea() {
+  const [editingNode, setEditingNode] = useState<Node<
+    NodeData,
+    NodeType
+  > | null>(null);
 
   return (
     <ReactFlowProvider>
       <FlowCanvas
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        setNodes={setNodes}
-        setEdges={setEdges}
-        onSelectNode={() => {}}
+        defaultNodes={initialNodes}
+        defaultEdges={initialEdges}
+        onEditNode={setEditingNode}
       />
+      {editingNode && (
+        <ParameterConfigurationDrawer
+          editingNode={editingNode}
+          clearEditingNode={() => setEditingNode(null)}
+        />
+      )}
     </ReactFlowProvider>
   );
-};
-export default DragAndDropArea;
+}

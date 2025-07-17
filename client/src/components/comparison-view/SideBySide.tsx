@@ -5,6 +5,7 @@ import UnifiedPlayer from "./UnifiedPlayer";
 import { PlayerHandle } from "./VideoPlayer";
 import { Box } from "@mui/material";
 import { loadVideo } from "@/services/videoService";
+import { useVideoReload } from "@/contexts/videoReloadContext";
 import { VideoType } from "./types";
 
 type Props = {
@@ -12,28 +13,30 @@ type Props = {
 };
 
 const SideBySide = ({ type }: Props) => {
+  // Initialise error and loading states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const { reloadKey, isProcessing, isProcessingError } = useVideoReload();
 
+  // Initialise video and player references
   const videoARef = useRef<HTMLVideoElement>(null);
   const videoBRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<PlayerHandle>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Group all loading and error states
+  const isAnyLoading = isLoading || isProcessing;
+  const isAnyError = error != "" || isProcessingError;
+
+  // Load initial video
   useEffect(() => {
     const urls: string[] = [];
-
-    const initializeVideos = async () => {
+    const loadInitialVideo = async () => {
       try {
         setIsLoading(true);
         setError("");
-
-        const [originalUrl, filteredUrl] = await Promise.all([
-          loadVideo("example-video.mp4", videoARef),
-          loadVideo("example-video-filter.mp4", videoBRef),
-        ]);
-
-        urls.push(originalUrl, filteredUrl);
+        const originalUrl = await loadVideo("example-video.mp4", videoARef);
+        urls.push(originalUrl);
       } catch (e) {
         setError("Failed to load videos. Please try again. " + e);
       } finally {
@@ -41,12 +44,36 @@ const SideBySide = ({ type }: Props) => {
       }
     };
 
-    initializeVideos();
+    loadInitialVideo();
 
     return () => {
       urls.forEach((url) => url && URL.revokeObjectURL(url));
     };
   }, []);
+
+  // When reload is triggered, load processed video
+  useEffect(() => {
+    const urls: string[] = [];
+    const loadOutputVideo = async () => {
+      try {
+        setIsLoading(true);
+        const filteredUrl = await loadVideo("example_output.webm", videoBRef);
+        urls.push(filteredUrl);
+      } catch (e) {
+        setError("Failed to load output video: " + e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (reloadKey !== 0) {
+      loadOutputVideo();
+    }
+
+    return () => {
+      urls.forEach((url) => url && URL.revokeObjectURL(url));
+    };
+  }, [reloadKey]);
 
   return (
     <Box
@@ -58,10 +85,34 @@ const SideBySide = ({ type }: Props) => {
         {type === VideoType.Video && (
           <>
             {/* Status Overlay */}
-            {(isLoading || error) && (
+            {(isAnyLoading || isAnyError) && (
               <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
                 {isLoading ? (
                   <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                ) : isProcessing ? (
+                  <Box className="flex flex-col items-center justify-center">
+                    <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                    <Box className="mt-4 text-lg font-medium">
+                      Processing Pipeline...
+                    </Box>
+                    <Box className="text-sm text-gray-300 mt-1">
+                      This might take some time.
+                    </Box>
+                  </Box>
+                ) : isProcessingError ? (
+                  <Box className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white p-4 text-center">
+                    {/* Error Icon */}
+                    <Box className="flex items-center justify-center h-10 w-10 rounded-full bg-red-600 mb-4">
+                      <span className="text-3xl font-bold">!</span>
+                    </Box>
+                    {/* Error Text */}
+                    <Box className="text-lg font-semibold">
+                      Error processing pipeline
+                    </Box>
+                    <Box className="text-sm text-gray-300 mt-1">
+                      Please try again or check your pipeline.
+                    </Box>
+                  </Box>
                 ) : (
                   error
                 )}
@@ -89,6 +140,7 @@ const SideBySide = ({ type }: Props) => {
         )}
       </Box>
 
+      {/* Player Controls */}
       <UnifiedPlayer
         type={type}
         videoRefs={[videoARef, videoBRef]}

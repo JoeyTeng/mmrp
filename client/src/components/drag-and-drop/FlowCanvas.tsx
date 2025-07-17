@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-  useMemo,
-} from "react";
+import React, { useCallback, useContext, useRef, useMemo } from "react";
 
 import {
   ReactFlow,
@@ -19,73 +13,50 @@ import {
   Position,
   MarkerType,
   getOutgoers,
-  OnEdgesChange,
-  OnNodesChange,
   Panel,
   useReactFlow,
   ControlButton,
+  getIncomers,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
 
-import "@xyflow/react/dist/style.css";
-
 import FlowNode, { FlowNodeProps } from "@/components/drag-and-drop/FlowNode";
-import { NodeData, NodeType, ParamValueType } from "./types";
+import { FlowCanvasProps, NodeData, NodeType } from "./types";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
-import { AppDrawer } from "@/components/sidebar/AppDrawer";
-import ParameterConfiguration from "@/components/drag-and-drop/ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { ModulesContext } from "@/contexts/ModulesContext";
-import { getInitialNodeParamValue, makePorts } from "./util";
+import { checkPipeline, getInitialNodeParamValue, makePorts } from "./util";
 import NodeContextMenu, {
   NodeContextMenuHandle,
 } from "./context-menu/NodeContextMenu";
 import CanvasContextMenu, {
   CanvasContextMenuHandle,
 } from "./context-menu/CanvasContextMenu";
-
-type FlowCanvasProps = {
-  nodes: Node<NodeData, NodeType>[];
-  edges: Edge[];
-  onNodesChange: OnNodesChange<Node<NodeData, NodeType>>;
-  onEdgesChange: OnEdgesChange;
-  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
-  onSelectNode: (id: string | null) => void;
-};
+import { useVideoReload } from "@/contexts/videoReloadContext";
+import { toast } from "react-toastify/unstyled";
 
 export default function FlowCanvas({
-  nodes,
-  edges,
-  onNodesChange,
-  onEdgesChange,
-  setNodes,
-  setEdges,
-  onSelectNode,
+  defaultNodes,
+  defaultEdges,
+  onEditNode,
 }: FlowCanvasProps) {
-  const [appDrawerOpen, setAppDrawerOpen] = useState(false);
-  const [tempNode, setTempNode] = useState<Node<NodeData, NodeType> | null>(
-    null,
-  );
-
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
-
   const paneRef = useRef<HTMLDivElement>(null);
-
-  const handleConfigure = useCallback(
-    (nodeId: string) => {
-      const node = nodes.find((node) => node.id === nodeId);
-      if (node) {
-        setTempNode({ ...node });
-        setAppDrawerOpen(true);
-      }
-    },
-    [nodes],
-  );
+  
+  const { triggerReload, setIsProcessing, setError, isProcessing } =
+    useVideoReload();
+  const {
+    screenToFlowPosition,
+    getNodes,
+    getEdges,
+    deleteElements,
+    setEdges,
+    setNodes,
+  } = useReactFlow();
 
   const handleNodeOpenMenu = useCallback(
     (event: React.MouseEvent, nodeId: string) => {
@@ -143,27 +114,32 @@ export default function FlowCanvas({
     });
   };
 
-  const handlePaneClick = () => {
+  const handlePaneClick = useCallback(() => {
     paneRef.current?.focus();
-  };
+  }, []);
 
   const handlePaneKeyDown = useCallback(
     (evt: React.KeyboardEvent) => {
       if (evt.key === "Delete" || evt.key === "Backspace") {
-        setNodes((nds) => nds.filter((n) => !n.selected));
-        setEdges((eds) => eds.filter((e) => !e.selected));
+        //get current state
+        const nodes = getNodes();
+        const edges = getEdges();
+
+        const selectedNode = nodes.filter((node) => node.selected);
+        const selectedEdge = edges.filter((edge) => edge.selected);
+
+        deleteElements({ nodes: selectedNode, edges: selectedEdge });
+
         evt.preventDefault();
       }
     },
-    [setNodes, setEdges],
+    [getNodes, getEdges, deleteElements],
   );
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges],
   );
-
-  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -220,8 +196,9 @@ export default function FlowCanvas({
       const conn = connection as Connection;
       const nodes = getNodes();
       const edges = getEdges();
-      const target = nodes.find((node) => node.id == connection.target);
-      if (!target || target.id == connection.source) return false;
+      const source = nodes.find((node) => node.id == conn.source);
+      const target = nodes.find((node) => node.id == conn.target);
+      if (!source || !target || source.id == target.id) return false;
       const hasCycle = (node: Node, visited = new Set<string>()) => {
         if (visited.has(node.id)) return false;
         visited.add(node.id);
@@ -231,19 +208,42 @@ export default function FlowCanvas({
         }
         return false;
       };
-      return !hasCycle(target);
+      const hasOneEdge = (src: Node, tgt: Node): boolean => {
+        if (
+          getOutgoers(src, nodes, edges).length >= 1 ||
+          getIncomers(tgt, nodes, edges).length >= 1
+        ) {
+          return false;
+        }
+        return true;
+      };
+      return !hasCycle(target) && hasOneEdge(source, target);
     },
     [getNodes, getEdges],
   );
 
   const onRun = async () => {
-    const pipeline = dumpPipelineToJson(nodes, edges);
-    console.log(JSON.stringify(pipeline, null, 2));
-    try {
-      const res = await sendPipelineToBackend(pipeline);
-      console.log("Executing in order", res);
-    } catch (err) {
-      console.error("Error sending pipleine to backend", err);
+    const nodes: Node<NodeData, NodeType>[] = getNodes() as Node<
+      NodeData,
+      NodeType
+    >[];
+    const edges: Edge[] = getEdges();
+    if (checkPipeline(nodes, edges)) {
+      const pipeline = dumpPipelineToJson(nodes, edges);
+      console.log(JSON.stringify(pipeline, null, 2));
+      try {
+        toast.success("Pipeline valid, starting processing");
+        setIsProcessing(true);
+        const res = await sendPipelineToBackend(pipeline);
+        console.log("Pipeline processed successfully: ", res);
+        setError(false);
+        triggerReload();
+      } catch (err) {
+        console.error("Error sending pipeline to backend", err);
+        setError(true);
+      } finally {
+        setIsProcessing(false);
+      }
     }
   };
 
@@ -251,42 +251,12 @@ export default function FlowCanvas({
     (event: React.MouseEvent, node: Node<NodeData, NodeType>) => {
       event.preventDefault();
       event.stopPropagation();
-      setTempNode({ ...node });
-      setAppDrawerOpen(true);
+      onEditNode(node);
     },
-    [],
+    [onEditNode],
   );
 
-  const handleParamChange = useCallback(
-    (key: string, value: ParamValueType) => {
-      setTempNode((prev) =>
-        prev
-          ? {
-              ...prev,
-              data: {
-                ...prev.data,
-                params: { ...prev.data.params, [key]: value },
-              },
-            }
-          : null,
-      );
-    },
-    [],
-  );
-
-  const handleConfirmParams = useCallback(() => {
-    if (!tempNode) return;
-
-    setNodes((nds) => nds.map((n) => (n.id === tempNode.id ? tempNode : n)));
-    setAppDrawerOpen(false);
-  }, [tempNode, setNodes]);
-
-  const handleCancelParams = useCallback(() => {
-    setAppDrawerOpen(false);
-    setTempNode(null);
-  }, []);
-
-  if (!modules) return;
+  if (!modules) return null;
 
   return (
     <Box
@@ -302,17 +272,12 @@ export default function FlowCanvas({
       >
         <ReactFlow
           nodeTypes={nodeTypes}
-          nodes={nodes}
-          edges={edges}
+          defaultNodes={defaultNodes}
+          defaultEdges={defaultEdges}
           isValidConnection={isValidConnection}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onDragOver={onDragOver}
           onDrop={onDrop}
-          onSelectionChange={({ nodes: selected }) =>
-            onSelectNode(selected.length ? selected[0].id : null)
-          }
           onNodeDoubleClick={onNodeDoubleClickHandler}
           onNodeContextMenu={onNodeContextMenu}
           onPaneContextMenu={onPaneContextMenu}
@@ -340,47 +305,19 @@ export default function FlowCanvas({
           </Controls>
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           <Panel position="bottom-right">
-            <Button variant="contained" className="bg-primary" onClick={onRun}>
+            <Button
+              variant="contained"
+              className={
+                isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
+              }
+              onClick={onRun}
+              disabled={isProcessing}
+            >
               Run
             </Button>
           </Panel>
         </ReactFlow>
       </Box>
-      <AppDrawer
-        open={appDrawerOpen}
-        onClose={handleCancelParams}
-        title={
-          tempNode
-            ? `Edit ${tempNode.data.label} Parameters`
-            : "Edit Parameters"
-        }
-        width={400}
-        anchor="right"
-      >
-        <Box display="flex" flexDirection="column" height="100%">
-          <Box flex={1} overflow="auto">
-            <ParameterConfiguration
-              node={tempNode}
-              onParamChange={handleParamChange}
-            />
-          </Box>
-          <Box
-            sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}
-          >
-            <Button variant="outlined" onClick={handleCancelParams}>
-              Cancel
-            </Button>
-            <Button
-              className="bg-primary"
-              variant="contained"
-              onClick={handleConfirmParams}
-              disabled={!tempNode}
-            >
-              Confirm
-            </Button>
-          </Box>
-        </Box>
-      </AppDrawer>
       <NodeContextMenu
         ref={nodeContextMenuRef}
         handleConfigure={handleConfigure}

@@ -63,7 +63,7 @@ export const Sidebar = ({
                   item={{
                     ...item,
                     action: item.action || (() => togglePanel(item.id)),
-                    arrowDirection: openPanelId === item.id ? "left" : "right",
+                    arrowDirection: openPanelId === item.id ? "right" : "left",
                   }}
                   anchor={anchor}
                 />

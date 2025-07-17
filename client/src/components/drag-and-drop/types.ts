@@ -1,11 +1,18 @@
+import type { Node, Edge } from "@xyflow/react";
+
 export type ParamValueType = string | number | boolean;
+export type NodeParamValue = ParamValueType | string[];
+export type ConstraintsLookupType = Record<
+  string,
+  ParamValueType[] | [number, number] | undefined
+>;
 
 export interface ParameterDefinition {
   name: string;
   type: "int" | "float" | "str" | "bool";
   description?: string | null;
   default?: ParamValueType;
-  validValues?: ParamValueType[] | [number, number];
+  constraints?: ParamValueType[] | [number, number];
   required: boolean;
 }
 
@@ -35,6 +42,7 @@ export enum NodeType {
   OutputNode = "outputNode",
 }
 
+
 export type ContextMenuItem<ActionType extends string> = {
   id: ActionType;
   label: string;
@@ -43,4 +51,19 @@ export type ContextMenuItem<ActionType extends string> = {
   dividerAfter?: boolean;
   submenu?: ContextMenuItem<ActionType>[];
   danger?: boolean;
+
+export type FlowCanvasProps = {
+  defaultNodes: Node<NodeData, NodeType>[];
+  defaultEdges: Edge[];
+  onEditNode: (node: Node<NodeData, NodeType>) => void;
+};
+
+export interface ParameterConfigurationDrawerProps {
+  editingNode: Node<NodeData, NodeType>;
+  clearEditingNode: () => void;
+}
+
+export type ParameterConfigurationProps = {
+  node: Node<NodeData, NodeType>;
+  onParamChange: (key: string, value: ParamValueType) => void;
 };
