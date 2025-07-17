@@ -1,4 +1,4 @@
-import type { Node, Edge, OnNodesChange, OnEdgesChange } from "@xyflow/react";
+import type { Node, Edge } from "@xyflow/react";
 
 export type ParamValueType = string | number | boolean;
 export type NodeParamValue = ParamValueType | string[];
@@ -43,19 +43,14 @@ export enum NodeType {
 }
 
 export type FlowCanvasProps = {
-  nodes: Node<NodeData, NodeType>[];
-  edges: Edge[];
-  onNodesChange: OnNodesChange<Node<NodeData, NodeType>>;
-  onEdgesChange: OnEdgesChange;
-  setNodes: React.Dispatch<React.SetStateAction<Node<NodeData, NodeType>[]>>;
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  defaultNodes: Node<NodeData, NodeType>[];
+  defaultEdges: Edge[];
   onEditNode: (node: Node<NodeData, NodeType>) => void;
 };
 
 export interface ParameterConfigurationDrawerProps {
   editingNode: Node<NodeData, NodeType>;
-  onConfirm: (node: Node<NodeData, NodeType>) => void;
-  onCancel: () => void;
+  clearEditingNode: () => void;
 }
 
 export type ParameterConfigurationProps = {
