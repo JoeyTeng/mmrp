@@ -147,16 +147,13 @@ export default function FlowCanvas({
         }
         return false;
       };
-      const hasOneEdge = (src: Node, tgt: Node): boolean => {
-        if (
-          getOutgoers(src, nodes, edges).length >= 1 ||
-          getIncomers(tgt, nodes, edges).length >= 1
-        ) {
+      const hasOneIncomingConnection = (src: Node, tgt: Node): boolean => {
+        if (getIncomers(tgt, nodes, edges).length >= 1) {
           return false;
         }
         return true;
       };
-      return !hasCycle(target) && hasOneEdge(source, target);
+      return !hasCycle(target) && hasOneIncomingConnection(source, target);
     },
     [getNodes, getEdges],
   );
@@ -169,14 +166,13 @@ export default function FlowCanvas({
     const edges: Edge[] = getEdges();
     if (checkPipeline(nodes, edges)) {
       const pipeline = dumpPipelineToJson(nodes, edges);
-      console.log(JSON.stringify(pipeline, null, 2));
+      console.debug(JSON.stringify(pipeline, null, 2));
       try {
         toast.success("Pipeline valid, starting processing");
         setIsProcessing(true);
         const res = await sendPipelineToBackend(pipeline);
-        console.log("Pipeline processed successfully: ", res);
         setError(false);
-        triggerReload();
+        triggerReload(res);
       } catch (err) {
         console.error("Error sending pipeline to backend", err);
         setError(true);

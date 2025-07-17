@@ -15,3 +15,8 @@ class PipelineModule(BaseModel):
 
 class PipelineRequest(BaseModel):
     modules: list[PipelineModule]
+
+
+class PipelineResponse(BaseModel):
+    left: str
+    right: str
