@@ -5,23 +5,38 @@ import SideBySide from "@/components/comparison-view/SideBySide";
 import InterleavingFrames from "@/components/comparison-view/InterleavingFrames";
 import MenuDropdown from "@/components/comparison-view/MenuDropdown";
 import { Box, Typography } from "@mui/material";
-import { VideoType, ViewOptions } from "@/components/comparison-view/types";
+import {
+  MenuSelection,
+  VideoType,
+  ViewOptions,
+} from "@/components/comparison-view/types";
 
 const VideoComparisonView = () => {
-  const [view, setView] = useState(ViewOptions.SideBySide);
+  const [selection, setSelection] = useState<MenuSelection>({
+    view: ViewOptions.SideBySide,
+    type: VideoType.Video,
+  });
 
   return (
     <Box className="flex flex-col h-full w-full border border-primary bg-primary overflow-hidden rounded-md">
       <Box className="flex items-center gap-2 p-1.5">
-        <MenuDropdown onSelect={setView} />
-        <Typography variant="subtitle1">{view} View</Typography>
+        <MenuDropdown onSelect={setSelection} />
+        <Typography variant="subtitle1">
+          {selection.view} View - {selection.type}
+        </Typography>
       </Box>
       <Box className="flex-1 flex overflow-hidden">
-        {view === ViewOptions.SideBySide && (
-          <SideBySide type={VideoType.Video} />
+        {selection.view === ViewOptions.SideBySide && (
+          <SideBySide
+            key={`${selection.view}-${selection.type}`}
+            type={selection.type}
+          />
         )}
-        {view === ViewOptions.Interleaving && (
-          <InterleavingFrames type={VideoType.Stream} />
+        {selection.view === ViewOptions.Interleaving && (
+          <InterleavingFrames
+            key={`${selection.view}-${selection.type}`}
+            type={selection.type}
+          />
         )}
       </Box>
     </Box>

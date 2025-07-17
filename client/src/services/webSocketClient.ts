@@ -12,6 +12,7 @@ export const createVideoWebSocket = (
   onOpen?: () => void,
   onError?: (err: Event) => void,
   onClose?: () => void,
+  initMessage?: object,
 ): WebSocket => {
   const url = `${process.env.NEXT_PUBLIC_WS_API_URL}/video`;
   ws ??= new WebSocket(url);
@@ -19,6 +20,9 @@ export const createVideoWebSocket = (
 
   ws.onopen = () => {
     console.log("WebSocket connection opened");
+    if (initMessage) {
+      ws?.send(JSON.stringify(initMessage)); // send filenames info
+    }
     onOpen?.();
   };
 
@@ -41,7 +45,6 @@ export const createVideoWebSocket = (
   };
 
   ws.onclose = () => {
-    console.log("WebSocket closed");
     onClose?.();
   };
 
@@ -49,7 +52,11 @@ export const createVideoWebSocket = (
 };
 
 export const closeVideoWebSocket = () => {
-  if (ws?.CLOSED || ws?.CLOSING) return;
+  if (ws && ws.readyState === WebSocket.CONNECTING) {
+    console.log("WebSocket connecting");
+    return;
+  }
+  console.log("WebSocket closing");
   ws?.close();
   ws = null;
 };
