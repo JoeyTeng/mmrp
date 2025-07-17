@@ -159,6 +159,7 @@ export default function FlowCanvas({
   const onConfirm = async () => {
     if (checkPipeline(nodes, edges)) {
       const pipeline = dumpPipelineToJson(nodes, edges);
+      console.debug(JSON.stringify(pipeline, null, 2));
       try {
         toast.success("Pipeline valid, starting processing");
         setIsProcessing(true);

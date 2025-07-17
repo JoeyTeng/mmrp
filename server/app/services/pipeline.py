@@ -3,7 +3,7 @@ from collections import defaultdict, deque
 from typing import Any, Iterator
 from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.schemas.pipeline import PipelineModule
-from app.schemas.pipeline import PipelineRequest
+from app.schemas.pipeline import PipelineRequest, PipelineResponse
 from app.services.module import registry
 from itertools import tee
 import uuid
@@ -108,7 +108,7 @@ def get_execution_order(modules: list[PipelineModule]):
 
 
 # Handle the pipeline request and process the video
-def handle_pipeline_request(request: PipelineRequest) -> dict[str, str]:
+def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     # Resolve pipeline modules
     ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
     # Check that the pipeline starts with a source module
@@ -152,7 +152,7 @@ def handle_pipeline_request(request: PipelineRequest) -> dict[str, str]:
         m for m in ordered_modules if m.name not in {"source", "result"}
     ]
 
-    # Source module processes video input and yeilds framerate
+    # Source module processes video input and yields framerate
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
         source_file,
         fps,
@@ -160,8 +160,10 @@ def handle_pipeline_request(request: PipelineRequest) -> dict[str, str]:
     ):
         # Run frames through whole pipeline and return the frames that need to be written
         def base_pipeline_iterator() -> Iterator[tuple[int, np.ndarray]]:
+            frame_cache: dict[int, np.ndarray] = {}
             for frame in frame_iter:
-                frame_cache = {source_mod.id: frame}
+                frame_cache.clear()
+                frame_cache[source_mod.id] = frame
                 # Process frames and save them to a frame cache
                 process_pipeline_frame(frame_cache, processing_nodes, module_map)
                 for result_mod in result_modules:
@@ -169,8 +171,8 @@ def handle_pipeline_request(request: PipelineRequest) -> dict[str, str]:
                         # Yield the result module and the corresponding frames to be written
                         yield (result_mod.id, frame_cache[sid])
 
-        # Create two iterators for the two result modules that can read from the data stream independently
-        piped_iters = tee(base_pipeline_iterator(), 2)
+        # Create two iterators for the result modules that can read from the data stream independently
+        piped_iters = tee(base_pipeline_iterator(), len(result_modules))
 
         outputs: list[dict[str, str]] = []
 
@@ -186,12 +188,12 @@ def handle_pipeline_request(request: PipelineRequest) -> dict[str, str]:
             filename = f"{source_file}-{filename_base64}.webm"
 
             params["path"] = filename
+            params["fps"] = fps
 
             # Pass only the frames for the specific result module
             def filtered_iter(
                 mod_id: int, it: Iterator[tuple[int, np.ndarray]]
             ) -> Iterator[np.ndarray]:
-                yield fps
                 for mid, frame in it:
                     if mid == mod_id:
                         yield frame
@@ -202,4 +204,7 @@ def handle_pipeline_request(request: PipelineRequest) -> dict[str, str]:
             outputs.append({"video_player": params["video_player"], "path": filename})
 
     output_map = {entry["video_player"]: entry["path"] for entry in outputs}
-    return output_map
+    response = PipelineResponse(
+        left=output_map.get("left", ""), right=output_map.get("right", "")
+    )
+    return response

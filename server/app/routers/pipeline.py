@@ -13,10 +13,7 @@ router = APIRouter(
 @router.post("/", response_model=PipelineResponse)
 def process_pipeline(request: PipelineRequest):
     try:
-        result = handle_pipeline_request(request)
-        response = PipelineResponse(
-            left=result.get("left", ""), right=result.get("right", "")
-        )
+        response = handle_pipeline_request(request)
         return response
     except ValueError as e:
         raise HTTPException(422, detail=str(e))

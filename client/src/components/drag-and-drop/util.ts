@@ -79,10 +79,10 @@ export function checkPipeline(
     return false;
   }
 
-  //  Find the one result
+  //  Find the results
   const results: Node[] = nodes.filter((n) => n.type === NodeType.OutputNode);
-  if (results.length > 2) {
-    toast.error("Only two or less result modules are allowed.");
+  if (results.length > 2 || results.length == 0) {
+    toast.error("Only one or two result nodes are allowed.");
     return false;
   }
 
