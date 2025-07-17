@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from pathlib import Path
 from app.utils.shared_functionality import get_video_path
 from app.utils.constants import VIDEO_TYPES
+from app.schemas.video import VideoRequest
 
 router = APIRouter(
     prefix="/video",
@@ -16,9 +17,10 @@ router = APIRouter(
 
 
 # Send a mp4 video to the frontend
-@router.get("/{video_name}")
-def get_video(video_name: str):
+@router.post("/")
+def get_video(request: VideoRequest):
     try:
+        video_name: str = request.video_name
         file_ext = Path(video_name).suffix.lower()
 
         if file_ext not in VIDEO_TYPES:
@@ -26,8 +28,8 @@ def get_video(video_name: str):
                 400, detail=f"Unsupported format. Allowed: {list(VIDEO_TYPES.keys())}"
             )
 
-        # Use your existing path resolution logic
-        if video_name.lower().endswith("_output.webm"):
+        # Get video path
+        if request.output:
             video_path = (
                 Path(__file__).resolve().parent.parent.parent / "output" / video_name
             )
