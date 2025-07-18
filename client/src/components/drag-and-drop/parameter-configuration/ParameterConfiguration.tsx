@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useContext, useMemo } from "react";
-import { Box, TextField, MenuItem, Tooltip, IconButton } from "@mui/material";
+import { Box, TextField, MenuItem } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
 import {
   ModuleParamLookupType,
@@ -9,7 +9,7 @@ import {
   ParameterConfigurationProps,
 } from "../types";
 import { ModulesContext } from "@/contexts/ModulesContext";
-import { InfoOutlined } from "@mui/icons-material";
+import ParameterInfoToolTip from "./ParameterInfoToolTip";
 
 export default function ParameterConfiguration({
   node,
@@ -72,28 +72,6 @@ export default function ParameterConfiguration({
     const { constraints = [], description = "" } = paramLookup[key] ?? {};
     const inputType = getInputType(key, value);
 
-    const infoNode = (
-      <>
-        {description && (
-          <Tooltip title={description} placement="top">
-            <IconButton
-              size="small"
-              edge="end"
-              sx={{
-                p: 0, // no extra padding
-                ml: 1, // small gap from the input
-                "& .MuiSvgIcon-root": {
-                  fontSize: "1em", // shrink the SVG down to text‑size
-                },
-              }}
-            >
-              <InfoOutlined fontSize="inherit" />
-            </IconButton>
-          </Tooltip>
-        )}
-      </>
-    );
-
     switch (inputType) {
       case "select":
         return (
@@ -101,7 +79,6 @@ export default function ParameterConfiguration({
             key={key}
             sx={{
               display: "flex",
-              gap: 0.5,
               mb: 2,
               justifyContent: "space-between",
               alignItems: "center",
@@ -123,7 +100,7 @@ export default function ParameterConfiguration({
                   </MenuItem>
                 ))}
             </TextField>
-            {infoNode}
+            <ParameterInfoToolTip description={description} />
           </Box>
         );
 
@@ -163,7 +140,7 @@ export default function ParameterConfiguration({
                   />
                 </NumberField.Group>
               </NumberField.Root>
-              {infoNode}
+              <ParameterInfoToolTip description={description} />
             </Box>
 
             {errors[key] && (
@@ -180,7 +157,6 @@ export default function ParameterConfiguration({
             key={key}
             sx={{
               display: "flex",
-              gap: 0.5,
               mb: 2,
               justifyContent: "space-between",
               alignItems: "center",
@@ -198,7 +174,7 @@ export default function ParameterConfiguration({
               <MenuItem value="true">True</MenuItem>
               <MenuItem value="false">False</MenuItem>
             </TextField>
-            {infoNode}
+            <ParameterInfoToolTip description={description} />
           </Box>
         );
 
@@ -208,7 +184,6 @@ export default function ParameterConfiguration({
             key={key}
             sx={{
               display: "flex",
-              gap: 0.5,
               mb: 2,
               justifyContent: "space-between",
               alignItems: "center",
@@ -222,7 +197,7 @@ export default function ParameterConfiguration({
               onChange={(e) => onParamChange(key, e.target.value)}
               sx={{ flex: 1 }}
             />
-            {infoNode}
+            <ParameterInfoToolTip description={description} />
           </Box>
         );
     }
