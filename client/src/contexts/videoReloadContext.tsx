@@ -1,10 +1,11 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
+import type { PipelineResponse } from "@/types/pipeline";
 
 type VideoReloadContextType = {
-  triggerReload: () => void;
-  reloadKey: number;
+  triggerReload: (res: PipelineResponse) => void;
+  latestResponse: PipelineResponse | null;
   isProcessing: boolean;
   setIsProcessing: (value: boolean) => void;
   isProcessingError: boolean;
@@ -22,17 +23,21 @@ export const useVideoReload = () => {
 };
 
 export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
-  const [reloadKey, setReloadKey] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isProcessingError, setError] = useState(false);
+  const [latestResponse, setLatestResponse] = useState<PipelineResponse | null>(
+    null,
+  );
 
-  const triggerReload = () => setReloadKey(Date.now());
+  const triggerReload = (res: PipelineResponse) => {
+    setLatestResponse(res);
+  };
 
   return (
     <VideoReloadContext
       value={{
-        reloadKey,
         triggerReload,
+        latestResponse,
         isProcessing,
         setIsProcessing,
         isProcessingError,

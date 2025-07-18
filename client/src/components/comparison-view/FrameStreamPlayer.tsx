@@ -32,7 +32,6 @@ const FrameStreamPlayer = ({
   const [frames, setFrames] = useState<FrameData[]>([]);
   const currentFpsRef = useRef(30);
   const currentMimeRef = useRef("image/webp");
-  const wsRef = useRef<WebSocket | null>(null);
   const [isStreamActive, setIsStreamActive] = useState(false);
   const [filenames] = useState([
     "example-video.mp4",
@@ -52,7 +51,7 @@ const FrameStreamPlayer = ({
     const expectedFrames = 2;
     let frameBuffer: Blob[] = [];
 
-    const ws = createVideoWebSocket(
+    createVideoWebSocket(
       (data) => {
         if (data instanceof ArrayBuffer) {
           const blob = new Blob([data], { type: currentMimeRef.current });
@@ -98,11 +97,8 @@ const FrameStreamPlayer = ({
       { filenames },
     );
 
-    wsRef.current = ws;
-
     return () => {
       closeVideoWebSocket();
-      wsRef.current = null;
     };
   }, [filenames, view]);
 

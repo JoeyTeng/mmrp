@@ -16,7 +16,7 @@ const SideBySide = ({ type }: Props) => {
   // Initialise error and loading states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const { reloadKey, isProcessing, isProcessingError } = useVideoReload();
+  const { latestResponse, isProcessing, isProcessingError } = useVideoReload();
 
   // Initialise video and player references
   const videoARef = useRef<HTMLVideoElement>(null);
@@ -41,7 +41,11 @@ const SideBySide = ({ type }: Props) => {
       try {
         setIsLoading(true);
         setError("");
-        const originalUrl = await loadVideo("example-video.mp4", videoARef);
+        const originalUrl = await loadVideo(
+          "example-video.mp4",
+          false,
+          videoARef,
+        );
         urls.push(originalUrl);
       } catch (e) {
         setError("Failed to load videos. Please try again. " + e);
@@ -57,18 +61,32 @@ const SideBySide = ({ type }: Props) => {
     };
   }, [type]);
 
-  // When reload is triggered, load processed video
+  // When reload is triggered, load processed video(s)
   useEffect(() => {
     if (type === VideoType.Stream) {
       return;
     }
 
     const urls: string[] = [];
-    const loadOutputVideo = async () => {
+    const loadOutputVideos = async () => {
       try {
         setIsLoading(true);
-        const filteredUrl = await loadVideo("example_output.webm", videoBRef);
-        urls.push(filteredUrl);
+        if (latestResponse!.left !== "") {
+          const urlLeft = await loadVideo(
+            latestResponse!.left,
+            true,
+            videoARef,
+          );
+          urls.push(urlLeft);
+        }
+        if (latestResponse!.right !== "") {
+          const urlRight = await loadVideo(
+            latestResponse!.right,
+            true,
+            videoBRef,
+          );
+          urls.push(urlRight);
+        }
       } catch (e) {
         setError("Failed to load output video: " + e);
       } finally {
@@ -76,14 +94,14 @@ const SideBySide = ({ type }: Props) => {
       }
     };
 
-    if (reloadKey !== 0) {
-      loadOutputVideo();
+    if (latestResponse != null) {
+      loadOutputVideos();
     }
 
     return () => {
       urls.forEach((url) => url && URL.revokeObjectURL(url));
     };
-  }, [reloadKey, type]);
+  }, [latestResponse, type]);
 
   return (
     <Box
