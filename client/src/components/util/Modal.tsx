@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@mui/material";
 import { ModalOption } from "./types";
+import { useId } from "react";
 
 interface ModalProps<ModalActionType extends string> {
   open: boolean;
@@ -25,6 +26,7 @@ const Modal = <ModalActionType extends string>({
   onAction,
   onClose,
 }: ModalProps<ModalActionType>) => {
+  const ariaId = useId();
   const descriptionLines = Array.isArray(description)
     ? description
     : [description];
@@ -33,11 +35,11 @@ const Modal = <ModalActionType extends string>({
     <Dialog
       open={open}
       onClose={onClose}
-      aria-labelledby="delete-dialog-title"
-      aria-describedby="delete-dialog-description"
+      aria-labelledby={`${ariaId}-title`}
+      aria-describedby={`${ariaId}-description`}
     >
-      <DialogTitle id="delete-dialog-title">{title}</DialogTitle>
-      <DialogContent id="delete-dialog-description">
+      <DialogTitle id={`${ariaId}-title`}>{title}</DialogTitle>
+      <DialogContent id={`${ariaId}-description`}>
         {descriptionLines.map((line, index) => (
           <DialogContentText key={index}>{line}</DialogContentText>
         ))}
