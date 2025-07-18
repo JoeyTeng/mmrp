@@ -8,7 +8,7 @@ export interface ParameterDefinition {
   type: "int" | "float" | "str" | "bool";
   description?: string | null;
   default?: ParamValueType;
-  constraints?: ParamValueType[] | [number, number];
+  constraints?: ParamValueType[] | [number, number] | undefined;
   required: boolean;
 }
 
