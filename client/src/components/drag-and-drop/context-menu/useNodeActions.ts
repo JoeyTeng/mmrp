@@ -6,7 +6,7 @@ import { ModuleData, ModuleType } from "@/types/module";
 export const useNodeActions = (
   onEditNode: (node: Node<ModuleData, ModuleType>) => void,
 ) => {
-  const { getNode, deleteElements } = useReactFlow();
+  const { getNode, getNodeConnections, deleteElements } = useReactFlow();
 
   const handleNodeAction = useCallback(
     (action: NodeAction, nodeId: string) => {
@@ -46,5 +46,11 @@ export const useNodeActions = (
     },
     [deleteElements, getNode, onEditNode],
   );
-  return { handleNodeAction };
+
+  const isBreakingChangeOnDelete = (nodeId: string) =>
+    getNodeConnections({ nodeId: nodeId }).length > 0;
+
+  const getNodeName = (nodeId: string) => getNode(nodeId)?.data.label;
+
+  return { handleNodeAction, isBreakingChangeOnDelete, getNodeName };
 };

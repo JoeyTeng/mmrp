@@ -30,15 +30,14 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
 
   const handleAction = useCallback(
     (actionId: CanvasContextAction) => {
+      handleCloseMenu();
       if (actionId === "clear") {
-        console.info(isEmpty);
-        if (!isEmpty) {
-          setIsModalOpen(true);
+        if (isEmpty) {
+          return;
         }
-        handleCloseMenu();
+        setIsModalOpen(true);
         return;
       }
-      handleCloseMenu();
       handleCanvasAction(actionId as CanvasContextAction);
     },
     [handleCanvasAction, isEmpty],
@@ -50,9 +49,10 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
     (actionId: CanvasModalAction) => {
       handleCloseMenu();
       switch (actionId) {
-        case "cancel":
+        case "cancel": {
           handleCloseModal();
           return;
+        }
         case "delete": {
           handleCanvasAction("clear" as CanvasContextAction);
           handleCloseModal();
