@@ -8,11 +8,14 @@ export interface ParameterDefinition {
   type: "int" | "float" | "str" | "bool";
   description?: string | null;
   default?: ParamValueType;
-  constraints?: ParamValueType[] | [number, number] | undefined;
+  constraints?: ParamValueType[] | [number, number];
   required: boolean;
 }
 
-export type ModuleParamLookupType = Record<string, ParameterDefinition>;
+export type ModuleParamLookupType = Record<
+  string,
+  ParameterDefinition | undefined
+>;
 
 export interface FormatDefinition {
   pixelFormat?: string;
