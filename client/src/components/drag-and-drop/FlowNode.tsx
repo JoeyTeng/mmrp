@@ -1,20 +1,24 @@
 "use client";
-import { Handle, Node, NodeProps, Position, useReactFlow } from "@xyflow/react";
-import { DeleteOutlined as Trash } from "@mui/icons-material";
+import { Handle, Node, NodeProps, Position } from "@xyflow/react";
+import { MoreVertOutlined as MenuIcon } from "@mui/icons-material";
 
 import { NodeData, NodePort, NodeType } from "./types";
+import { IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
 
 type CustomNode = Node<NodeData>;
+
+export interface FlowNodeProps extends NodeProps<CustomNode> {
+  onOpenMenu?: (e: React.MouseEvent, nodeId: string) => void;
+}
 
 export default function FlowNode({
   id,
   type,
   data: { label, params, inputFormats = [], outputFormats = [] },
   selected,
-}: NodeProps<CustomNode>) {
-  const { deleteElements } = useReactFlow();
-
+  onOpenMenu,
+}: FlowNodeProps) {
   const MAX_VISIBLE = 4; //default no of params visible in node
 
   function tooltip(port: NodePort) {
@@ -31,19 +35,21 @@ export default function FlowNode({
 
   return (
     <div
-      className={`w-40 bg-white rounded-lg overflow-hidden text-sm ${
-        selected ? "border-2 border-black-100" : "border border-gray-300"
-      }`}
+      className={`w-40 bg-white rounded-lg overflow-hidden text-sm border ${selected ? "border-black-100" : "border-gray-300"}`}
     >
-      <div className="px-3 py-1 font-semibold text-gray-800 flex justify-between align-center">
+      <div className="pl-3 pr-1 py-1 font-semibold text-gray-800 flex justify-between items-center">
         {label}
-        <Trash
-          className="cursor-pointer"
+        <IconButton
           onClick={(e) => {
-            e.stopPropagation(); //prevent the container’s onClick
-            deleteElements({ nodes: [{ id }] });
+            e.preventDefault();
+            onOpenMenu?.(e, id);
           }}
-        />
+          size="small"
+          aria-label="Module options"
+          sx={{ padding: 0 }}
+        >
+          <MenuIcon />
+        </IconButton>
       </div>
       <div className="border-t border-gray-300" />
       <div className="px-3 py-1 space-y-1">

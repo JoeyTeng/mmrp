@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useCallback, useContext, useRef } from "react";
+import React, { useCallback, useContext, useRef, useMemo } from "react";
+
 import {
   ReactFlow,
   Background,
@@ -14,32 +15,36 @@ import {
   getOutgoers,
   Panel,
   useReactFlow,
+  ControlButton,
   getIncomers,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
 
-import FlowNode from "@/components/drag-and-drop/FlowNode";
+import FlowNode, { FlowNodeProps } from "@/components/drag-and-drop/FlowNode";
 import { FlowCanvasProps, NodeData, NodeType } from "./types";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { ModulesContext } from "@/contexts/ModulesContext";
-import { useVideoReload } from "@/contexts/videoReloadContext";
 import { checkPipeline, getInitialNodeParamValue, makePorts } from "./util";
+import NodeContextMenu, {
+  NodeContextMenuHandle,
+} from "./context-menu/NodeContextMenu";
+import CanvasContextMenu, {
+  CanvasContextMenuHandle,
+} from "./context-menu/CanvasContextMenu";
+import { useVideoReload } from "@/contexts/videoReloadContext";
 import { toast } from "react-toastify/unstyled";
-
-const nodeTypes = {
-  [NodeType.InputNode]: FlowNode,
-  [NodeType.ProcessNode]: FlowNode,
-  [NodeType.OutputNode]: FlowNode,
-};
 
 export default function FlowCanvas({
   defaultNodes,
   defaultEdges,
   onEditNode,
 }: FlowCanvasProps) {
+  const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
+  const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
   const paneRef = useRef<HTMLDivElement>(null);
 
   const { triggerReload, setIsProcessing, setError, isProcessing } =
@@ -52,6 +57,59 @@ export default function FlowCanvas({
     setEdges,
     setNodes,
   } = useReactFlow();
+
+  const handleNodeOpenMenu = useCallback(
+    (event: React.MouseEvent, nodeId: string) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const coordinates = event.currentTarget.getBoundingClientRect();
+
+      nodeContextMenuRef.current?.open({
+        position: {
+          x: coordinates.left,
+          y: coordinates.bottom + 6,
+        },
+        nodeId: nodeId,
+      });
+    },
+    [],
+  );
+
+  const FlowNodeWithMenu = useCallback(
+    (props: FlowNodeProps) => (
+      <FlowNode {...props} onOpenMenu={handleNodeOpenMenu} />
+    ),
+    [handleNodeOpenMenu],
+  );
+
+  const nodeTypes = useMemo(
+    () => ({
+      [NodeType.InputNode]: FlowNodeWithMenu,
+      [NodeType.ProcessNode]: FlowNodeWithMenu,
+      [NodeType.OutputNode]: FlowNodeWithMenu,
+    }),
+    [FlowNodeWithMenu],
+  );
+
+  const onNodeContextMenu = (event: React.MouseEvent, node: Node) => {
+    event.preventDefault();
+    nodeContextMenuRef.current?.open({
+      position: {
+        x: event.clientX,
+        y: event.clientY,
+      },
+      nodeId: node.id,
+    });
+  };
+
+  const onPaneContextMenu = (event: React.MouseEvent | MouseEvent) => {
+    event.preventDefault();
+    canvasContextMenuRef.current?.open({
+      x: event.clientX,
+      y: event.clientY,
+    });
+  };
 
   const handlePaneClick = useCallback(() => {
     paneRef.current?.focus();
@@ -158,7 +216,7 @@ export default function FlowCanvas({
     [getNodes, getEdges],
   );
 
-  const onConfirm = async () => {
+  const onRun = async () => {
     const nodes: Node<NodeData, NodeType>[] = getNodes() as Node<
       NodeData,
       NodeType
@@ -194,7 +252,10 @@ export default function FlowCanvas({
   if (!modules) return null;
 
   return (
-    <Box className="w-full h-full relative bg-white rounded-lg border border-gray-300">
+    <Box
+      className="w-full h-full relative bg-white rounded-lg border border-gray-300"
+      onContextMenu={(e) => e.preventDefault()}
+    >
       <Box
         className="w-full h-full"
         ref={paneRef}
@@ -211,6 +272,8 @@ export default function FlowCanvas({
           onDragOver={onDragOver}
           onDrop={onDrop}
           onNodeDoubleClick={onNodeDoubleClickHandler}
+          onNodeContextMenu={onNodeContextMenu}
+          onPaneContextMenu={onPaneContextMenu}
           fitViewOptions={{
             padding: 1,
           }}
@@ -220,10 +283,19 @@ export default function FlowCanvas({
               width: 20,
               height: 20,
             },
+            interactionWidth: 20,
           }}
           fitView
+          proOptions={{ hideAttribution: true }}
+          reconnectRadius={50}
         >
-          <Controls />
+          <Controls>
+            <ControlButton
+              onClick={() => canvasContextMenuRef.current?.clearAll()}
+            >
+              <DeleteIcon className="fill-red-700" sx={{ scale: 1.2 }} />
+            </ControlButton>
+          </Controls>
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           <Panel position="bottom-right">
             <Button
@@ -231,14 +303,16 @@ export default function FlowCanvas({
               className={
                 isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
               }
-              onClick={onConfirm}
+              onClick={onRun}
               disabled={isProcessing}
             >
-              Confirm
+              Run
             </Button>
           </Panel>
         </ReactFlow>
       </Box>
+      <NodeContextMenu ref={nodeContextMenuRef} onEditNode={onEditNode} />
+      <CanvasContextMenu ref={canvasContextMenuRef} onRun={onRun} />
     </Box>
   );
 }
