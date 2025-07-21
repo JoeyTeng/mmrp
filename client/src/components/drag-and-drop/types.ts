@@ -42,6 +42,16 @@ export enum NodeType {
   OutputNode = "outputNode",
 }
 
+export type ContextMenuItem<ActionType extends string> = {
+  id: ActionType;
+  label: string;
+  icon?: React.ReactNode;
+  disabled?: boolean;
+  dividerAfter?: boolean;
+  submenu?: ContextMenuItem<ActionType>[];
+  danger?: boolean;
+};
+
 export type FlowCanvasProps = {
   defaultNodes: Node<NodeData, NodeType>[];
   defaultEdges: Edge[];
