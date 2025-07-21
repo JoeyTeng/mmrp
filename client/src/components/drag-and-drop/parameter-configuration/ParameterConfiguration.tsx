@@ -77,12 +77,7 @@ export default function ParameterConfiguration({
         return (
           <Box
             key={key}
-            sx={{
-              display: "flex",
-              mb: 2,
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
+            className="flex gap-1 mb-4 justify-between items-center"
           >
             <TextField
               select
@@ -91,7 +86,7 @@ export default function ParameterConfiguration({
               label={key}
               value={value}
               onChange={(e) => onParamChange(key, e.target.value)}
-              sx={{ flex: 1 }}
+              className="flex-1"
             >
               {Array.isArray(constraints) &&
                 constraints.map((option) => (
@@ -155,12 +150,7 @@ export default function ParameterConfiguration({
         return (
           <Box
             key={key}
-            sx={{
-              display: "flex",
-              mb: 2,
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
+            className="flex gap-1 mb-4 justify-between items-center"
           >
             <TextField
               select
@@ -169,7 +159,7 @@ export default function ParameterConfiguration({
               size="small"
               value={String(value)}
               onChange={(e) => onParamChange(key, e.target.value === "true")}
-              sx={{ flex: 1 }}
+              className="flex-1"
             >
               <MenuItem value="true">True</MenuItem>
               <MenuItem value="false">False</MenuItem>
@@ -182,12 +172,7 @@ export default function ParameterConfiguration({
         return (
           <Box
             key={key}
-            sx={{
-              display: "flex",
-              mb: 2,
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
+            className="flex gap-1 mb-4 justify-between items-center"
           >
             <TextField
               fullWidth
@@ -195,7 +180,7 @@ export default function ParameterConfiguration({
               size="small"
               value={String(value)}
               onChange={(e) => onParamChange(key, e.target.value)}
-              sx={{ flex: 1 }}
+              className="flex-1"
             />
             <ParameterInfoToolTip description={description} />
           </Box>
@@ -204,7 +189,7 @@ export default function ParameterConfiguration({
   };
 
   return (
-    <Box sx={{ p: 2, height: "100%", overflowY: "auto" }}>
+    <Box className="p-4 h-full overflow-y-auto">
       {Object.entries(node.data.params).map(([key, value]) =>
         renderParamInput(key, value),
       )}
