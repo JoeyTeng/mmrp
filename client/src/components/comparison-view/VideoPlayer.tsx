@@ -7,6 +7,7 @@ import React, {
   useEffect,
 } from "react";
 import PlayerControls from "./PlayerControls";
+import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
 
 type Props = {
   videoRefs: React.RefObject<HTMLVideoElement | null>[];
@@ -38,10 +39,15 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
     const [duration, setDuration] = useState(0);
 
     const mainVideo = videoRefs[0]?.current;
+    const { setCurrentFrame } = useVideoMetrics(); // Frame index in range [0, frames.length)
 
     useImperativeHandle(ref, () => ({
       handleTimeUpdate,
     }));
+
+    useEffect(() => {
+      setCurrentFrame(Math.floor(currentTime * frameRate));
+    }, [currentTime, frameRate, setCurrentFrame]);
 
     useEffect(() => {
       if (!mainVideo) return;

@@ -5,8 +5,9 @@ import cv2
 import asyncio
 import json
 import numpy as np
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from app.utils.shared_functionality import as_context
+from app.utils.quality_metrics import compute_metrics
 
 router = APIRouter()
 
@@ -48,10 +49,16 @@ async def video_feed(websocket: WebSocket) -> None:
 
             while all(cap.isOpened() for cap in caps):
                 frames: List[Optional[np.ndarray]] = []
+                raw_frames: List[
+                    np.ndarray
+                ] = []  # Keep originals for metrics computation
+
                 for cap in caps:
                     ret, frame = cap.read()
                     if not ret:
                         return  # Exit if any video ends
+
+                    raw_frames.append(frame)
 
                     encode_success: bool
                     buffer: Optional[np.ndarray]
@@ -74,10 +81,14 @@ async def video_feed(websocket: WebSocket) -> None:
                 if any(buf is None for buf in frames):
                     continue
 
-                metadata: Dict[str, Union[int, float, str]] = {
+                metadata: Dict[str, Any] = {
                     "fps": fps,
                     "mime": mime_type,
                 }
+
+                metrics = compute_metrics(raw_frames[0], raw_frames[1])
+                metadata["metrics"] = metrics
+
                 await websocket.send_text(json.dumps(metadata))
 
                 for buf in frames:

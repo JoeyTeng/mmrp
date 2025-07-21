@@ -18,26 +18,30 @@ const VideoComparisonView = () => {
   });
 
   return (
-    <Box className="flex flex-col h-full w-full border border-primary bg-primary overflow-hidden rounded-md">
-      <Box className="flex items-center gap-2 p-1.5">
-        <MenuDropdown onSelect={setSelection} />
-        <Typography variant="subtitle1">
-          {selection.view} View - {selection.type}
-        </Typography>
-      </Box>
-      <Box className="flex-1 flex overflow-hidden">
-        {selection.view === ViewOptions.SideBySide && (
-          <SideBySide
-            key={`${selection.view}-${selection.type}`}
-            type={selection.type}
-          />
-        )}
-        {selection.view === ViewOptions.Interleaving && (
-          <InterleavingFrames
-            key={`${selection.view}-${selection.type}`}
-            type={selection.type}
-          />
-        )}
+    <Box className="h-full w-full flex items-center justify-center m-0.5">
+      <Box className="w-full h-full" sx={{ maxWidth: "900px" }}>
+        <Box className="flex flex-col h-full w-full border border-primary bg-primary overflow-hidden rounded-md">
+          <Box className="flex items-center gap-2 p-1.5">
+            <MenuDropdown onSelect={setSelection} />
+            <Typography variant="subtitle1">
+              {selection.view} View - {selection.type}
+            </Typography>
+          </Box>
+          <Box className="flex-1 flex overflow-hidden">
+            {selection.view === ViewOptions.SideBySide && (
+              <SideBySide
+                key={`${selection.view}-${selection.type}`}
+                type={selection.type}
+              />
+            )}
+            {selection.view === ViewOptions.Interleaving && (
+              <InterleavingFrames
+                key={`${selection.view}-${selection.type}`}
+                type={selection.type}
+              />
+            )}
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

@@ -6,6 +6,7 @@ import { Box } from "@mui/material";
 import UnifiedPlayer from "./UnifiedPlayer";
 import { PlayerHandle } from "./VideoPlayer";
 import { VideoType, ViewOptions } from "./types";
+import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
 
 type Props = {
   type: VideoType;
@@ -18,8 +19,12 @@ const InterleavingFrames = ({ type }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
   useEffect(() => {
+    setMetrics([]);
+    setCurrentFrame(0);
+
     if (type === VideoType.Stream) {
       return () => {};
     }
@@ -44,7 +49,7 @@ const InterleavingFrames = ({ type }: Props) => {
     return () => {
       URL.revokeObjectURL(url);
     };
-  }, [type]);
+  }, [setCurrentFrame, setMetrics, type]);
 
   return (
     <Box

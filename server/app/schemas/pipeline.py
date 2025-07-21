@@ -1,3 +1,4 @@
+from typing import Dict
 from pydantic import BaseModel
 
 
@@ -20,3 +21,4 @@ class PipelineRequest(BaseModel):
 class PipelineResponse(BaseModel):
     left: str
     right: str
+    metrics: list[Dict[str, float]]

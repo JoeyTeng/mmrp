@@ -1,3 +1,5 @@
+import { Metrics } from "@/types/metrics";
+
 export enum ViewOptions {
   SideBySide = "Side-by-Side",
   Interleaving = "Interleaving Frames",
@@ -21,4 +23,5 @@ export type FrameData = {
   blob: Blob[];
   fps: number;
   mime: string;
+  metrics?: Metrics;
 };
