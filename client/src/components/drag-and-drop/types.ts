@@ -2,10 +2,6 @@ import type { Node, Edge } from "@xyflow/react";
 
 export type ParamValueType = string | number | boolean;
 export type NodeParamValue = ParamValueType | string[];
-export type ConstraintsLookupType = Record<
-  string,
-  ParamValueType[] | [number, number] | undefined
->;
 
 export interface ParameterDefinition {
   name: string;
@@ -15,6 +11,11 @@ export interface ParameterDefinition {
   constraints?: ParamValueType[] | [number, number];
   required: boolean;
 }
+
+export type ModuleParamLookupType = Record<
+  string,
+  ParameterDefinition | undefined
+>;
 
 export interface FormatDefinition {
   pixelFormat?: string;
@@ -66,4 +67,8 @@ export interface ParameterConfigurationDrawerProps {
 export type ParameterConfigurationProps = {
   node: Node<NodeData, NodeType>;
   onParamChange: (key: string, value: ParamValueType) => void;
+};
+
+export type ParameterInfoToolTipProps = {
+  description: string | null;
 };
