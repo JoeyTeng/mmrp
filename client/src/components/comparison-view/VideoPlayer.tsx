@@ -10,10 +10,10 @@ import PlayerControls from "./PlayerControls";
 
 type Props = {
   videoRefs: React.RefObject<HTMLVideoElement | null>[];
-  containerRef: React.RefObject<HTMLDivElement | null>;
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
   frameRate?: number;
+  onFullscreen: () => void;
 };
 
 export type PlayerHandle = {
@@ -24,10 +24,10 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
   (
     {
       videoRefs,
-      containerRef,
       showSource = false,
       getSourceLabel,
       frameRate = 30,
+      onFullscreen,
     },
     ref,
   ) => {
@@ -114,18 +114,6 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
       setCurrentTime(value);
     };
 
-    const handleFullscreen = () => {
-      const elem = containerRef.current;
-      if (!elem) return;
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        elem.requestFullscreen().catch((err) => {
-          console.error("Failed to enter fullscreen:", err);
-        });
-      }
-    };
-
     const currentFrame = Math.floor(currentTime * frameRate);
     const totalFrames = Math.floor(duration * frameRate);
     const sourceLabel = getSourceLabel?.(currentFrame);
@@ -141,7 +129,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
         onStepFrame={handleStepFrame}
         onMuteToggle={handleMuteToggle}
         onSliderChange={handleSliderChange}
-        onFullscreen={handleFullscreen}
+        onFullscreen={onFullscreen}
         showSource={showSource}
         sourceLabel={sourceLabel}
         sliderValue={currentTime}

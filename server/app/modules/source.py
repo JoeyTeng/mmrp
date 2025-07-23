@@ -9,6 +9,7 @@ from app.utils.shared_functionality import get_video_path, as_context
 import cv2
 import contextlib
 import numpy as np
+from pathlib import Path
 
 
 class Source(ModuleBase):
@@ -51,8 +52,11 @@ class Source(ModuleBase):
     # Process video path
     def process(
         self, input_data: Any, parameters: dict[str, Any]
-    ) -> contextlib.AbstractContextManager[tuple[float, Iterator[np.ndarray]]]:
-        video_path = get_video_path(str(parameters["path"]))
+    ) -> contextlib.AbstractContextManager[tuple[str, float, Iterator[np.ndarray]]]:
+        # Get source file and name
+        source_file: str = str(parameters["path"])
+        name_without_ext = Path(source_file).stem
+        video_path = get_video_path(source_file)
 
         cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
 
@@ -71,6 +75,6 @@ class Source(ModuleBase):
                             break
                         yield frame
 
-                yield fps, frame_generator()
+                yield name_without_ext, fps, frame_generator()
 
         return generator_context()
