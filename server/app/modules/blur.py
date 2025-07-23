@@ -21,7 +21,11 @@ class Blur(ModuleBase):
     def get_parameters(self) -> list[ParameterDefinition[typing.Any]]:
         return [
             ParameterDefinition(
-                name="kernel_size", type="int", default=5, required=True
+                name="kernel_size",
+                type="int",
+                default=5,
+                required=True,
+                description="Kernel size for the module",
             ),
             ParameterDefinition(
                 name="method",

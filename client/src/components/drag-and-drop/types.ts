@@ -40,3 +40,7 @@ export type ParameterConfigurationProps = {
   node: Node<NodeData, NodeType>;
   onParamChange: (key: string, value: ParamValueType) => void;
 };
+
+export type ParameterInfoToolTipProps = {
+  description: string | null;
+};
