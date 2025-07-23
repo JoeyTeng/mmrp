@@ -11,7 +11,7 @@ export default function Modules() {
     <Box className="flex overflow-hidden h-full w-full flex-col">
       <Box className="flex flex-wrap gap-2">
         {modules.map((item) => (
-          <ModuleItem key={item.name} label={item.name} type={item.role} />
+          <ModuleItem key={item.name} id={item.id} label={item.name} />
         ))}
       </Box>
     </Box>

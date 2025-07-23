@@ -1,4 +1,4 @@
-import { ParamValueType } from "@/components/drag-and-drop/types";
+import { ParamValueType } from "@/types/module";
 import { Metrics } from "./metrics";
 
 export type PipelineParameter = {
@@ -6,9 +6,9 @@ export type PipelineParameter = {
 };
 
 export type PipelineModule = {
-  id: number;
+  id: string;
   name: string;
-  source: number[];
+  source: string[];
   parameters: PipelineParameter[];
 };
 
