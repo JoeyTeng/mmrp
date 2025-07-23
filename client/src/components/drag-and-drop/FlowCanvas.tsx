@@ -239,6 +239,10 @@ export default function FlowCanvas({
           onNodeDoubleClick={onNodeDoubleClickHandler}
           onNodeContextMenu={onNodeContextMenu}
           onPaneContextMenu={onPaneContextMenu}
+          onNodesDelete={() => {
+            nodeContextMenuRef.current?.close();
+            canvasContextMenuRef.current?.close();
+          }}
           fitViewOptions={{
             padding: 1,
           }}
