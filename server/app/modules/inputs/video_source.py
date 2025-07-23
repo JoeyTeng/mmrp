@@ -1,48 +1,30 @@
-from typing import Any, Iterator
-from app.modules.base_module import (
-    ModuleBase,
-    ParameterDefinition,
-    FormatDefinition,
-    ModuleRole,
-)
-from app.utils.shared_functionality import get_video_path, as_context
-import cv2
 import contextlib
+from typing import Any, Iterator, List, Dict
+import cv2
 import numpy as np
+from app.modules.module import ModuleBase
+from app.schemas.module import ModuleFormat, ModuleParameter
+from app.modules.utils.enums import ModuleName, ModuleType, PixelFormat, ColorSpace
+from app.utils.shared_functionality import get_video_path, as_context
 from pathlib import Path
 
 
-class Source(ModuleBase):
-    name = "source"
+class VideoSource(ModuleBase):
+    name: ModuleName
+    type: ModuleType
 
-    role = ModuleRole.INPUT_NODE
+    def __init__(self, **data: Dict[str, Any]) -> None:
+        super().__init__(**data)
 
-    def get_parameters(self) -> list[ParameterDefinition[Any]]:
-        return [
-            ParameterDefinition(
-                name="path",
-                type="str",
-                required=True,
-                default="example-video.mp4",
-                description="Filesystem path to the input .mp4 video",
-            )
-        ]
+    def get_parameters(self) -> Dict[str, ModuleParameter]:
+        return {}
 
-    def get_input_formats(self) -> list[FormatDefinition]:
-        # No upstream inputs
+    def get_input_formats(self) -> List[ModuleFormat]:
         return []
 
-    def get_output_formats(self) -> list[FormatDefinition]:
-        # We support .mp4 imports (decoded by OpenCV as BGR24)
-        # Width/height/fps will be resolved at runtime by the pipeline runner
+    def get_output_formats(self) -> List[ModuleFormat]:
         return [
-            FormatDefinition(
-                pixel_format="bgr24",  # default in openCV
-                color_space="BT.709 Full",
-                width=None,
-                height=None,
-                frame_rate=None,
-            )
+            ModuleFormat(pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL)
         ]
 
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:
@@ -50,10 +32,11 @@ class Source(ModuleBase):
         raise NotImplementedError("Frame injection is handled by the pipeline service")
 
     # Process video path
+
     def process(
         self, input_data: Any, parameters: dict[str, Any]
     ) -> contextlib.AbstractContextManager[tuple[str, float, Iterator[np.ndarray]]]:
-        # Get source file and name
+           # Get source file and name
         source_file: str = str(parameters["path"])
         name_without_ext = Path(source_file).stem
         video_path = get_video_path(source_file)

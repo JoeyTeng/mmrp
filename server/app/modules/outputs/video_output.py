@@ -1,48 +1,29 @@
-from typing import Any, Iterator
-from app.modules.base_module import (
-    ModuleBase,
-    ParameterDefinition,
-    FormatDefinition,
-    ModuleRole,
-)
 from pathlib import Path
-import numpy as np
+from typing import Any, Iterator, List, Union, Dict
 import cv2
+import numpy as np
+from app.modules.module import ModuleBase
+from app.schemas.module import ModuleFormat, ModuleParameter
+from app.modules.utils.enums import ModuleName, ModuleType, PixelFormat, ColorSpace
 from app.utils.shared_functionality import as_context
 
 
-# visual purpose
-class Result(ModuleBase):
-    name = "result"
+class VideoOutput(ModuleBase):
+    name: ModuleName
+    type: ModuleType
 
-    role = ModuleRole.OUTPUT_NODE
+    def __init__(self, **data: Dict[str, Any]) -> None:
+        super().__init__(**data)
 
-    def get_parameters(self) -> list[ParameterDefinition[Any]]:
+    def get_parameters(self) -> Dict[str, ModuleParameter]:
+        return {}
+
+    def get_input_formats(self) -> List[ModuleFormat]:
         return [
-            ParameterDefinition(
-                name="video_player",
-                type="str",
-                required=False,
-                description="Select on which side the video should be played (only for two pipelines)",
-                constraints=["left", "right"],
-                default="right",
-            ),
+            ModuleFormat(pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL)
         ]
 
-    def get_input_formats(self) -> list[FormatDefinition]:
-        # Accept whatever the pipeline hands it (we only decode/write BGR24 i OpenCV)
-        return [
-            FormatDefinition(
-                pixel_format="bgr24",
-                color_space="BT.709 Full",
-                width=None,
-                height=None,
-                frame_rate=None,
-            )
-        ]
-
-    def get_output_formats(self) -> list[FormatDefinition]:
-        # No downstream consumers
+    def get_output_formats(self) -> List[ModuleFormat]:
         return []
 
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:
@@ -50,7 +31,7 @@ class Result(ModuleBase):
         raise NotImplementedError
 
     def process(
-        self, input_data: Iterator[np.ndarray], parameters: dict[str, Any]
+        self, input_data: Iterator[Union[float, np.ndarray]], parameters: dict[str, Any]
     ) -> Any:
         out_path = (
             Path(__file__).resolve().parent.parent.parent

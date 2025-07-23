@@ -4,9 +4,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 import shutil
 import uvicorn
-from app.routers import pipeline, video, module, frame, binaries
+from app.routers import pipeline, video, frame, binaries
 from app.services.module import load_modules
 from app.services.binaries import download_gist_files
+from app.routers import modules
 
 
 @asynccontextmanager
@@ -51,7 +52,7 @@ app.add_middleware(
 
 app.include_router(pipeline.router)
 app.include_router(video.router)
-app.include_router(module.router)
+app.include_router(modules.router)
 app.include_router(frame.router)
 app.include_router(binaries.router)
 
