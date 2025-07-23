@@ -1,0 +1,75 @@
+import cv2
+from typing import Any, List, Dict
+from pathlib import Path
+import numpy as np
+from app.modules.module import ModuleBase
+from app.utils.shared_functionality import as_context
+from app.schemas.module import ModuleFormat, ModuleParameter
+from app.modules.utils.enums import ColorSpace, ModuleName, ModuleType, PixelFormat
+
+
+class ColorspaceModule(ModuleBase):
+    name: ModuleName
+    type: ModuleType
+
+    def __init__(self, **data: Dict[str, Any]) -> None:
+        super().__init__(**data)
+
+    def get_parameters(self) -> Dict[str, ModuleParameter]:
+        return {}
+
+    def get_input_formats(self) -> List[ModuleFormat]:
+        return [
+            ModuleFormat(pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL)
+        ]
+
+    def get_output_formats(self) -> List[ModuleFormat]:
+        return self.get_input_formats()
+
+    def process_frame(
+        self, frame: np.ndarray[Any], parameters: dict[str, Any]
+    ) -> np.ndarray[Any]:
+        input: str = parameters["input_colorspace"]
+        output: str = parameters["output_colorspace"]
+        return self.match_colorspace(frame, input, output)
+
+    def match_colorspace(
+        self, frame: np.ndarray[Any], input_color: str, output_color: str
+    ) -> np.ndarray[Any]:
+        if input_color == output_color:
+            return frame
+        constant_name = f"COLOR_{input_color}2{output_color}"
+        if hasattr(cv2, constant_name):
+            color = getattr(cv2, constant_name)
+            return cv2.cvtColor(frame, color)
+        raise ValueError(
+            f"Unsupported input-output ColorSpace: {input_color} {output_color}"
+        )
+
+    def process(self, input_data: str, parameters: dict[str, Any]) -> None:
+        output_path: str = str(
+            Path(__file__).resolve().parent.parent.parent
+            / "output"
+            / "colorspace_conversion.webm"
+        )
+
+        cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
+        cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda cap: cap.release())
+        fourcc = getattr(cv2, "VideoWriter_fourcc")(*"VP80")
+
+        with cv2VideoCaptureContext(input_data) as cap:
+            if not cap.isOpened():
+                raise ValueError(f"Could not open video file: {input_data}")
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+            with cv2VideoWriterContext(
+                output_path, fourcc, fps, (width, height)
+            ) as out:
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+                    output_frame = self.process_frame(frame, parameters)
+                    out.write(output_frame)

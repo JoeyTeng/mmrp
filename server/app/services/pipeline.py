@@ -1,19 +1,20 @@
 import numpy as np
 from collections import defaultdict, deque
-from typing import Any, Iterator
-from app.modules.base_module import ModuleBase, ParameterDefinition
+from typing import Any, Iterator, Dict, List
+from app.modules.module import ModuleBase
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
 from app.services.module import registry
 from itertools import tee
 import uuid
 import base64
+# from app.modules.utils.models import ModuleParameter
 
 
 # Validate pipeline parameters
 # Helper
 def _is_type_match(value: Any, expected_type: str) -> bool:
-    type_map: dict[str, type] = {"int": int, "float": float, "str": str, "bool": bool}
+    type_map: Dict[str, type] = {"int": int, "float": float, "str": str, "bool": bool}
     if expected_type not in type_map:
         raise ValueError(f"Unknown expected type '{expected_type}'")
 
@@ -21,16 +22,17 @@ def _is_type_match(value: Any, expected_type: str) -> bool:
 
 
 def validate_parameters(
-    parameters: dict[str, Any],
-    parameter_defs: dict[str, ParameterDefinition[Any]],
+    parameters: Dict[str, Any],
+    parameter_defs: Dict[str, Any],
     module: ModuleBase,
-):
+) -> None:
     # Check for unexpected parameters
     for key, value in parameters.items():
         if key not in parameter_defs:
             raise ValueError(f"Unexpected parameter '{key}' for module '{module.name}'")
 
-        expected_type = parameter_defs[key].type
+        param_def = parameter_defs[key]
+        expected_type = param_def.type
         if not _is_type_match(value, expected_type):
             raise TypeError(
                 f"Parameter '{key}' for module '{module.name}' should be of type '{expected_type}', "
@@ -47,10 +49,10 @@ def validate_parameters(
 
 # Process a single frame through the pipeline
 def process_pipeline_frame(
-    frame_cache: dict[int, np.ndarray],
-    ordered_modules: list[PipelineModule],
-    module_map: dict[int, tuple[ModuleBase, dict[str, Any]]],
-):
+    frame_cache: Dict[int, np.ndarray],
+    ordered_modules: List[PipelineModule],
+    module_map: Dict[int, tuple[ModuleBase, Dict[str, Any]]],
+) -> None:
     for mod in ordered_modules:
         mod_id = mod.id
         mod_instance, params = module_map[mod_id]
@@ -61,13 +63,13 @@ def process_pipeline_frame(
 
 
 # Get modules in correct execution order in the pipeline
-def get_execution_order(modules: list[PipelineModule]):
+def get_execution_order(modules: List[PipelineModule]) -> List[PipelineModule]:
     # Map module id -> module
-    module_map: dict[int, PipelineModule] = {mod.id: mod for mod in modules}
+    module_map: Dict[int, PipelineModule] = {mod.id: mod for mod in modules}
     all_module_ids = set(module_map.keys())
 
     # Build the dependency graph (adjacency list of dependent ids)
-    graph: defaultdict[int, list[int]] = defaultdict(list)
+    graph: defaultdict[int, List[int]] = defaultdict(list)
 
     # Tracks how many dependecies each module has
     indegree = {mod.id: len(mod.source) for mod in modules}
@@ -85,7 +87,7 @@ def get_execution_order(modules: list[PipelineModule]):
     queue: deque[int] = deque(
         [module_id for module_id, degree in indegree.items() if degree == 0]
     )
-    execution_order: list[PipelineModule] = []
+    execution_order: List[PipelineModule] = []
 
     while queue:
         current_id = queue.popleft()
@@ -112,13 +114,13 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     # Resolve pipeline modules
     ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
     # Check that the pipeline starts with a source module
-    if not ordered_modules or ordered_modules[0].name != "source":
-        raise ValueError("Pipeline must start with a source module")
+    if not ordered_modules or ordered_modules[0].name != "video_source":
+        raise ValueError("Pipeline must start with a video_source module")
     if ordered_modules[-1].name != "result":
         raise ValueError("Pipeline must end with a result module")
 
     # Registry lookup
-    module_map: dict[int, tuple[ModuleBase, dict[str, Any]]] = {
+    module_map: Dict[int, tuple[ModuleBase, Dict[str, Any]]] = {
         m.id: (registry[m.name](), {p.key: p.value for p in m.parameters})
         for m in ordered_modules
     }
@@ -128,7 +130,9 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         mod_id = mod.id
         mod_instance, params = module_map[mod_id]
         # Get expected parameter definitions
-        param_defs = {p.name: p for p in mod_instance.get_parameters()}
+        param_defs: Dict[str, Any] = {
+            name: param for name, param in mod_instance.get_parameters().items()
+        }
         # Validate each parameter
         validate_parameters(params, param_defs, mod_instance)
 

@@ -1,0 +1,45 @@
+{
+  "data": [
+    {
+      "name": "video_source",
+      "type": "inputNode",
+      "parameters": {
+        "path": "example-video.mp4"
+      }
+    },
+    {
+      "name": "color_space",
+      "type": "processNode",
+      "parameters": {
+        "input_colorspace": "RGB",
+        "output_colorspace": "YCrCb"
+      }
+    },
+    {
+      "name": "blur",
+      "type": "processNode",
+      "parameters": {
+        "kernel_size": 5,
+        "method": "gaussian"
+      }
+    },
+    {
+      "name": "resize",
+      "type": "processNode",
+      "parameters": {
+        "width": 640,
+        "height": 480,
+        "interpolation": "linear"
+      }
+    },
+    {
+      "name": "result",
+      "type": "outputNode",
+      "parameters": {
+        "path": "output.mp4",
+        "codec": "libx264",
+        "quality": 23
+      }
+    }
+  ]
+}

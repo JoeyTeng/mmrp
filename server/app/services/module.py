@@ -1,23 +1,28 @@
 import importlib
-import pkgutil
-from typing import Type
-from app.modules.base_module import ModuleBase
-import app.modules as module_pkg
+from pathlib import Path
+from typing import Dict, Type
+from app.modules.module import ModuleBase
 
-registry: dict[str, Type[ModuleBase]] = {}
+registry: Dict[str, Type[ModuleBase]] = {}
+base_path = Path("app/modules")
 
 
-# Automatically find all subclasses of type ModuleBase
-def load_modules():
-    for _, module_name, _ in pkgutil.iter_modules(module_pkg.__path__):
-        if module_name in {"base_module"}:
+def load_modules() -> None:
+    for path in base_path.rglob("*.py"):
+        if path.name == "__init__.py":
             continue
-        module = importlib.import_module(f"app.modules.{module_name}")
-        for attr in dir(module):
-            obj = getattr(module, attr)
-            if (
-                isinstance(obj, type)
-                and issubclass(obj, ModuleBase)
-                and obj is not ModuleBase
-            ):
-                registry[obj.name] = obj
+
+        module_path = str(path.with_suffix("")).replace("/", ".")
+        try:
+            module = importlib.import_module(module_path)
+            for attr in dir(module):
+                obj = getattr(module, attr)
+                if (
+                    isinstance(obj, type)
+                    and issubclass(obj, ModuleBase)
+                    and obj is not ModuleBase
+                ):
+                    registry[obj.__name__] = obj
+        except ImportError as e:
+            print(f"Could not import module {module_path}: {e}")
+    print(f"Module registry loaded with {len(registry)} modules.")

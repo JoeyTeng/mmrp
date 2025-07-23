@@ -1,64 +1,38 @@
 import cv2
-import typing
+from typing import Any, Dict
 from pathlib import Path
-from app.modules.base_module import (
-    ModuleBase,
-    ParameterDefinition,
-    FormatDefinition,
-    ModuleRole,
-)
-from app.utils.shared_functionality import as_context
 import numpy as np
+from app.modules.module import ModuleBase
+from app.utils.shared_functionality import as_context
+from app.schemas.module import ModuleFormat, ModuleParameter
+from app.modules.utils.enums import ColorSpace, ModuleName, ModuleType, PixelFormat
 
 
-class Blur(ModuleBase):
-    name = "blur"
+class BlurModule(ModuleBase):
+    name: ModuleName
+    type: ModuleType
 
-    role = ModuleRole.PROCESS_NODE
+    def __init__(self, **data: Dict[str, Any]) -> None:
+        super().__init__(**data)
 
-    @typing.override
-    # Get the parameters for the blur module
-    def get_parameters(self) -> list[ParameterDefinition[typing.Any]]:
+    def get_parameters(self) -> Dict[str, ModuleParameter]:
+        return {}
+
+    def get_input_formats(self) -> list[ModuleFormat]:
         return [
-            ParameterDefinition(
-                name="kernel_size",
-                type="int",
-                default=5,
-                required=True,
-                description="Kernel size for the module",
-            ),
-            ParameterDefinition(
-                name="method",
-                type="str",
-                default="gaussian",
-                constraints=["gaussian", "median", "bilateral"],
-                required=True,
-            ),
+            ModuleFormat(pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL),
         ]
 
-    @typing.override
-    def get_input_formats(self) -> list[FormatDefinition]:
-        return [
-            FormatDefinition(pixel_format="bgr24", color_space="BT.709 Full"),
-        ]
-
-    @typing.override
-    def get_output_formats(self) -> list[FormatDefinition]:
-        # blur doesn’t change format
+    def get_output_formats(self) -> list[ModuleFormat]:
         return self.get_input_formats()
 
-    @typing.override
-    # Process a single frame
     def process_frame(
-        self, frame: np.ndarray, parameters: dict[str, typing.Any]
-    ) -> np.ndarray:
+        self, frame: np.ndarray[Any], parameters: Dict[str, Any]
+    ) -> np.ndarray[Any]:
         kernel_size: int = parameters["kernel_size"]
         method: str = parameters["method"]
-        # Ensure kernel size is odd
-        # TODO: replace this with a proper parameter validation & error reporting mechanism
         if kernel_size % 2 == 0:
             kernel_size += 1
-        # Differentiate between different blur methods
         match method:
             case "gaussian":
                 return cv2.GaussianBlur(frame, (kernel_size, kernel_size), 0)
@@ -71,17 +45,12 @@ class Blur(ModuleBase):
             case _:
                 raise ValueError(f"Unsupported blur method: {method}")
 
-    @typing.override
-    # Process the entire video
-    def process(self, input_data: str, parameters: dict[str, typing.Any]) -> None:
+    def process(self, input_data: str, parameters: Dict[str, Any]) -> None:
         output_path: str = str(
             Path(__file__).resolve().parent.parent.parent / "output" / "blur.webm"
         )
 
-        # Video capture setup
         cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
-
-        # Video writer setup
         cv2VideoWriterContext = as_context(cv2.VideoWriter, lambda cap: cap.release())
         fourcc = getattr(cv2, "VideoWriter_fourcc")(*"VP80")
 
