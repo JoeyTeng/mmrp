@@ -1,5 +1,3 @@
-// ignore file for coverage
-/* istanbul ignore file */
 import type { Node } from "@xyflow/react";
 import type { NodeData } from "@/components/drag-and-drop/types";
 import { Position } from "@xyflow/react";

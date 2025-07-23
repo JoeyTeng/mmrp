@@ -25,6 +25,10 @@ const customJestConfig: Config = {
   collectCoverage: true,
   coverageReporters: ["html", "text"],
   coverageDirectory: "<rootDir>/coverage/unit/",
+  coveragePathIgnorePatterns: [
+    "<rootDir>/tests/unit/helpers/",
+    "<rootDir>/tests/unit/fixtures/",
+  ],
 };
 
 export default createJestConfig(customJestConfig);
