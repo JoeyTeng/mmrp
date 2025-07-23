@@ -1,8 +1,10 @@
 "use client";
+
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { MoreVertOutlined as MenuIcon } from "@mui/icons-material";
 
-import { NodeData, NodePort, NodeType } from "./types";
+import { NodeData, NodePort } from "./types";
+import { NodeType } from "@/types/module";
 import { IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
 

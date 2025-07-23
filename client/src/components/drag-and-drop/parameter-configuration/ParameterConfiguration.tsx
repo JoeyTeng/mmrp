@@ -3,12 +3,9 @@
 import { useState, useContext, useMemo } from "react";
 import { Box, TextField, MenuItem } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
-import {
-  ConstraintsLookupType,
-  NodeParamValue,
-  ParameterConfigurationProps,
-} from "../types";
+import { NodeParamValue, ParameterConfigurationProps } from "../types";
 import { ModulesContext } from "@/contexts/ModulesContext";
+import { ParameterConstraints } from "@/types/module";
 
 export default function ParameterConfiguration({
   node,
@@ -23,31 +20,28 @@ export default function ParameterConfiguration({
   const constraintsLookup = useMemo(() => {
     const foundModule = modules.find((item) => item.name === node?.data.label);
     return (
-      foundModule?.parameters.reduce((acc, { name, constraints }) => {
-        acc[name] = constraints;
+      foundModule?.data.parameters.reduce((acc, { name, metadata }) => {
+        acc.set(name, metadata.constraints);
         return acc;
-      }, {} as ConstraintsLookupType) ?? {}
+      }, new Map<string, ParameterConstraints>()) ?? new Map()
     );
   }, [modules, node?.data.label]);
 
-  const getInputType = (key: string, value: NodeParamValue) => {
-    if (typeof value === "string" && Array.isArray(constraintsLookup[key]))
-      return "select";
-    if (typeof value === "string") return "string";
-    if (typeof value === "number") return "number";
-    if (typeof value === "boolean") return "boolean";
-    return "text";
+  const getInputType = (key: string) => {
+    const constraints = constraintsLookup.get(key);
+    return constraints.type;
   };
 
   const handleInputNumber = (key: string, rawValue: string) => {
     const newValue = Number(rawValue);
+    const constraints = constraintsLookup.get(key);
 
     let min = MIN_VALUE;
     let max = MAX_VALUE;
 
-    if (constraintsLookup[key]?.length === 2) {
-      min = Number(constraintsLookup[key][0]);
-      max = Number(constraintsLookup[key][1]);
+    if (constraints.min !== undefined && constraints.max !== undefined) {
+      min = constraints.min;
+      max = constraints.max;
     }
 
     setErrors((prev) => ({
@@ -65,7 +59,7 @@ export default function ParameterConfiguration({
   };
 
   const renderParamInput = (key: string, value: NodeParamValue) => {
-    const inputType = getInputType(key, value);
+    const inputType = getInputType(key);
 
     switch (inputType) {
       case "select":
@@ -80,16 +74,15 @@ export default function ParameterConfiguration({
             onChange={(e) => onParamChange(key, e.target.value)}
             sx={{ mb: 2 }}
           >
-            {Array.isArray(constraintsLookup[key]) &&
-              constraintsLookup[key].map((option) => (
-                <MenuItem key={`${key}-${option}`} value={String(option)}>
-                  {option}
-                </MenuItem>
-              ))}
+            {constraintsLookup.get(key).options.map((option: string) => (
+              <MenuItem key={`${key}-${option}`} value={String(option)}>
+                {option}
+              </MenuItem>
+            ))}
           </TextField>
         );
 
-      case "number":
+      case "int":
         return (
           <Box
             key={key}
@@ -100,8 +93,6 @@ export default function ParameterConfiguration({
               key={key}
               id={key}
               value={Number(value)}
-              min={Number(constraintsLookup[key]?.[0] ?? MIN_VALUE)}
-              max={Number(constraintsLookup[key]?.[1]) ?? MAX_VALUE}
             >
               <NumberField.ScrubArea className="absolute -top-3.5 left-2 z-10 bg-white px-1">
                 <label

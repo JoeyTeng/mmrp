@@ -3,16 +3,16 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "@/services/apiClient";
 import { camelizeKeys } from "@/utils/camelize";
-import { ModuleMeta } from "@/types/module";
+import { Module } from "@/types/module";
 
 export function useModules() {
-  const [modules, setModules] = useState<ModuleMeta[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     apiClient
-      .get<ModuleMeta[]>("/module/") // TODO: Validate response schema
-      .then((res) => setModules(camelizeKeys(res.data) as ModuleMeta[]))
+      .get<Module[]>("/module/") // TODO: Validate response schema
+      .then((res) => setModules(camelizeKeys(res.data) as Module[]))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, []);

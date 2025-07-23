@@ -1,7 +1,8 @@
 import { useReactFlow, Node } from "@xyflow/react";
 import { NodeAction } from "./NodeContextMenuConfig";
 import { useCallback } from "react";
-import { NodeData, NodeType } from "../types";
+import { NodeData } from "../types";
+import { NodeType } from "@/types/module";
 
 export const useNodeActions = (
   onEditNode: (node: Node<NodeData, NodeType>) => void,
