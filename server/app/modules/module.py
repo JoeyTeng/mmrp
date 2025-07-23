@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 import numpy as np
-from app.schemas.module import ModuleFormat, ModuleParameter, Position
+from app.schemas.module import ModuleFormat, ModuleParameter, ParameterMetadata, Position
 from app.modules.utils.enums import ModuleName
 from app.modules.utils.constraints import MODULE_CONSTRAINTS
 
@@ -17,7 +17,7 @@ class ModuleBase(BaseModel, ABC):
     )
     data: Dict[str, Any] = Field(
         default_factory=lambda: {
-            "parameters": List[ModuleParameter],
+            "parameters": [],
             "input_formats": [],
             "output_formats": [],
         },
@@ -26,32 +26,43 @@ class ModuleBase(BaseModel, ABC):
 
     model_config = ConfigDict(extra="forbid", validate_assignment=True, frozen=False)
 
+    @model_validator(mode="before")
+    def parse_raw_parameters(_, values: Dict[str, Any]) -> Dict[str, Any]:
+        data = values.get("data", {})
+        raw_params = data.get("parameters", [])
+
+        name = values.get("name")
+        if isinstance(name, ModuleName):
+            name = name.value
+
+        # Get constraints for the module name
+        param_constraints = MODULE_CONSTRAINTS.get(name, {})
+
+        # Enrich parameters with constraints
+        data["parameters"] = [
+            ModuleParameter(
+                name = param["name"],
+                metadata = ParameterMetadata(
+                    value = param.get("default", None),
+                    type =param.get("type"),
+                    constraints= param_constraints.get(param["name"], {})
+                    .get("constraints", None)
+                    .model_dump(exclude_none=True)
+                    if param_constraints.get(param["name"])
+                    else None,
+                ),
+            )
+            for param in raw_params
+        ]
+
+        values["data"] = data
+        return values
+
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
         self._enrich_data()
 
     def _enrich_data(self) -> None:
-        name_value = self.name.value if isinstance(self.name, ModuleName) else self.name
-        constraints = MODULE_CONSTRAINTS.get(name_value, {})
-        self.data.setdefault("parameters", [])
-
-        # Enrich parameters with constraints
-        self.data["parameters"] = [
-            {
-                "name": param["name"],
-                "metadata": {
-                    "value": param.get("default", None),
-                    "type": param.get("type", None),
-                    "constraints": constraints.get(param["name"], {})
-                    .get("constraints", None)
-                    .model_dump(exclude_none=True)
-                    if constraints.get(param["name"])
-                    else None,
-                },
-            }
-            for param in self.data["parameters"]
-        ]
-
         # Add formats
         self.data.update(
             {

@@ -35,7 +35,7 @@ class ParameterConstraint(BaseModel):
         raise KeyError(f"No such constraint field: {key}")
 
 
-class ModuleParameter(BaseModel):
+class ParameterMetadata(BaseModel):
     value: Any = Field(..., description="Parameter value")
     type: str = Field(..., description="Parameter type")
     constraints: Optional[ParameterConstraint] = Field(
@@ -45,6 +45,27 @@ class ModuleParameter(BaseModel):
     def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
         kwargs.setdefault("exclude_none", True)
         return super().model_dump(**kwargs)
+
+
+class ModuleParameter(BaseModel):
+    name: str = Field(..., description="Parameter name")
+    metadata: ParameterMetadata = Field( ..., description="Parameter Metadata for the parameter")
+
+    def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
+        kwargs.setdefault("exclude_none", True)
+        return super().model_dump(**kwargs)
+
+
+class ModuleData(BaseModel):
+    parameters: List[ModuleParameter] = Field(
+        default_factory=list, description="List of module parameters"
+    )
+    input_formats: List[ModuleFormat] = Field(
+        default_factory=list, description="List of input formats"
+    )
+    output_formats: List[ModuleFormat] = Field(
+        default_factory=list, description="List of output formats"
+    )
 
 
 class VideoSourceParams(ModuleParameter):

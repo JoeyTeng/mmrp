@@ -70,17 +70,17 @@ def json_to_modules(json_data: Dict[str, Any]) -> List[ModuleBase]:
         except KeyError as e:
             raise HTTPException(
                 status_code=400,
-                detail=f"Missing required field in module data: {str(e)}",
+                detail=f"Missing required field in module data: {str(e)} - module_data: {module_data}",
             )
         except ValidationError as e:
             raise HTTPException(
                 status_code=422,
-                detail=f"Validation error in module {module_data.get('id')}: {e.errors()}",
+                detail=f"Validation error in module: {module_data} : {e.errors()}",
             )
         except Exception as e:
             raise HTTPException(
                 status_code=500,
-                detail=f"Error loading module {module_data.get('id')}: {str(e)}",
+                detail=f"Error loading module: {module_data}: {str(e)}",
             )
     return modules
 
