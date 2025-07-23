@@ -17,6 +17,7 @@ import {
   useReactFlow,
   ControlButton,
   getIncomers,
+  SelectionMode,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
@@ -291,7 +292,8 @@ export default function FlowCanvas({
           panOnScroll
           panOnScrollSpeed={1}
           selectionOnDrag
-          panOnDrag={false}
+          panOnDrag={[1, 2]}
+          selectionMode={SelectionMode.Partial}
         >
           <Controls>
             <ControlButton
