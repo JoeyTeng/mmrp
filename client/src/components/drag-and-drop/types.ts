@@ -56,6 +56,7 @@ export type ContextMenuItem<ActionType extends string> = {
 export type FlowCanvasProps = {
   defaultNodes: Node<NodeData, NodeType>[];
   defaultEdges: Edge[];
+  editingNode: Node<NodeData, NodeType> | null;
   onEditNode: (node: Node<NodeData, NodeType>) => void;
 };
 
