@@ -48,22 +48,10 @@ export default function FlowCanvas({
 
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();
-  const { screenToFlowPosition, getNodes, getEdges, setNodes } = useReactFlow();
-
-  const handleNodeOpenMenu = useCallback(
-    (event: React.MouseEvent, nodeId: string) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const coordinates = event.currentTarget.getBoundingClientRect();
-
-      nodeContextMenuRef.current?.open({
-        position: {
-          x: coordinates.left,
-          y: coordinates.bottom + 6,
-        },
-        nodeId: nodeId,
-      });
+  const { screenToFlowPosition, getNodes, getEdges, setNodes, setEdges } =
+    useReactFlow();
+  const selectNode = useCallback(
+    (nodeId: string) => {
       setNodes((nodes) =>
         nodes.map((node) => ({
           ...node,
@@ -72,6 +60,40 @@ export default function FlowCanvas({
       );
     },
     [setNodes],
+  );
+  const unselectNodesandEdges = useCallback(() => {
+    setNodes((nodes: Node[]) =>
+      nodes.map((node) => ({
+        ...node,
+        selected: false,
+      })),
+    );
+
+    setEdges((edges: Edge[]) =>
+      edges.map((edge) => ({
+        ...edge,
+        selected: false,
+      })),
+    );
+  }, [setNodes, setEdges]);
+
+  const handleNodeOpenMenu = useCallback(
+    (event: React.MouseEvent, nodeId: string) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const coordinates = event.currentTarget.getBoundingClientRect();
+      selectNode(nodeId);
+
+      nodeContextMenuRef.current?.open({
+        position: {
+          x: coordinates.left,
+          y: coordinates.bottom + 6,
+        },
+        nodeId: nodeId,
+      });
+    },
+    [selectNode],
   );
 
   const FlowNodeWithMenu = useCallback(
@@ -92,6 +114,7 @@ export default function FlowCanvas({
 
   const onNodeContextMenu = (event: React.MouseEvent, node: Node) => {
     event.preventDefault();
+    selectNode(node.id);
     nodeContextMenuRef.current?.open({
       position: {
         x: event.clientX,
@@ -103,6 +126,7 @@ export default function FlowCanvas({
 
   const onPaneContextMenu = (event: React.MouseEvent | MouseEvent) => {
     event.preventDefault();
+    unselectNodesandEdges();
     canvasContextMenuRef.current?.open({
       x: event.clientX,
       y: event.clientY,
@@ -220,6 +244,11 @@ export default function FlowCanvas({
     [onEditNode],
   );
 
+  const closeContextMenus = () => {
+    nodeContextMenuRef.current?.close();
+    canvasContextMenuRef.current?.close();
+  };
+
   if (!modules) return null;
 
   return (
@@ -239,10 +268,8 @@ export default function FlowCanvas({
           onNodeDoubleClick={onNodeDoubleClickHandler}
           onNodeContextMenu={onNodeContextMenu}
           onPaneContextMenu={onPaneContextMenu}
-          onNodesDelete={() => {
-            nodeContextMenuRef.current?.close();
-            canvasContextMenuRef.current?.close();
-          }}
+          onNodesDelete={closeContextMenus}
+          onEdgesDelete={closeContextMenus}
           fitViewOptions={{
             padding: 1,
           }}
