@@ -101,7 +101,6 @@ const SideBySide = ({ type }: Props) => {
     return () => {
       urls.forEach((url) => url && URL.revokeObjectURL(url));
     };
-
   }, [latestResponse, type]);
 
   return (

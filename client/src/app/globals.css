@@ -30,6 +30,7 @@ body {
   background-color: #f0f8ff;
   color: #111;
   height: 100%;
+  overscroll-behavior-x: none;
 }
 
 /* Utilities */
