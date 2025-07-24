@@ -2,7 +2,13 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 import numpy as np
-from app.schemas.module import ModuleFormat, ModuleParameter, ParameterMetadata, Position
+from app.schemas.module import (
+    ModuleFormat,
+    ModuleParameter,
+    ParameterConstraint,
+    ParameterMetadata,
+    Position,
+)
 from app.modules.utils.enums import ModuleName
 from app.modules.utils.constraints import MODULE_CONSTRAINTS
 
@@ -27,31 +33,34 @@ class ModuleBase(BaseModel, ABC):
     model_config = ConfigDict(extra="forbid", validate_assignment=True, frozen=False)
 
     @model_validator(mode="before")
-    def parse_raw_parameters(_, values: Dict[str, Any]) -> Dict[str, Any]:
+    def parse_raw_parameters(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         data = values.get("data", {})
         raw_params = data.get("parameters", [])
 
-        name = values.get("name")
-        if isinstance(name, ModuleName):
-            name = name.value
+        name_raw = values.get("name")
+        name: str = (
+            name_raw.value if isinstance(name_raw, ModuleName) else str(name_raw)
+        )
 
         # Get constraints for the module name
-        param_constraints = MODULE_CONSTRAINTS.get(name, {})
+        param_constraints: Dict[str, Dict[str, ParameterConstraint]] = (
+            MODULE_CONSTRAINTS.get(name, {})
+        )
 
         # Enrich parameters with constraints
         data["parameters"] = [
             ModuleParameter(
-                name = param["name"],
-                metadata = ParameterMetadata(
-                    value = param.get("default", None),
-                    type =param.get("type"),
-                    constraints= param_constraints.get(param["name"], {})
-                    .get("constraints", None)
-                    .model_dump(exclude_none=True)
-                    if param_constraints.get(param["name"])
+                name=param["name"],
+                metadata=ParameterMetadata(
+                    value=param.get("default", None),
+                    type=param.get("type"),
+                    constraints=param_constraints.get(param["name"], {}).get(
+                        "constraints", None
+                    )
+                    if param["name"] in param_constraints
                     else None,
                 ),
-            )
+            ).model_dump()
             for param in raw_params
         ]
 

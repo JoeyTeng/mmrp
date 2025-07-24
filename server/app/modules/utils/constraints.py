@@ -1,9 +1,9 @@
 from typing import Any, Dict
 from app.schemas.module import ParameterConstraint
 from app.modules.utils.enums import (
+    Color,
     ModuleName,
     ParameterType,
-    ColorConversion,
     BlurAlgorithm,
     ResizeInterpolation,
     VideoCodec,
@@ -29,20 +29,20 @@ MODULE_CONSTRAINTS: Dict[str, Any] = {
             )
         },
     },
-    ModuleName.COLOR_SPACE: {
+    ModuleName.COLOR: {
         "input_colorspace": {
             "constraints": ParameterConstraint(
                 type=ParameterType.SELECT,
-                default=ColorConversion.BGR2GRAY,
-                options=[color.value for color in ColorConversion],
+                default=Color.RGB,
+                options=[color.value for color in Color],
                 description="Input color space",
             )
         },
         "output_colorspace": {
             "constraints": ParameterConstraint(
                 type=ParameterType.SELECT,
-                default=ColorConversion.BGR2GRAY,
-                options=[color.value for color in ColorConversion],
+                default=Color.RGB,
+                options=[color.value for color in Color],
                 description="Output color space",
             )
         },

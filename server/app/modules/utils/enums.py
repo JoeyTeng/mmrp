@@ -3,7 +3,7 @@ from enum import StrEnum
 
 class ModuleName(StrEnum):
     VIDEO_SOURCE = "video_source"
-    COLOR_SPACE = "color_space"
+    COLOR = "color"
     BLUR = "blur"
     RESIZE = "resize"
     RESULT = "result"
@@ -39,6 +39,14 @@ class ColorSpace(StrEnum):
     BT_601_LIMITED = "BT.601 Limited"
     BT_709_FULL = "BT.709 Full"
     BT_709_LIMITED = "BT.709 Limited"
+
+
+class Color(StrEnum):
+    YCbCr = "YCbCr"
+    HSV = "HSV"
+    LAB = "LAB"
+    RGB = "RGB"
+    BGR = "BGR"
 
 
 class ResizeInterpolation(StrEnum):
