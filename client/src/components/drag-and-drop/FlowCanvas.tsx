@@ -16,6 +16,7 @@ import {
   useReactFlow,
   ControlButton,
   getIncomers,
+  SelectionMode,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
@@ -284,6 +285,11 @@ export default function FlowCanvas({
           fitView
           proOptions={{ hideAttribution: true }}
           reconnectRadius={50}
+          panOnScroll
+          panOnScrollSpeed={1}
+          selectionOnDrag
+          panOnDrag={[1, 2]}
+          selectionMode={SelectionMode.Partial}
         >
           <Controls>
             <ControlButton
@@ -300,7 +306,7 @@ export default function FlowCanvas({
                 isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
               }
               onClick={onRun}
-              disabled={isProcessing}
+              loading={isProcessing}
             >
               Run
             </Button>
