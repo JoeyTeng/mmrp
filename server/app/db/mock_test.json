@@ -14,7 +14,7 @@
       ]
     },
     {
-      "name": "color_space",
+      "name": "color",
       "type": "processNode",
       "parameters": [
         {

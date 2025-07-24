@@ -1,11 +1,12 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Any, Union, Dict
-from app.modules.utils.enums import ColorSpace, FrameRate, PixelFormat
+from app.modules.utils.enums import Color, ColorSpace, FrameRate, PixelFormat
 
 
 class ModuleFormat(BaseModel):
     pixel_format: Optional[PixelFormat] = None
     color_space: Optional[ColorSpace] = None
+    color: Optional[Color] = None
     width: Optional[Union[int, str]] = None
     height: Optional[Union[int, str]] = None
     frame_rate: Optional[FrameRate] = None
@@ -49,23 +50,13 @@ class ParameterMetadata(BaseModel):
 
 class ModuleParameter(BaseModel):
     name: str = Field(..., description="Parameter name")
-    metadata: ParameterMetadata = Field( ..., description="Parameter Metadata for the parameter")
+    metadata: ParameterMetadata = Field(
+        ..., description="Parameter Metadata for the parameter"
+    )
 
     def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
         kwargs.setdefault("exclude_none", True)
         return super().model_dump(**kwargs)
-
-
-class ModuleData(BaseModel):
-    parameters: List[ModuleParameter] = Field(
-        default_factory=list, description="List of module parameters"
-    )
-    input_formats: List[ModuleFormat] = Field(
-        default_factory=list, description="List of input formats"
-    )
-    output_formats: List[ModuleFormat] = Field(
-        default_factory=list, description="List of output formats"
-    )
 
 
 class VideoSourceParams(ModuleParameter):

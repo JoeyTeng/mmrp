@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from app.modules.inputs.video_source import VideoSource
 from app.modules.outputs.video_output import VideoOutput
 from app.modules.transforms.blur import BlurModule
-from app.modules.transforms.color_space import ColorspaceModule
+from app.modules.transforms.color import ColorModule
 from app.modules.transforms.resize import ResizeModule
 from app.modules.generic.binary_module import GenericBinaryModule
 from app.modules.utils.enums import ModuleName
@@ -35,7 +35,7 @@ def generate_module_uuid(module_name: str) -> str:
 def json_to_modules(json_data: Dict[str, Any]) -> List[ModuleBase]:
     module_classes: Dict[ModuleName, type[ModuleBase]] = {
         ModuleName.VIDEO_SOURCE: VideoSource,
-        ModuleName.COLOR_SPACE: ColorspaceModule,
+        ModuleName.COLOR: ColorModule,
         ModuleName.BLUR: BlurModule,
         ModuleName.RESIZE: ResizeModule,
         ModuleName.RESULT: VideoOutput,
