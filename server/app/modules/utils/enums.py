@@ -44,7 +44,7 @@ class ColorSpace(StrEnum):
 class Color(StrEnum):
     YCbCr = "YCbCr"
     HSV = "HSV"
-    LAB = "LAB"
+    LAB = "Lab"
     RGB = "RGB"
     BGR = "BGR"
 
