@@ -62,7 +62,7 @@ export default function FlowCanvas({
     },
     [setNodes],
   );
-  const unselectNodesandEdges = useCallback(() => {
+  const unselectNodesAndEdges = useCallback(() => {
     setNodes((nodes: Node[]) =>
       nodes.map((node) => ({
         ...node,
@@ -84,6 +84,7 @@ export default function FlowCanvas({
       event.stopPropagation();
 
       const coordinates = event.currentTarget.getBoundingClientRect();
+      unselectNodesAndEdges();
       selectNode(nodeId);
 
       nodeContextMenuRef.current?.open({
@@ -115,6 +116,7 @@ export default function FlowCanvas({
 
   const onNodeContextMenu = (event: React.MouseEvent, node: Node) => {
     event.preventDefault();
+    unselectNodesAndEdges();
     selectNode(node.id);
     nodeContextMenuRef.current?.open({
       position: {
@@ -127,7 +129,7 @@ export default function FlowCanvas({
 
   const onPaneContextMenu = (event: React.MouseEvent | MouseEvent) => {
     event.preventDefault();
-    unselectNodesandEdges();
+    unselectNodesAndEdges();
     canvasContextMenuRef.current?.open({
       x: event.clientX,
       y: event.clientY,
