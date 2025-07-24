@@ -95,7 +95,7 @@ export default function FlowCanvas({
         nodeId: nodeId,
       });
     },
-    [selectNode],
+    [selectNode, unselectNodesAndEdges],
   );
 
   const FlowNodeWithMenu = useCallback(
