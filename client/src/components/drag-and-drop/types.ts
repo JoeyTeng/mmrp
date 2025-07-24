@@ -1,29 +1,7 @@
 import type { Node, Edge } from "@xyflow/react";
+import { ParamValueType, NodeType, FormatDefinition } from "@/types/module";
 
-export type ParamValueType = string | number | boolean;
 export type NodeParamValue = ParamValueType | string[];
-
-export interface ParameterDefinition {
-  name: string;
-  type: "int" | "float" | "str" | "bool";
-  description?: string | null;
-  default?: ParamValueType;
-  constraints?: ParamValueType[] | [number, number];
-  required: boolean;
-}
-
-export type ModuleParamLookupType = Record<
-  string,
-  ParameterDefinition | undefined
->;
-
-export interface FormatDefinition {
-  pixelFormat?: string;
-  colorSpace?: string;
-  width?: number | string;
-  height?: number | string;
-  frameRate?: number; //fps
-}
 
 export interface NodePort {
   id: string;
@@ -36,12 +14,6 @@ export type NodeData = {
   inputFormats: NodePort[];
   outputFormats: NodePort[];
 };
-
-export enum NodeType {
-  InputNode = "inputNode",
-  ProcessNode = "processNode",
-  OutputNode = "outputNode",
-}
 
 export type ContextMenuItem<ActionType extends string> = {
   id: ActionType;

@@ -3,12 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
 import { AppDrawer } from "@/components/sidebar/AppDrawer";
-import {
-  NodeData,
-  NodeType,
-  ParamValueType,
-  ParameterConfigurationDrawerProps,
-} from "../types";
+import { NodeData, ParameterConfigurationDrawerProps } from "../types";
+import { NodeType, ParamValueType } from "@/types/module";
 import ParameterConfiguration from "./ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 

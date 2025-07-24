@@ -3,7 +3,8 @@
 import FlowCanvas from "@/components/drag-and-drop/FlowCanvas";
 import { ReactFlowProvider, type Node, type Edge } from "@xyflow/react";
 
-import { NodeData, NodeType } from "../drag-and-drop/types";
+import { NodeData } from "../drag-and-drop/types";
+import { NodeType } from "@/types/module";
 import ParameterConfigurationDrawer from "@/components/drag-and-drop/parameter-configuration/ParameterConfigurationDrawer";
 import { useState } from "react";
 
@@ -13,7 +14,7 @@ const initialNodes: Node<NodeData, NodeType>[] = [
     type: NodeType.InputNode,
     position: { x: 0, y: 100 },
     data: {
-      label: "source",
+      label: "video_source",
       params: {
         path: "example-video.mp4",
       },
@@ -34,7 +35,7 @@ const initialNodes: Node<NodeData, NodeType>[] = [
     type: NodeType.ProcessNode,
     position: { x: 220, y: 100 },
     data: {
-      label: "colorspace",
+      label: "color",
       params: {
         input_colorspace: "RGB",
         output_colorspace: "YCrCb",
