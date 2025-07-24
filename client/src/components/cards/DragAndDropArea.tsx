@@ -35,7 +35,7 @@ const initialNodes: Node<NodeData, NodeType>[] = [
     type: NodeType.ProcessNode,
     position: { x: 220, y: 100 },
     data: {
-      label: "color_space",
+      label: "color",
       params: {
         input_colorspace: "RGB",
         output_colorspace: "YCrCb",
