@@ -245,10 +245,10 @@ export default function FlowCanvas({
     [onEditNode],
   );
 
-  const closeContextMenus = () => {
+  const closeContextMenus = useCallback(() => {
     nodeContextMenuRef.current?.close();
     canvasContextMenuRef.current?.close();
-  };
+  }, []);
 
   if (!modules) return null;
 
