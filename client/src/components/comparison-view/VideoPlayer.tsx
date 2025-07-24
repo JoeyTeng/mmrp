@@ -39,16 +39,13 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
     const [duration, setDuration] = useState(0);
 
     const mainVideo = videoRefs[0]?.current;
-    const { setCurrentFrame } = useVideoMetrics(); // Frame index in range [0, frames.length)
+    const { setCurrentFrame, currentFrame } = useVideoMetrics(); // Frame index in range [0, frames.length)
 
     useImperativeHandle(ref, () => ({
       handleTimeUpdate,
     }));
 
-    useEffect(() => {
-      setCurrentFrame(Math.floor(currentTime * frameRate));
-    }, [currentTime, frameRate, setCurrentFrame]);
-
+    // Pause playback when main video ends
     useEffect(() => {
       if (!mainVideo) return;
       const onEnded = () => setIsPlaying(false);
@@ -58,14 +55,22 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
       };
     }, [mainVideo]);
 
+    // Update time and corresponding frame based on playback
+    const updateTimeAndFrame = (currentTime: number) => {
+      setCurrentTime(currentTime);
+      setCurrentFrame(Math.floor(currentTime * frameRate));
+    };
+
+    // Handle time update triggered externally
     const handleTimeUpdate = () => {
       const mainVideo = videoRefs[0].current;
       if (mainVideo) {
-        setCurrentTime(mainVideo.currentTime);
+        updateTimeAndFrame(mainVideo.currentTime);
         setDuration(mainVideo.duration || 0);
       }
     };
 
+    // Handle play/pause
     const handlePlayPause = () => {
       if (isPlaying) {
         videoRefs.forEach((ref) => ref.current?.pause());
@@ -89,6 +94,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
       }
     };
 
+    // Toggle mute state
     const handleMuteToggle = () => {
       if (mainVideo) {
         mainVideo.muted = !isMuted;
@@ -96,6 +102,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
       }
     };
 
+    // Step forward/backward by delta frames
     const handleStepFrame = (direction: number) => {
       if (!mainVideo) return;
       videoRefs.forEach((ref) => ref.current?.pause());
@@ -107,20 +114,20 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
         const video = ref.current;
         if (video) video.currentTime = nextTime;
       });
-      setCurrentTime(nextTime);
+      updateTimeAndFrame(nextTime);
       setIsPlaying(false);
     };
 
+    // Handle slider movement
     const handleSliderChange = (value: number) => {
       videoRefs.forEach((ref) => {
         if (ref.current) {
           ref.current.currentTime = value;
         }
       });
-      setCurrentTime(value);
+      updateTimeAndFrame(value);
     };
 
-    const currentFrame = Math.floor(currentTime * frameRate);
     const totalFrames = Math.floor(duration * frameRate);
     const sourceLabel = getSourceLabel?.(currentFrame);
 

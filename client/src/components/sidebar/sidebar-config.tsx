@@ -48,7 +48,7 @@ export const RIGHT_SIDEBAR_ITEMS: SidebarItem[] = [
   },
   {
     id: "metrics",
-    title: "Metrics",
+    title: "Video Quality Metrics",
     icon: <QueryStatsOutlined />,
     panelContent: (
       <div className="p-2">

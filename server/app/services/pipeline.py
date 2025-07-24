@@ -8,6 +8,7 @@ from app.services.module import registry
 import uuid
 import base64
 from app.utils.quality_metrics import compute_metrics
+from app.schemas.metrics import Metrics
 
 
 # Validate pipeline parameters
@@ -208,7 +209,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         output_map = {entry["video_player"]: entry["path"] for entry in outputs}
 
         # Frame-by-frame metrics
-        metrics: list[dict[str, float]] = []
+        metrics: list[Metrics] = []
         if len(result_modules) in (1, 2):
             if len(result_modules) == 1:
                 frames1 = original_frames

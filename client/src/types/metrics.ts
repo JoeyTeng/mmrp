@@ -1,4 +1,4 @@
 export type Metrics = {
-  psnr?: number;
-  ssim?: number;
+  psnr: number;
+  ssim: number;
 };

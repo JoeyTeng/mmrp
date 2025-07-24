@@ -8,6 +8,7 @@ import {
   createVideoWebSocket,
 } from "@/services/webSocketClient";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
+import { Metrics } from "@/types/metrics";
 
 type Props = {
   view: ViewOptions;
@@ -32,7 +33,7 @@ const FrameStreamPlayer = ({
   const [frames, setFrames] = useState<FrameData[]>([]);
   const currentFpsRef = useRef(30);
   const currentMimeRef = useRef("image/webp");
-  const latestMetricsRef = useRef<{ psnr?: number; ssim?: number }>({});
+  const latestMetricsRef = useRef<Partial<Metrics>>({});
   const [isStreamActive, setIsStreamActive] = useState(false);
   const [filenames] = useState([
     "example-video.mp4",
@@ -41,6 +42,7 @@ const FrameStreamPlayer = ({
   const hasCalledFirstFrame = useRef(false);
   const { setMetrics, currentFrame, setCurrentFrame } = useVideoMetrics(); // currentFrame is frame index in range [0, frames.length)
 
+  // Trigger onFirstFrame callback once first frame is received
   useEffect(() => {
     if (!hasCalledFirstFrame.current && frames.length > 0) {
       onFirstFrame?.();
@@ -67,8 +69,8 @@ const FrameStreamPlayer = ({
               mime: currentMimeRef.current,
             };
             const metrics = {
-              psnr: latestMetricsRef.current.psnr ?? undefined,
-              ssim: latestMetricsRef.current.ssim ?? undefined,
+              psnr: latestMetricsRef.current.psnr!,
+              ssim: latestMetricsRef.current.ssim!,
             };
 
             if (view === ViewOptions.SideBySide) {
@@ -97,10 +99,10 @@ const FrameStreamPlayer = ({
         } else {
           if (data.fps) currentFpsRef.current = data.fps;
           if (data.mime) currentMimeRef.current = data.mime;
-          if (data.metrics?.psnr || data.metrics?.ssim) {
+          if (data.metrics) {
             latestMetricsRef.current = {
-              psnr: data.metrics.psnr ?? undefined,
-              ssim: data.metrics.ssim ?? undefined,
+              psnr: data.metrics.psnr,
+              ssim: data.metrics.ssim,
             };
           }
         }

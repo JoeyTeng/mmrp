@@ -5,9 +5,10 @@ import cv2
 import asyncio
 import json
 import numpy as np
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from app.utils.shared_functionality import as_context
 from app.utils.quality_metrics import compute_metrics
+from app.schemas.frame import FrameData
 
 router = APIRouter()
 
@@ -81,15 +82,10 @@ async def video_feed(websocket: WebSocket) -> None:
                 if any(buf is None for buf in frames):
                     continue
 
-                metadata: Dict[str, Any] = {
-                    "fps": fps,
-                    "mime": mime_type,
-                }
-
                 metrics = compute_metrics(raw_frames[0], raw_frames[1])
-                metadata["metrics"] = metrics
+                metadata = FrameData(fps=fps, mime=mime_type, metrics=metrics)
 
-                await websocket.send_text(json.dumps(metadata))
+                await websocket.send_text(metadata.model_dump_json())
 
                 for buf in frames:
                     if buf is not None:

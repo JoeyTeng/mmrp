@@ -1,5 +1,5 @@
-from typing import Dict
 from pydantic import BaseModel
+from app.schemas.metrics import Metrics
 
 
 class PipelineParameter(BaseModel):
@@ -21,4 +21,4 @@ class PipelineRequest(BaseModel):
 class PipelineResponse(BaseModel):
     left: str
     right: str
-    metrics: list[Dict[str, float]]
+    metrics: list[Metrics]

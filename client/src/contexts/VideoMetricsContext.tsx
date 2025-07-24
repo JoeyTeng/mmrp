@@ -29,10 +29,10 @@ export const VideoMetricsProvider = ({
   const [currentFrame, setCurrentFrame] = useState(0);
 
   return (
-    <VideoMetricsContext.Provider
+    <VideoMetricsContext
       value={{ metrics, currentFrame, setMetrics, setCurrentFrame }}
     >
       {children}
-    </VideoMetricsContext.Provider>
+    </VideoMetricsContext>
   );
 };
