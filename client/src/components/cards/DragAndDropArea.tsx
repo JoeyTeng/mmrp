@@ -148,6 +148,7 @@ export default function DragAndDropArea() {
       <FlowCanvas
         defaultNodes={initialNodes}
         defaultEdges={initialEdges}
+        editingNode={editingNode}
         onEditNode={setEditingNode}
       />
       {editingNode && (
