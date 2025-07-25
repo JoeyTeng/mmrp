@@ -9,7 +9,8 @@
           "flag": "-i",
           "type": "str",
           "default": "example-video.mp4",
-          "required": true
+          "required": true,
+          "description":"Input file path"
         }
       ]
     },
@@ -23,7 +24,8 @@
           "type": "str",
           "default": "RGB",
           "required": true,
-          "options": ["RGB", "YCrCb", "HSV", "GRAY"]
+          "options": ["RGB", "YCrCb", "HSV", "GRAY"],
+          "description":"Input color space"
         },
         {
           "name": "output_colorspace",
@@ -31,7 +33,8 @@
           "type": "str",
           "default": "RGB",
           "required": true,
-          "options": ["RGB", "YCrCb", "HSV", "GRAY"]
+          "options": ["RGB", "YCrCb", "HSV", "GRAY"],
+          "description":"Input color space"
         }
       ]
     },
@@ -44,7 +47,10 @@
           "flag": "-oc",
           "type": "int",
           "default": 5,
-          "required": true
+          "min": 1,
+          "max": 31,
+          "required": true,
+          "description":"Kernel size (must be odd)"
         },
         {
           "name": "method",
@@ -52,7 +58,8 @@
           "type": "str",
           "required": true,
           "default": "gaussian",
-          "options": ["gaussian", "median", "average"]
+          "options": ["gaussian", "median", "average"],
+          "description": "Blur algorithm type"
         }
       ]
     },
@@ -65,14 +72,20 @@
           "flag": null,
           "type": "int",
           "default": 640,
-          "required": true
+          "min": 32,
+          "max": 3840,
+          "required": true,
+          "description": "Output width in pixels"
         },
         {
           "name": "height",
           "flag": null,
           "type": "int",
           "default": 480,
-          "required": true
+          "min": 32,
+          "max": 2160,
+          "required": true,
+          "description": "Output height in pixels"
         },
         {
           "name": "interpolation",
@@ -80,7 +93,8 @@
           "type": "str",
           "required": true,
           "default": "linear",
-          "options": ["linear", "nearest", "cubic", "area"]
+          "options": ["linear", "nearest", "cubic", "area"],
+          "description": "Interpolation method"
         }
       ]
     },
@@ -93,8 +107,9 @@
           "flag": null,
           "type": "str",
           "default": "right",
+          "required": true,
           "options": ["left", "right"],
-          "required": true
+          "description": "Output Video Player"
         }
       ]
     },

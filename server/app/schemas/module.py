@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import List, Optional, Any, Union, Dict
 from app.modules.utils.enums import Color, ColorSpace, FrameRate, PixelFormat
 
@@ -18,13 +18,25 @@ class Position(BaseModel):
 
 
 class ParameterConstraint(BaseModel):
-    type: str
-    default: Any
+    type: str = Field(..., description="Parameter type")
+    default: Any = Field(..., description="Default value for the parameter")
     min: Optional[float] = None
     max: Optional[float] = None
     options: Optional[List[str]] = None
     required: bool = True
     description: Optional[str] = None
+
+    @model_validator(mode="before")
+    def set_default(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        param_type = values.get("type", "str")
+        if "default" not in values:
+            values["default"] = cls._get_type_default(param_type)
+        return values
+
+    @staticmethod
+    def _get_type_default(param_type: str) -> Any:
+        type_defaults = {"str": "", "int": 0, "float": 0.0, "bool": False, "select": ""}
+        return type_defaults.get(param_type.lower(), None)
 
     def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
         kwargs.setdefault("exclude_none", True)
