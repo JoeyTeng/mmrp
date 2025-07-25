@@ -9,8 +9,6 @@ from app.schemas.module import (
     ParameterMetadata,
     Position,
 )
-from app.modules.utils.enums import ModuleName
-from app.modules.utils.constraints import MODULE_CONSTRAINTS
 
 
 class ModuleBase(BaseModel, ABC):
@@ -34,35 +32,30 @@ class ModuleBase(BaseModel, ABC):
 
     @model_validator(mode="before")
     def parse_raw_parameters(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        data = values.get("data", {})
-        raw_params = data.get("parameters", [])
+        data = values["data"]
+        parameters_ = data.get("parameters", [])
 
-        name_raw = values.get("name")
-        name: str = (
-            name_raw.value if isinstance(name_raw, ModuleName) else str(name_raw)
-        )
+        data["parameters"] = []
+        for param_ in parameters_:
+            # Validate and enrich parameter constraints
+            constraint = ParameterConstraint.model_validate(
+                {
+                    k: v
+                    for k, v in param_.items()
+                    if k in ParameterConstraint.model_fields
+                }
+            )
 
-        # Get constraints for the module name
-        param_constraints: Dict[str, Dict[str, ParameterConstraint]] = (
-            MODULE_CONSTRAINTS.get(name, {})
-        )
+            # Metadata for the parameter
+            metadata = ParameterMetadata(
+                type=param_["type"],
+                value=param_.get("default", constraint.default),
+                constraints=constraint,
+            )
 
-        # Enrich parameters with constraints
-        data["parameters"] = [
-            ModuleParameter(
-                name=param["name"],
-                metadata=ParameterMetadata(
-                    value=param.get("default", None),
-                    type=param.get("type"),
-                    constraints=param_constraints.get(param["name"], {}).get(
-                        "constraints", None
-                    )
-                    if param["name"] in param_constraints
-                    else None,
-                ),
-            ).model_dump()
-            for param in raw_params
-        ]
+            # Parameter
+            parameter = ModuleParameter(name=param_["name"], metadata=metadata)
+            data["parameters"].append(parameter.model_dump(exclude_none=True))
 
         values["data"] = data
         return values
