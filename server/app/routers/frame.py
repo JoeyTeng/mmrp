@@ -5,7 +5,7 @@ import cv2
 import asyncio
 import json
 import numpy as np
-from typing import List, Optional
+from typing import Optional
 from app.utils.shared_functionality import as_context
 from app.utils.quality_metrics import compute_metrics
 from app.schemas.frame import FrameData
@@ -32,11 +32,11 @@ async def video_feed(websocket: WebSocket) -> None:
     base_path: Path = (
         Path(__file__).resolve().parent.parent.parent.parent / "server" / "videos"
     )
-    video_paths: List[Path] = [base_path / name for name in filenames[:2]]
+    video_paths: list[Path] = [base_path / name for name in filenames[:2]]
 
     try:
         with ExitStack() as stack:
-            caps: List[cv2.VideoCapture] = [
+            caps: list[cv2.VideoCapture] = [
                 stack.enter_context(cv2VideoCaptureContext(str(path)))
                 for path in video_paths
             ]
@@ -49,8 +49,8 @@ async def video_feed(websocket: WebSocket) -> None:
             mime_type: str = "image/webp"
 
             while all(cap.isOpened() for cap in caps):
-                frames: List[Optional[np.ndarray]] = []
-                raw_frames: List[
+                frames: list[Optional[np.ndarray]] = []
+                raw_frames: list[
                     np.ndarray
                 ] = []  # Keep originals for metrics computation
 
