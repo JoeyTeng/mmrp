@@ -6,7 +6,6 @@ import {
   ReactFlow,
   Background,
   Controls,
-  addEdge,
   Connection,
   IsValidConnection,
   BackgroundVariant,
@@ -17,6 +16,7 @@ import {
   useReactFlow,
   ControlButton,
   getIncomers,
+  SelectionMode,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
@@ -41,22 +41,42 @@ import { toast } from "react-toastify/unstyled";
 export default function FlowCanvas({
   defaultNodes,
   defaultEdges,
+  editingNode,
   onEditNode,
 }: FlowCanvasProps) {
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
-  const paneRef = useRef<HTMLDivElement>(null);
 
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();
-  const {
-    screenToFlowPosition,
-    getNodes,
-    getEdges,
-    deleteElements,
-    setEdges,
-    setNodes,
-  } = useReactFlow();
+  const { screenToFlowPosition, getNodes, getEdges, setNodes, setEdges } =
+    useReactFlow();
+  const selectNode = useCallback(
+    (nodeId: string) => {
+      setNodes((nodes) =>
+        nodes.map((node) => ({
+          ...node,
+          selected: node.id === nodeId,
+        })),
+      );
+    },
+    [setNodes],
+  );
+  const unselectNodesAndEdges = useCallback(() => {
+    setNodes((nodes: Node[]) =>
+      nodes.map((node) => ({
+        ...node,
+        selected: false,
+      })),
+    );
+
+    setEdges((edges: Edge[]) =>
+      edges.map((edge) => ({
+        ...edge,
+        selected: false,
+      })),
+    );
+  }, [setNodes, setEdges]);
 
   const handleNodeOpenMenu = useCallback(
     (event: React.MouseEvent, nodeId: string) => {
@@ -64,6 +84,8 @@ export default function FlowCanvas({
       event.stopPropagation();
 
       const coordinates = event.currentTarget.getBoundingClientRect();
+      unselectNodesAndEdges();
+      selectNode(nodeId);
 
       nodeContextMenuRef.current?.open({
         position: {
@@ -73,7 +95,7 @@ export default function FlowCanvas({
         nodeId: nodeId,
       });
     },
-    [],
+    [selectNode, unselectNodesAndEdges],
   );
 
   const FlowNodeWithMenu = useCallback(
@@ -94,6 +116,8 @@ export default function FlowCanvas({
 
   const onNodeContextMenu = (event: React.MouseEvent, node: Node) => {
     event.preventDefault();
+    unselectNodesAndEdges();
+    selectNode(node.id);
     nodeContextMenuRef.current?.open({
       position: {
         x: event.clientX,
@@ -105,38 +129,12 @@ export default function FlowCanvas({
 
   const onPaneContextMenu = (event: React.MouseEvent | MouseEvent) => {
     event.preventDefault();
+    unselectNodesAndEdges();
     canvasContextMenuRef.current?.open({
       x: event.clientX,
       y: event.clientY,
     });
   };
-
-  const handlePaneClick = useCallback(() => {
-    paneRef.current?.focus();
-  }, []);
-
-  const handlePaneKeyDown = useCallback(
-    (evt: React.KeyboardEvent) => {
-      if (evt.key === "Delete" || evt.key === "Backspace") {
-        //get current state
-        const nodes = getNodes();
-        const edges = getEdges();
-
-        const selectedNode = nodes.filter((node) => node.selected);
-        const selectedEdge = edges.filter((edge) => edge.selected);
-
-        deleteElements({ nodes: selectedNode, edges: selectedEdge });
-
-        evt.preventDefault();
-      }
-    },
-    [getNodes, getEdges, deleteElements],
-  );
-
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
-  );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -249,6 +247,11 @@ export default function FlowCanvas({
     [onEditNode],
   );
 
+  const closeContextMenus = useCallback(() => {
+    nodeContextMenuRef.current?.close();
+    canvasContextMenuRef.current?.close();
+  }, []);
+
   if (!modules) return null;
 
   return (
@@ -256,24 +259,20 @@ export default function FlowCanvas({
       className="w-full h-full relative bg-white rounded-lg border border-gray-300"
       onContextMenu={(e) => e.preventDefault()}
     >
-      <Box
-        className="w-full h-full"
-        ref={paneRef}
-        tabIndex={0}
-        onClick={handlePaneClick}
-        onKeyDown={handlePaneKeyDown}
-      >
+      <Box className="w-full h-full">
         <ReactFlow
           nodeTypes={nodeTypes}
+          deleteKeyCode={editingNode != null ? [] : ["Delete", "Backspace"]}
           defaultNodes={defaultNodes}
           defaultEdges={defaultEdges}
           isValidConnection={isValidConnection}
-          onConnect={onConnect}
           onDragOver={onDragOver}
           onDrop={onDrop}
           onNodeDoubleClick={onNodeDoubleClickHandler}
           onNodeContextMenu={onNodeContextMenu}
           onPaneContextMenu={onPaneContextMenu}
+          onNodesDelete={closeContextMenus}
+          onEdgesDelete={closeContextMenus}
           fitViewOptions={{
             padding: 1,
           }}
@@ -288,6 +287,11 @@ export default function FlowCanvas({
           fitView
           proOptions={{ hideAttribution: true }}
           reconnectRadius={50}
+          panOnScroll
+          panOnScrollSpeed={1}
+          selectionOnDrag
+          panOnDrag={[1, 2]}
+          selectionMode={SelectionMode.Partial}
         >
           <Controls>
             <ControlButton
@@ -304,7 +308,7 @@ export default function FlowCanvas({
                 isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
               }
               onClick={onRun}
-              disabled={isProcessing}
+              loading={isProcessing}
             >
               Run
             </Button>
