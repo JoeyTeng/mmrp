@@ -7,6 +7,7 @@ import { Box } from "@mui/material";
 import { loadVideo } from "@/services/videoService";
 import { useVideoReload } from "@/contexts/videoReloadContext";
 import { VideoType, ViewOptions } from "./types";
+import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
 
 type Props = {
   type: VideoType;
@@ -30,8 +31,13 @@ const SideBySide = ({ type }: Props) => {
   const isAnyLoading = isLoading || isProcessing;
   const isAnyError = error != "" || isProcessingError;
 
+  const { setMetrics, setCurrentFrame } = useVideoMetrics();
+
   // Load initial video
   useEffect(() => {
+    setMetrics([]);
+    setCurrentFrame(0);
+
     if (type === VideoType.Stream) {
       return;
     }
@@ -59,7 +65,7 @@ const SideBySide = ({ type }: Props) => {
     return () => {
       urls.forEach((url) => url && URL.revokeObjectURL(url));
     };
-  }, [type]);
+  }, [setCurrentFrame, setMetrics, type]);
 
   // When reload is triggered, load processed video(s)
   useEffect(() => {

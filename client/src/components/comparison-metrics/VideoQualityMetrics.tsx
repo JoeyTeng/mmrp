@@ -1,27 +1,29 @@
+import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
+import { Box } from "@mui/material";
+
 const VideoQualityMetrics = () => {
+  const { metrics, currentFrame } = useVideoMetrics();
+  const currentFrameMetrics = metrics[currentFrame];
+
+  if (!currentFrameMetrics) return null;
+
   return (
-    <div className="w-full h-full flex flex-col text-center">
-      <div className="flex-1 flex items-center justify-between">
-        <span className="text-sm font-medium">PSNR</span>
-        <span className="text-sm text-gray-600">37.42 dB</span>
-      </div>
-      <div className="flex-1 flex items-center justify-between">
-        <span className="text-sm font-medium">SSIM</span>
-        <span className="text-sm text-gray-600">0.945</span>
-      </div>
-      <div className="flex-1 flex items-center justify-between">
-        <span className="text-sm font-medium">VMAF</span>
-        <span className="text-sm text-gray-600">92.6</span>
-      </div>
-      <div className="flex-1 flex items-center justify-between">
-        <span className="text-sm font-medium">NIQE</span>
-        <span className="text-sm text-gray-600">4.3</span>
-      </div>
-      <div className="flex-1 flex items-center justify-between">
-        <span className="text-sm font-medium">WVQA</span>
-        <span className="text-sm text-gray-600">78.1</span>
-      </div>
-    </div>
+    <Box className="w-full h-full">
+      <Box className="flex flex-col text-center h-full">
+        <Box className="flex-1 flex items-center justify-between">
+          <span className="text-sm font-medium">PSNR</span>
+          <span className="text-sm text-gray-600">
+            {currentFrameMetrics.psnr.toFixed(2)} dB
+          </span>
+        </Box>
+        <Box className="flex-1 flex items-center justify-between">
+          <span className="text-sm font-medium">SSIM</span>
+          <span className="text-sm text-gray-600">
+            {currentFrameMetrics.ssim.toFixed(4)}
+          </span>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

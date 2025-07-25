@@ -5,9 +5,10 @@ from app.modules.base_module import ModuleBase, ParameterDefinition
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
 from app.services.module import registry
-from itertools import tee
 import uuid
 import base64
+from app.utils.quality_metrics import compute_metrics
+from app.schemas.metrics import Metrics
 
 
 # Validate pipeline parameters
@@ -158,10 +159,18 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         fps,
         frame_iter,
     ):
+        # Frame storage of original frames
+        original_frames: list[np.ndarray] = []
+        # Frame storage per result module
+        result_frames: dict[int, list[np.ndarray]] = {
+            mod.id: [] for mod in result_modules
+        }
+
         # Run frames through whole pipeline and return the frames that need to be written
         def base_pipeline_iterator() -> Iterator[tuple[int, np.ndarray]]:
             frame_cache: dict[int, np.ndarray] = {}
             for frame in frame_iter:
+                original_frames.append(frame.copy())
                 frame_cache.clear()
                 frame_cache[source_mod.id] = frame
                 # Process frames and save them to a frame cache
@@ -171,13 +180,12 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                         # Yield the result module and the corresponding frames to be written
                         yield (result_mod.id, frame_cache[sid])
 
-        # Create two iterators for the result modules that can read from the data stream independently
-        piped_iters = tee(base_pipeline_iterator(), len(result_modules))
+        for mod_id, frame in base_pipeline_iterator():
+            result_frames[mod_id].append(frame)
 
         outputs: list[dict[str, str]] = []
 
-        # Result module(s) write the output video file(s)
-        for result_mod, mod_iter in zip(result_modules, piped_iters):
+        for result_mod in result_modules:
             mod_instance, params = module_map[result_mod.id]
 
             # Create video file name
@@ -190,21 +198,37 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             params["path"] = filename
             params["fps"] = fps
 
-            # Pass only the frames for the specific result module
-            def filtered_iter(
-                mod_id: int, it: Iterator[tuple[int, np.ndarray]]
-            ) -> Iterator[np.ndarray]:
-                for mid, frame in it:
-                    if mid == mod_id:
-                        yield frame
+            def frame_iter_result() -> Iterator[np.ndarray]:
+                yield from result_frames[result_mod.id]
 
-            mod_instance.process(filtered_iter(result_mod.id, mod_iter), params)
+            mod_instance.process(frame_iter_result(), params)
 
             # Return the video player side and video file name
             outputs.append({"video_player": params["video_player"], "path": filename})
 
-    output_map = {entry["video_player"]: entry["path"] for entry in outputs}
-    response = PipelineResponse(
-        left=output_map.get("left", ""), right=output_map.get("right", "")
-    )
-    return response
+        output_map = {entry["video_player"]: entry["path"] for entry in outputs}
+
+        # Frame-by-frame metrics
+        metrics: list[Metrics] = []
+        if len(result_modules) in (1, 2):
+            if len(result_modules) == 1:
+                frames1 = original_frames
+                frames2 = result_frames[result_modules[0].id]
+                error_msg = "Original and processed frames must match in size"
+            else:
+                frames1 = result_frames[result_modules[0].id]
+                frames2 = result_frames[result_modules[1].id]
+                error_msg = "Result frames must be the same size for metric comparison"
+
+            for frame1, frame2 in zip(frames1, frames2):
+                if frame1.shape != frame2.shape:
+                    raise ValueError(error_msg)
+                m = compute_metrics(frame1, frame2)
+                metrics.append(m)
+
+        response = PipelineResponse(
+            left=output_map.get("left", ""),
+            right=output_map.get("right", ""),
+            metrics=metrics,
+        )
+        return response

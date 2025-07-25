@@ -7,6 +7,8 @@ import {
   closeVideoWebSocket,
   createVideoWebSocket,
 } from "@/services/webSocketClient";
+import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
+import { Metrics } from "@/types/metrics";
 
 type Props = {
   view: ViewOptions;
@@ -27,18 +29,20 @@ const FrameStreamPlayer = ({
 }: Props) => {
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentFrame, setCurrentFrame] = useState(0); // Frame index in range [0, frames.length)
   const [isUserPaused, setIsUserPaused] = useState(true);
   const [frames, setFrames] = useState<FrameData[]>([]);
   const currentFpsRef = useRef(30);
   const currentMimeRef = useRef("image/webp");
+  const latestMetricsRef = useRef<Partial<Metrics>>({});
   const [isStreamActive, setIsStreamActive] = useState(false);
   const [filenames] = useState([
     "example-video.mp4",
     "example-video-filter.mp4",
   ]);
   const hasCalledFirstFrame = useRef(false);
+  const { setMetrics, currentFrame, setCurrentFrame } = useVideoMetrics(); // currentFrame is frame index in range [0, frames.length)
 
+  // Trigger onFirstFrame callback once first frame is received
   useEffect(() => {
     if (!hasCalledFirstFrame.current && frames.length > 0) {
       onFirstFrame?.();
@@ -50,6 +54,8 @@ const FrameStreamPlayer = ({
   useEffect(() => {
     const expectedFrames = 2;
     let frameBuffer: Blob[] = [];
+    setMetrics([]);
+    setCurrentFrame(0);
 
     createVideoWebSocket(
       (data) => {
@@ -62,13 +68,19 @@ const FrameStreamPlayer = ({
               fps: currentFpsRef.current,
               mime: currentMimeRef.current,
             };
+            const metrics = {
+              psnr: latestMetricsRef.current.psnr!,
+              ssim: latestMetricsRef.current.ssim!,
+            };
 
             if (view === ViewOptions.SideBySide) {
               const newFrame = {
                 blob: [frameBuffer[0], frameBuffer[1]],
                 ...commonFrameData,
               };
+
               setFrames((prev) => [...prev, newFrame]);
+              setMetrics((prev) => [...prev, metrics]);
             } else {
               const [original, filtered] = frameBuffer;
 
@@ -78,13 +90,21 @@ const FrameStreamPlayer = ({
               ];
 
               setFrames((prev) => [...prev, ...newFrames]);
+              setMetrics((prev) => [...prev, metrics, metrics]);
             }
 
             frameBuffer = [];
+            latestMetricsRef.current = {};
           }
         } else {
           if (data.fps) currentFpsRef.current = data.fps;
           if (data.mime) currentMimeRef.current = data.mime;
+          if (data.metrics) {
+            latestMetricsRef.current = {
+              psnr: data.metrics.psnr,
+              ssim: data.metrics.ssim,
+            };
+          }
         }
       },
       () => {
@@ -100,7 +120,7 @@ const FrameStreamPlayer = ({
     return () => {
       closeVideoWebSocket();
     };
-  }, [filenames, view]);
+  }, [filenames, setCurrentFrame, setFrames, setMetrics, view]);
 
   // Render frame at given index
   const renderFrame = useCallback(
@@ -195,7 +215,14 @@ const FrameStreamPlayer = ({
         playbackTimer.current = null;
       }
     };
-  }, [isPlaying, currentFrame, frames, renderFrame, isStreamActive]);
+  }, [
+    isPlaying,
+    currentFrame,
+    frames,
+    renderFrame,
+    isStreamActive,
+    setCurrentFrame,
+  ]);
 
   // When currentFrame changes and playback is paused, render frame immediately
   useEffect(() => {

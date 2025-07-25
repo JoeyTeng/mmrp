@@ -5,8 +5,10 @@ import cv2
 import asyncio
 import json
 import numpy as np
-from typing import Dict, List, Optional, Union
+from typing import Optional
 from app.utils.shared_functionality import as_context
+from app.utils.quality_metrics import compute_metrics
+from app.schemas.frame import FrameData
 
 router = APIRouter()
 
@@ -30,11 +32,11 @@ async def video_feed(websocket: WebSocket) -> None:
     base_path: Path = (
         Path(__file__).resolve().parent.parent.parent.parent / "server" / "videos"
     )
-    video_paths: List[Path] = [base_path / name for name in filenames[:2]]
+    video_paths: list[Path] = [base_path / name for name in filenames[:2]]
 
     try:
         with ExitStack() as stack:
-            caps: List[cv2.VideoCapture] = [
+            caps: list[cv2.VideoCapture] = [
                 stack.enter_context(cv2VideoCaptureContext(str(path)))
                 for path in video_paths
             ]
@@ -47,11 +49,17 @@ async def video_feed(websocket: WebSocket) -> None:
             mime_type: str = "image/webp"
 
             while all(cap.isOpened() for cap in caps):
-                frames: List[Optional[np.ndarray]] = []
+                frames: list[Optional[np.ndarray]] = []
+                raw_frames: list[
+                    np.ndarray
+                ] = []  # Keep originals for metrics computation
+
                 for cap in caps:
                     ret, frame = cap.read()
                     if not ret:
                         return  # Exit if any video ends
+
+                    raw_frames.append(frame)
 
                     encode_success: bool
                     buffer: Optional[np.ndarray]
@@ -74,11 +82,10 @@ async def video_feed(websocket: WebSocket) -> None:
                 if any(buf is None for buf in frames):
                     continue
 
-                metadata: Dict[str, Union[int, float, str]] = {
-                    "fps": fps,
-                    "mime": mime_type,
-                }
-                await websocket.send_text(json.dumps(metadata))
+                metrics = compute_metrics(raw_frames[0], raw_frames[1])
+                metadata = FrameData(fps=fps, mime=mime_type, metrics=metrics)
+
+                await websocket.send_text(metadata.model_dump_json())
 
                 for buf in frames:
                     if buf is not None:

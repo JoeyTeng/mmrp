@@ -1,9 +1,12 @@
+import { Metrics } from "@/types/metrics";
+
 let ws: WebSocket | null = null;
 
 export type FrameMessage =
   | {
       fps?: number;
       mime?: string;
+      metrics?: Metrics;
     }
   | ArrayBuffer;
 
