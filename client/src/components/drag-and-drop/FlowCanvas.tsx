@@ -151,7 +151,7 @@ export default function FlowCanvas({
       const nodeData = event.dataTransfer.getData("application/reactflow");
       if (!nodeData) return;
 
-      const { id, label } = JSON.parse(nodeData);
+      const { id, name } = JSON.parse(nodeData);
       const moduleDef = modules.find((m) => m.id === id)!;
       const type = moduleDef.type as NodeType;
       if (!moduleDef) {
@@ -170,11 +170,11 @@ export default function FlowCanvas({
 
       // Create Node for the Canvas
       const newNode: Node<NodeData, NodeType> = {
-        id: id + "?" + Math.random().toString(36).substring(2, 9),
+        id: id + "#" + Math.random().toString(36).substring(2, 9),
         type,
         position,
         data: {
-          label: `${label}`,
+          name: `${name}`,
           params: defaultParams,
           inputFormats: inputPorts,
           outputFormats: outputPorts,

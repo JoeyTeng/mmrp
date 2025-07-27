@@ -11,8 +11,8 @@ class GenericBinaryModule(ModuleBase):
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
 
-    def get_parameters(self) -> Dict[str, ModuleParameter]:
-        return {}
+    def get_parameters(self) -> List[ModuleParameter]:
+        return self.data["parameters"]
 
     def get_input_formats(self) -> List[ModuleFormat]:
         return []

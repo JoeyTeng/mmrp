@@ -54,8 +54,8 @@ class ModuleBase(BaseModel, ABC):
             )
 
             # Parameter
-            parameter = ModuleParameter(name=param_["name"], metadata=metadata)
-            data["parameters"].append(parameter.model_dump(exclude_none=True))
+            parameter_ = ModuleParameter(name=param_["name"], metadata=metadata)
+            data["parameters"].append(parameter_.model_dump())
 
         values["data"] = data
         return values
@@ -80,7 +80,7 @@ class ModuleBase(BaseModel, ABC):
         )
 
     @abstractmethod
-    def get_parameters(self) -> Dict[str, ModuleParameter]:
+    def get_parameters(self) -> List[ModuleParameter]:
         pass
 
     @abstractmethod

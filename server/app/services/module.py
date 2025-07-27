@@ -22,7 +22,7 @@ def load_modules() -> None:
                     and issubclass(obj, ModuleBase)
                     and obj is not ModuleBase
                 ):
-                    registry[obj.__name__] = obj
+                    registry[path.stem] = obj
         except ImportError as e:
             print(f"Could not import module {module_path}: {e}")
     print(f"Module registry loaded with {len(registry)} modules.")

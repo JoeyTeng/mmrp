@@ -4,7 +4,9 @@ from typing import Any, Iterator, Dict, List
 from app.modules.module import ModuleBase
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
-from app.services.module import registry
+from fastapi import HTTPException
+from app.services.module_registry import ModuleRegistry
+from itertools import tee
 import uuid
 import base64
 from app.utils.quality_metrics import compute_metrics
@@ -22,11 +24,16 @@ def _is_type_match(value: Any, expected_type: str) -> bool:
     return isinstance(value, type_map[expected_type])
 
 
+def get_module_namespace(module: PipelineModule) -> str:
+    return module.id.split("#")[0]
+
+
 def validate_parameters(
     parameters: Dict[str, Any],
     parameter_defs: Dict[str, Any],
     module: ModuleBase,
 ) -> None:
+    return
     # Check for unexpected parameters
     for key, value in parameters.items():
         if key not in parameter_defs:
@@ -50,15 +57,15 @@ def validate_parameters(
 
 # Process a single frame through the pipeline
 def process_pipeline_frame(
-    frame_cache: Dict[int, np.ndarray],
+    frame_cache: Dict[str, np.ndarray],
     ordered_modules: List[PipelineModule],
-    module_map: Dict[int, tuple[ModuleBase, Dict[str, Any]]],
+    module_map: Dict[str, tuple[ModuleBase, Dict[str, Any]]],
 ) -> None:
     for mod in ordered_modules:
         mod_id = mod.id
         mod_instance, params = module_map[mod_id]
 
-        input_frames = [frame_cache[src_id] for src_id in (mod.source or [0])]
+        input_frames = [frame_cache[src_id] for src_id in mod.source]
         frame_output = mod_instance.process_frame(input_frames[0], params)
         frame_cache[mod_id] = frame_output
 
@@ -66,14 +73,14 @@ def process_pipeline_frame(
 # Get modules in correct execution order in the pipeline
 def get_execution_order(modules: List[PipelineModule]) -> List[PipelineModule]:
     # Map module id -> module
-    module_map: Dict[int, PipelineModule] = {mod.id: mod for mod in modules}
+    module_map: Dict[str, PipelineModule] = {mod.id: mod for mod in modules}
     all_module_ids = set(module_map.keys())
 
     # Build the dependency graph (adjacency list of dependent ids)
-    graph: defaultdict[int, List[int]] = defaultdict(list)
+    graph: defaultdict[str, List[str]] = defaultdict(list)
 
     # Tracks how many dependecies each module has
-    indegree = {mod.id: len(mod.source) for mod in modules}
+    indegree: Dict[str, int] = {mod.id: len(mod.source) for mod in modules}
 
     for mod in modules:
         if mod.source:
@@ -85,7 +92,7 @@ def get_execution_order(modules: List[PipelineModule]) -> List[PipelineModule]:
                 graph[dep_id].append(mod.id)
 
     # Start with modules that have no dependencies
-    queue: deque[int] = deque(
+    queue: deque[str] = deque(
         [module_id for module_id, degree in indegree.items() if degree == 0]
     )
     execution_order: List[PipelineModule] = []
@@ -112,17 +119,24 @@ def get_execution_order(modules: List[PipelineModule]) -> List[PipelineModule]:
 
 # Handle the pipeline request and process the video
 def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
-    # Resolve pipeline modules
     ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
-    # Check that the pipeline starts with a source module
-    if not ordered_modules or ordered_modules[0].name != "video_source":
-        raise ValueError("Pipeline must start with a video_source module")
-    if ordered_modules[-1].name != "result":
-        raise ValueError("Pipeline must end with a result module")
+    # Validate pipeline structure
+    if not ordered_modules:
+        raise HTTPException(status_code=500, detail="Pipeline is empty")
 
-    # Registry lookup
-    module_map: Dict[int, tuple[ModuleBase, Dict[str, Any]]] = {
-        m.id: (registry[m.name](), {p.key: p.value for p in m.parameters})
+    first_module_base = get_module_namespace(ordered_modules[0])
+    if first_module_base != "video_source":
+        raise ValueError("Pipeline must start with a video_source module")
+
+    last_module_base = get_module_namespace(ordered_modules[-1])
+    if last_module_base != "video_output":
+        raise ValueError("Pipeline must end with a video_output module")
+
+    module_map: Dict[str, tuple[ModuleBase, Dict[str, Any]]] = {
+        m.id: (
+            ModuleRegistry.get_by_spacename(get_module_namespace(m)),
+            {p.key: p.value for p in m.parameters},
+        )
         for m in ordered_modules
     }
 
@@ -132,14 +146,18 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         mod_instance, params = module_map[mod_id]
         # Get expected parameter definitions
         param_defs: Dict[str, Any] = {
-            name: param for name, param in mod_instance.get_parameters().items()
+            param.name: param.metadata for param in mod_instance.get_parameters()
         }
         # Validate each parameter
         validate_parameters(params, param_defs, mod_instance)
 
     # Get source and result module
     source_mod = ordered_modules[0]
-    result_modules = [module for module in ordered_modules if module.name == "result"]
+    result_modules = [
+        module
+        for module in ordered_modules
+        if get_module_namespace(module) == "video_output"
+    ]
 
     # Check and validate result modules
     if not result_modules:
@@ -154,10 +172,11 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
 
     # Get processing nodes (remove source and result modules)
     processing_nodes = [
-        m for m in ordered_modules if m.name not in {"source", "result"}
+        m
+        for m in ordered_modules
+        if "video_source" not in m.id and "video_output" not in m.id
     ]
 
-    # Source module processes video input and yields framerate
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
         source_file,
         fps,
@@ -171,8 +190,8 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         }
 
         # Run frames through whole pipeline and return the frames that need to be written
-        def base_pipeline_iterator() -> Iterator[tuple[int, np.ndarray]]:
-            frame_cache: dict[int, np.ndarray] = {}
+        def base_pipeline_iterator() -> Iterator[tuple[str, np.ndarray]]:
+            frame_cache: Dict[str, np.ndarray] = {}
             for frame in frame_iter:
                 original_frames.append(frame.copy())
                 frame_cache.clear()

@@ -16,15 +16,17 @@ class VideoSource(ModuleBase):
     def __init__(self, **data: Dict[str, Any]) -> None:
         super().__init__(**data)
 
-    def get_parameters(self) -> Dict[str, ModuleParameter]:
-        return {}
+    def get_parameters(self) -> List[ModuleParameter]:
+        return self.data["parameters"]
 
     def get_input_formats(self) -> List[ModuleFormat]:
         return []
 
     def get_output_formats(self) -> List[ModuleFormat]:
         return [
-            ModuleFormat(pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL)
+            ModuleFormat(
+                pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
+            )
         ]
 
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:
@@ -36,7 +38,7 @@ class VideoSource(ModuleBase):
     def process(
         self, input_data: Any, parameters: dict[str, Any]
     ) -> contextlib.AbstractContextManager[tuple[str, float, Iterator[np.ndarray]]]:
-           # Get source file and name
+        # Get source file and name
         source_file: str = str(parameters["path"])
         name_without_ext = Path(source_file).stem
         video_path = get_video_path(source_file)

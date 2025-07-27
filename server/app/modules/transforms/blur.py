@@ -1,5 +1,5 @@
 import cv2
-from typing import Any, Dict
+from typing import Any, Dict, List
 from pathlib import Path
 import numpy as np
 from app.modules.module import ModuleBase
@@ -15,12 +15,14 @@ class BlurModule(ModuleBase):
     def __init__(self, **data: Dict[str, Any]) -> None:
         super().__init__(**data)
 
-    def get_parameters(self) -> Dict[str, ModuleParameter]:
-        return {}
+    def get_parameters(self) -> List[ModuleParameter]:
+        return self.data["parameters"]
 
     def get_input_formats(self) -> list[ModuleFormat]:
         return [
-            ModuleFormat(pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL),
+            ModuleFormat(
+                pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
+            ),
         ]
 
     def get_output_formats(self) -> list[ModuleFormat]:

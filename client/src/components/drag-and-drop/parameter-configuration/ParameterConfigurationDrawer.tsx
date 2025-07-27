@@ -55,7 +55,7 @@ export default function ParameterConfigurationDrawer({
     <AppDrawer
       open={Boolean(editingNode)}
       onClose={handleCancel}
-      title={editingNode ? `Edit ${editingNode.data.label}` : "Edit Parameters"}
+      title={editingNode ? `Edit ${editingNode.data.name}` : "Edit Parameters"}
       width={400}
       anchor="right"
     >
