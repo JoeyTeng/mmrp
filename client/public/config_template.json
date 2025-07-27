@@ -1,0 +1,31 @@
+{
+  "name": "name-of-module",
+  "executable": "name-of-executable.exe",
+  "parameters": [
+    {
+      "name": "str_parameter_name",
+      "flag": "-i",
+      "type": "str",
+      "required": true,
+      "default": "optional default value",
+      "description": "optional description"
+    },
+    {
+      "name": "int_parameter_name",
+      "flag": "--operator",
+      "type": "int",
+      "required": true,
+      "default": 0,
+      "description": "optional description"
+    },
+
+    {
+      "name": "boolean_paramter_name",
+      "flag": "--flag_name",
+      "type": "bool",
+      "required": false,
+      "default": false,
+      "description": "optional description"
+    }
+  ]
+}

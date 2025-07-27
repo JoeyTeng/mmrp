@@ -10,7 +10,9 @@ import Modules from "../drag-and-drop/Modules";
 import { SidebarItem } from "./types";
 import VideoQualityMetrics from "../comparison-metrics/VideoQualityMetrics";
 
-export const LEFT_SIDEBAR_ITEMS: SidebarItem[] = [
+export const getLeftSidebarItems = (
+  setUploadOpen: (open: boolean) => void,
+): SidebarItem[] => [
   {
     id: "save",
     title: "Save",
@@ -24,17 +26,18 @@ export const LEFT_SIDEBAR_ITEMS: SidebarItem[] = [
     action: () => console.log("Download clicked"),
   },
   {
-    id: "upload",
-    title: "Upload",
-    icon: <CloudUploadOutlined />,
-    action: () => console.log("Upload clicked"),
-  },
-  {
     id: "modules",
     title: "Modules",
     icon: <AppsOutlined />,
     panelContent: <Modules />,
     showArrow: true,
+    showAfterDivider: true,
+  },
+  {
+    id: "upload",
+    title: "Upload Module",
+    icon: <CloudUploadOutlined />,
+    action: () => setUploadOpen(true),
     showAfterDivider: true,
   },
 ];
