@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from pydantic import ValidationError
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
 from app.services.pipeline import handle_pipeline_request
 
@@ -13,7 +14,8 @@ router = APIRouter(
 @router.post("/", response_model=PipelineResponse)
 def process_pipeline(request: PipelineRequest):
     try:
-        response = handle_pipeline_request(request)
-        return response
-    except ValueError as e:
-        raise HTTPException(422, detail=str(e))
+        return handle_pipeline_request(request)
+    except ValidationError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

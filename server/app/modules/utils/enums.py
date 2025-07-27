@@ -6,7 +6,7 @@ class ModuleName(StrEnum):
     COLOR = "color"
     BLUR = "blur"
     RESIZE = "resize"
-    RESULT = "result"
+    RESULT = "video_output"
 
 
 class ModuleType(StrEnum):

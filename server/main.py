@@ -5,15 +5,15 @@ from pathlib import Path
 import shutil
 import uvicorn
 from app.routers import pipeline, video, frame, binaries
-from app.services.module import load_modules
 from app.services.binaries import download_gist_files
 from app.routers import modules
+from app.db.convert_json_to_modules import get_all_mock_modules
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load a registry of all modules at start up
-    load_modules()
+    get_all_mock_modules()
     # Download and extract all binaries
     binaries_dir = download_gist_files()
 

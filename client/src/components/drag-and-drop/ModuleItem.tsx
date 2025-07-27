@@ -1,24 +1,25 @@
 "use client";
+import { Box } from "@mui/material";
 
 type ModuleItemProps = {
   id: string;
-  label: string;
+  name: string;
 };
 
-export default function ModuleItem({ id, label }: ModuleItemProps) {
+export default function ModuleItem({ id, name }: ModuleItemProps) {
   const onDragStart = (event: React.DragEvent) => {
-    const nodeData = JSON.stringify({ id, label });
+    const nodeData = JSON.stringify({ id, name });
     event.dataTransfer.setData("application/reactflow", nodeData);
     event.dataTransfer.effectAllowed = "copy";
   };
 
   return (
-    <div
+    <Box
       draggable
       onDragStart={onDragStart}
       className="p-2 mb-1 border border-gray-300 bg-gray-50 rounded cursor-grab"
     >
-      {label}
-    </div>
+      {name}
+    </Box>
   );
 }

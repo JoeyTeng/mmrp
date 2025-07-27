@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Iterator, List, Union, Dict
+from typing import Any, Iterator, List, Dict
 import cv2
 import numpy as np
 from app.modules.module import ModuleBase
@@ -15,12 +15,14 @@ class VideoOutput(ModuleBase):
     def __init__(self, **data: Dict[str, Any]) -> None:
         super().__init__(**data)
 
-    def get_parameters(self) -> Dict[str, ModuleParameter]:
-        return {}
+    def get_parameters(self) -> List[ModuleParameter]:
+        return self.data["parameters"]
 
     def get_input_formats(self) -> List[ModuleFormat]:
         return [
-            ModuleFormat(pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL)
+            ModuleFormat(
+                pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
+            )
         ]
 
     def get_output_formats(self) -> List[ModuleFormat]:
@@ -31,7 +33,7 @@ class VideoOutput(ModuleBase):
         raise NotImplementedError
 
     def process(
-        self, input_data: Iterator[Union[float, np.ndarray]], parameters: dict[str, Any]
+        self, input_data: Iterator[np.ndarray], parameters: dict[str, Any]
     ) -> Any:
         out_path = (
             Path(__file__).resolve().parent.parent.parent

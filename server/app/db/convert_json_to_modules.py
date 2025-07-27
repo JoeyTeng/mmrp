@@ -13,6 +13,7 @@ from app.modules.generic.binary_module import GenericBinaryModule
 from app.modules.utils.enums import ModuleName
 from app.schemas.module import Position
 from app.modules.module import ModuleBase
+from app.services.module_registry import ModuleRegistry
 
 
 def get_json_path() -> Path:
@@ -29,7 +30,7 @@ def load_modules_from_json(file_path: Optional[Path] = None) -> List[ModuleBase]
 
 def generate_module_uuid(module_name: str) -> str:
     id = uuid.uuid4()
-    return f"{module_name}-{id}"
+    return f"{module_name}#{id}"
 
 
 def json_to_modules(json_data: Dict[str, Any]) -> List[ModuleBase]:
@@ -65,7 +66,7 @@ def json_to_modules(json_data: Dict[str, Any]) -> List[ModuleBase]:
                     "parameters": parameters_,
                 },
             )
-
+            ModuleRegistry.register(module)
             modules.append(module)
         except KeyError as e:
             raise HTTPException(

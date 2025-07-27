@@ -19,14 +19,14 @@ export default function ParameterConfiguration({
   const MAX_VALUE = 100;
 
   const constraintsLookup = useMemo(() => {
-    const foundModule = modules.find((item) => item.name === node?.data.label);
+    const foundModule = modules.find((item) => item.name === node?.data.name);
     return (
       foundModule?.data.parameters.reduce((acc, { name, metadata }) => {
         acc.set(name, metadata.constraints);
         return acc;
       }, new Map<string, ParameterConstraints>()) ?? new Map()
     );
-  }, [modules, node?.data.label]);
+  }, [modules, node?.data.name]);
 
   const getInputType = (key: string) => {
     const constraints = constraintsLookup.get(key);

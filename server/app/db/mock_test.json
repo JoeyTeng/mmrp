@@ -99,7 +99,7 @@
       ]
     },
     {
-      "name": "result",
+      "name": "video_output",
       "type": "outputNode",
       "parameters": [
         {

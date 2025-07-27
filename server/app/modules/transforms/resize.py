@@ -22,12 +22,14 @@ class ResizeModule(ModuleBase):
     def __init__(self, **data: Dict[str, Any]) -> None:
         super().__init__(**data)
 
-    def get_parameters(self) -> Dict[str, ModuleParameter]:
-        return {}
+    def get_parameters(self) -> List[ModuleParameter]:
+        return self.data["parameters"]
 
     def get_input_formats(self) -> List[ModuleFormat]:
         return [
-            ModuleFormat(pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL)
+            ModuleFormat(
+                pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
+            )
         ]
 
     def get_output_formats(self) -> List[ModuleFormat]:
