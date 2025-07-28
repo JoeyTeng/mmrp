@@ -27,7 +27,7 @@ class ParameterConstraint(BaseModel):
     description: Optional[str] = None
 
     @model_validator(mode="before")
-    def set_default(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    def set_default(cls, values: dict[str, Any]) -> dict[str, Any]:
         param_type = values.get("type", "str")
         if "default" not in values:
             values["default"] = cls._get_type_default(param_type)
@@ -37,7 +37,13 @@ class ParameterConstraint(BaseModel):
 
     @staticmethod
     def _get_type_default(param_type: str) -> Any:
-        type_defaults = {"str": "", "int": 0, "float": 0.0, "bool": False, "select": ""}
+        type_defaults: dict[str, Any] = {
+            "str": "",
+            "int": 0,
+            "float": 0.0,
+            "bool": False,
+            "select": "",
+        }
         return type_defaults.get(param_type.lower(), None)
 
     def model_dump(self, **kwargs: Any) -> dict[str, Any]:
@@ -72,7 +78,7 @@ class ModuleParameter(BaseModel):
         kwargs.setdefault("exclude_none", True)
         return super().model_dump(**kwargs)
 
-      
+
 class VideoSourceParams(BaseModel):
     path: str = Field(..., description="Path to video file")
 
@@ -109,8 +115,8 @@ class VideoOutputParams(BaseModel):
 class GenericParameterModel(BaseModel):
     class Config:
         extra = "allow"
-        
-        
+
+
 class VideoCodecParams(ModuleParameter):
     codec: str = Field(..., description="Video codec (e.g., h264, hevc, vp9)")
     bitrate: Optional[int] = Field(

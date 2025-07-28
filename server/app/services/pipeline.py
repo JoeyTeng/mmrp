@@ -1,13 +1,12 @@
 import numpy as np
 from collections import defaultdict, deque
-from typing import Any
+from typing import Any, Iterator
 from pydantic import ValidationError
 from app.modules.module import ModuleBase
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
 from fastapi import HTTPException
 from app.services.module_registry import ModuleRegistry
-from itertools import tee
 import uuid
 import base64
 from app.utils.quality_metrics import compute_metrics
@@ -148,13 +147,13 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         # Frame storage of original frames
         original_frames: list[np.ndarray] = []
         # Frame storage per result module
-        result_frames: dict[int, list[np.ndarray]] = {
+        result_frames: dict[str, list[np.ndarray]] = {
             mod.id: [] for mod in result_modules
         }
 
         # Run frames through whole pipeline and return the frames that need to be written
         def base_pipeline_iterator() -> Iterator[tuple[str, np.ndarray]]:
-            frame_cache: Dict[str, np.ndarray] = {}
+            frame_cache: dict[str, np.ndarray] = {}
             for frame in frame_iter:
                 original_frames.append(frame.copy())
                 frame_cache.clear()
