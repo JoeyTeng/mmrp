@@ -31,11 +31,19 @@ class ParameterConstraint(BaseModel):
         param_type = values.get("type", "str")
         if "default" not in values:
             values["default"] = cls._get_type_default(param_type)
+        if "options" in values:
+            values["type"] = "select"
         return values
 
     @staticmethod
     def _get_type_default(param_type: str) -> Any:
-        type_defaults = {"str": "", "int": 0, "float": 0.0, "bool": False, "select": ""}
+        type_defaults: dict[str, Any] = {
+            "str": "",
+            "int": 0,
+            "float": 0.0,
+            "bool": False,
+            "select": "",
+        }
         return type_defaults.get(param_type.lower(), None)
 
     def model_dump(self, **kwargs: Any) -> dict[str, Any]:
@@ -71,16 +79,16 @@ class ModuleParameter(BaseModel):
         return super().model_dump(**kwargs)
 
 
-class VideoSourceParams(ModuleParameter):
+class VideoSourceParams(BaseModel):
     path: str = Field(..., description="Path to video file")
 
 
-class ColorspaceParams(ModuleParameter):
+class ColorspaceParams(BaseModel):
     input_colorspace: str = Field(..., description="Input color space")
     output_colorspace: str = Field(..., description="Output color space")
 
 
-class BlurParams(ModuleParameter):
+class BlurParams(BaseModel):
     kernel_size: int = Field(..., ge=1, le=31, description="Kernel size (must be odd)")
     method: str = Field(..., description="Blur algorithm type")
 
@@ -91,16 +99,22 @@ class BlurParams(ModuleParameter):
         return v
 
 
-class ResizeParams(ModuleParameter):
+class ResizeParams(BaseModel):
     width: int = Field(..., ge=32, le=3840, description="Output width")
     height: int = Field(..., ge=32, le=2160, description="Output height")
     interpolation: str = Field(..., description="Interpolation method")
 
 
-class VideoOutputParams(ModuleParameter):
-    path: str = Field(..., description="Output file path")
+class VideoOutputParams(BaseModel):
+    video_player: str = Field(..., description="Output file path")
     # codec: Optional[str] = Field(None, description="Video codec")
     # quality: Optional[int] = Field(23, ge=0, le=51, description="Quality level")
+
+
+# Binaries can have any parameters, so we need a generic model
+class GenericParameterModel(BaseModel):
+    class Config:
+        extra = "allow"
 
 
 class VideoCodecParams(ModuleParameter):

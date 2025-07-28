@@ -3,7 +3,7 @@ from typing import Any, Iterator
 import cv2
 import numpy as np
 from app.modules.module import ModuleBase
-from app.schemas.module import ModuleFormat, ModuleParameter
+from app.schemas.module import ModuleFormat, ModuleParameter, VideoOutputParams
 from app.modules.utils.enums import ModuleName, ModuleType, PixelFormat, ColorSpace
 from app.utils.shared_functionality import as_context
 
@@ -11,6 +11,8 @@ from app.utils.shared_functionality import as_context
 class VideoOutput(ModuleBase):
     name: ModuleName
     type: ModuleType
+
+    parameter_model: Any = VideoOutputParams
 
     def __init__(self, **data: dict[str, Any]) -> None:
         super().__init__(**data)
@@ -35,8 +37,9 @@ class VideoOutput(ModuleBase):
     def process(
         self, input_data: Iterator[np.ndarray], parameters: dict[str, Any]
     ) -> Any:
+        # mmrp/server/output
         out_path = (
-            Path(__file__).resolve().parent.parent.parent
+            Path(__file__).resolve().parent.parent.parent.parent
             / "output"
             / parameters["path"]
         )

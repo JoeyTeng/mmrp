@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 from app.modules.module import ModuleBase
 from app.utils.shared_functionality import as_context
-from app.schemas.module import ModuleFormat, ModuleParameter
+from app.schemas.module import ModuleFormat, ModuleParameter, ResizeParams
 from app.modules.utils.enums import (
     ModuleName,
     ModuleType,
@@ -18,6 +18,8 @@ from app.modules.utils.enums import (
 class ResizeModule(ModuleBase):
     name: ModuleName
     type: ModuleType
+
+    parameter_model: Any = ResizeParams
 
     def __init__(self, **data: dict[str, Any]) -> None:
         super().__init__(**data)

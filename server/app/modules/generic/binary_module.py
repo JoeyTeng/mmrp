@@ -1,13 +1,15 @@
 import numpy as np
 from app.modules.module import ModuleBase
 from typing import Any
-from app.schemas.module import ModuleFormat, ModuleParameter
+from app.schemas.module import GenericParameterModel, ModuleFormat, ModuleParameter
 
 
 class GenericBinaryModule(ModuleBase):
     name: str
     type: str
 
+    parameter_model: Any = GenericParameterModel
+      
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
 

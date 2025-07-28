@@ -4,13 +4,14 @@ from pathlib import Path
 import numpy as np
 from app.modules.module import ModuleBase
 from app.utils.shared_functionality import as_context
-from app.schemas.module import ModuleFormat, ModuleParameter
+from app.schemas.module import BlurParams, ModuleFormat, ModuleParameter
 from app.modules.utils.enums import ColorSpace, ModuleName, ModuleType, PixelFormat
 
 
 class BlurModule(ModuleBase):
     name: ModuleName
     type: ModuleType
+    parameter_model: Any = BlurParams
 
     def __init__(self, **data: dict[str, Any]) -> None:
         super().__init__(**data)
