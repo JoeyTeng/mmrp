@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Iterator, List, Dict
+from typing import Any, Iterator
 import cv2
 import numpy as np
 from app.modules.module import ModuleBase
@@ -14,20 +14,20 @@ class VideoOutput(ModuleBase):
 
     parameter_model: Any = VideoOutputParams
 
-    def __init__(self, **data: Dict[str, Any]) -> None:
+    def __init__(self, **data: dict[str, Any]) -> None:
         super().__init__(**data)
 
-    def get_parameters(self) -> List[ModuleParameter]:
+    def get_parameters(self) -> list[ModuleParameter]:
         return self.data["parameters"]
 
-    def get_input_formats(self) -> List[ModuleFormat]:
+    def get_input_formats(self) -> list[ModuleFormat]:
         return [
             ModuleFormat(
                 pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
             )
         ]
 
-    def get_output_formats(self) -> List[ModuleFormat]:
+    def get_output_formats(self) -> list[ModuleFormat]:
         return []
 
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:

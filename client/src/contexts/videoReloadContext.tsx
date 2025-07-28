@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
 import type { PipelineResponse } from "@/types/pipeline";
+import { useVideoMetrics } from "./VideoMetricsContext";
 
 type VideoReloadContextType = {
   triggerReload: (res: PipelineResponse) => void;
@@ -28,9 +29,12 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
   const [latestResponse, setLatestResponse] = useState<PipelineResponse | null>(
     null,
   );
+  const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
   const triggerReload = (res: PipelineResponse) => {
     setLatestResponse(res);
+    setCurrentFrame(0);
+    setMetrics(res.metrics);
   };
 
   return (

@@ -8,6 +8,7 @@ import {
 } from "@mui/icons-material";
 import Modules from "../drag-and-drop/Modules";
 import { SidebarItem } from "./types";
+import VideoQualityMetrics from "../comparison-metrics/VideoQualityMetrics";
 
 export const LEFT_SIDEBAR_ITEMS: SidebarItem[] = [
   {
@@ -47,12 +48,12 @@ export const RIGHT_SIDEBAR_ITEMS: SidebarItem[] = [
   },
   {
     id: "metrics",
-    title: "Metrics",
+    title: "Video Quality Metrics",
     icon: <QueryStatsOutlined />,
     panelContent: (
       <div className="p-2">
         <h4 className="font-medium mb-2">Comparison Metrics</h4>
-        <p>Metrics content will appear here</p>
+        <VideoQualityMetrics />
       </div>
     ),
     showArrow: true,

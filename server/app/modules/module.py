@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import Any
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 import numpy as np
 from app.schemas.module import (
@@ -19,7 +19,7 @@ class ModuleBase(BaseModel, ABC):
         default_factory=lambda: Position(x=0, y=0),
         description="Position in workspace (defaults to 0,0 if not provided)",
     )
-    data: Dict[str, Any] = Field(
+    data: dict[str, Any] = Field(
         default_factory=lambda: {
             "parameters": [],
             "input_formats": [],
@@ -32,7 +32,7 @@ class ModuleBase(BaseModel, ABC):
     model_config = ConfigDict(extra="forbid", validate_assignment=True, frozen=False)
 
     @model_validator(mode="before")
-    def parse_raw_parameters(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    def parse_raw_parameters(cls, values: dict[str, Any]) -> dict[str, Any]:
         data = values["data"]
         parameters_ = data.get("parameters", [])
 
@@ -81,23 +81,23 @@ class ModuleBase(BaseModel, ABC):
         )
 
     @abstractmethod
-    def get_parameters(self) -> List[ModuleParameter]:
+    def get_parameters(self) -> list[ModuleParameter]:
         pass
 
     @abstractmethod
-    def get_input_formats(self) -> List[ModuleFormat]:
+    def get_input_formats(self) -> list[ModuleFormat]:
         pass
 
     @abstractmethod
-    def get_output_formats(self) -> List[ModuleFormat]:
+    def get_output_formats(self) -> list[ModuleFormat]:
         pass
 
     @abstractmethod
-    def process(self, input_data: Any, parameters: Dict[str, Any]) -> Any:
+    def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:
         pass
 
     @abstractmethod
     def process_frame(
-        self, frame: np.ndarray[Any], parameters: Dict[str, Any]
+        self, frame: np.ndarray[Any], parameters: dict[str, Any]
     ) -> np.ndarray[Any]:
         pass

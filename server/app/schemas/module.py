@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import List, Optional, Any, Union, Dict
+from typing import Optional, Any, Union
 from app.modules.utils.enums import Color, ColorSpace, FrameRate, PixelFormat
 
 
@@ -22,7 +22,7 @@ class ParameterConstraint(BaseModel):
     default: Any = Field(..., description="Default value for the parameter")
     min: Optional[float] = None
     max: Optional[float] = None
-    options: Optional[List[str]] = None
+    options: Optional[list[str]] = None
     required: bool = True
     description: Optional[str] = None
 
@@ -37,16 +37,10 @@ class ParameterConstraint(BaseModel):
 
     @staticmethod
     def _get_type_default(param_type: str) -> Any:
-        type_defaults: dict[str, Any] = {
-            "str": "",
-            "int": 0,
-            "float": 0.0,
-            "bool": False,
-            "select": "",
-        }
+        type_defaults = {"str": "", "int": 0, "float": 0.0, "bool": False, "select": ""}
         return type_defaults.get(param_type.lower(), None)
 
-    def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
+    def model_dump(self, **kwargs: Any) -> dict[str, Any]:
         kwargs.setdefault("exclude_none", True)
         return super().model_dump(**kwargs)
 
@@ -63,7 +57,7 @@ class ParameterMetadata(BaseModel):
         None, description="Constraints for the parameter"
     )
 
-    def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
+    def model_dump(self, **kwargs: Any) -> dict[str, Any]:
         kwargs.setdefault("exclude_none", True)
         return super().model_dump(**kwargs)
 
@@ -74,11 +68,11 @@ class ModuleParameter(BaseModel):
         ..., description="Parameter Metadata for the parameter"
     )
 
-    def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
+    def model_dump(self, **kwargs: Any) -> dict[str, Any]:
         kwargs.setdefault("exclude_none", True)
         return super().model_dump(**kwargs)
 
-
+      
 class VideoSourceParams(BaseModel):
     path: str = Field(..., description="Path to video file")
 
@@ -115,8 +109,8 @@ class VideoOutputParams(BaseModel):
 class GenericParameterModel(BaseModel):
     class Config:
         extra = "allow"
-
-
+        
+        
 class VideoCodecParams(ModuleParameter):
     codec: str = Field(..., description="Video codec (e.g., h264, hevc, vp9)")
     bitrate: Optional[int] = Field(

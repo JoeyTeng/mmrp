@@ -1,9 +1,8 @@
-from typing import Dict
 from app.modules.module import ModuleBase
 
 
 class ModuleRegistry:
-    _modules: Dict[str, ModuleBase] = {}
+    _modules: dict[str, ModuleBase] = {}
 
     @classmethod
     def register(cls, module: ModuleBase) -> None:
@@ -21,7 +20,7 @@ class ModuleRegistry:
         raise KeyError(f"No module found with spacename starting with: {base_id}")
 
     @classmethod
-    def get_all(cls) -> Dict[str, ModuleBase]:
+    def get_all(cls) -> dict[str, ModuleBase]:
         return cls._modules
 
     @classmethod

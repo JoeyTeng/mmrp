@@ -1,5 +1,5 @@
 import cv2
-from typing import Any, Dict, List
+from typing import Any
 from pathlib import Path
 import numpy as np
 from app.modules.module import ModuleBase
@@ -11,13 +11,12 @@ from app.modules.utils.enums import ColorSpace, ModuleName, ModuleType, PixelFor
 class BlurModule(ModuleBase):
     name: ModuleName
     type: ModuleType
-
     parameter_model: Any = BlurParams
 
-    def __init__(self, **data: Dict[str, Any]) -> None:
+    def __init__(self, **data: dict[str, Any]) -> None:
         super().__init__(**data)
 
-    def get_parameters(self) -> List[ModuleParameter]:
+    def get_parameters(self) -> list[ModuleParameter]:
         return self.data["parameters"]
 
     def get_input_formats(self) -> list[ModuleFormat]:
@@ -31,7 +30,7 @@ class BlurModule(ModuleBase):
         return self.get_input_formats()
 
     def process_frame(
-        self, frame: np.ndarray[Any], parameters: Dict[str, Any]
+        self, frame: np.ndarray[Any], parameters: dict[str, Any]
     ) -> np.ndarray[Any]:
         kernel_size: int = parameters["kernel_size"]
         method: str = parameters["method"]
@@ -49,7 +48,7 @@ class BlurModule(ModuleBase):
             case _:
                 raise ValueError(f"Unsupported blur method: {method}")
 
-    def process(self, input_data: str, parameters: Dict[str, Any]) -> None:
+    def process(self, input_data: str, parameters: dict[str, Any]) -> None:
         output_path: str = str(
             Path(__file__).resolve().parent.parent.parent / "output" / "blur.webm"
         )

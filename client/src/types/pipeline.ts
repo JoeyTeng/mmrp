@@ -1,4 +1,5 @@
 import { ParamValueType } from "@/types/module";
+import { Metrics } from "./metrics";
 
 export type PipelineParameter = {
   [key: string]: ParamValueType;
@@ -18,4 +19,5 @@ export type PipelineRequest = {
 export type PipelineResponse = {
   left: string;
   right: string;
+  metrics: Metrics[];
 };
