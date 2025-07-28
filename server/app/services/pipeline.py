@@ -1,6 +1,8 @@
 import numpy as np
 from collections import defaultdict, deque
 from typing import Any, Iterator, Dict, List
+
+from pydantic import ValidationError
 from app.modules.module import ModuleBase
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
@@ -9,48 +11,10 @@ from app.services.module_registry import ModuleRegistry
 from itertools import tee
 import uuid
 import base64
-# from app.modules.utils.models import ModuleParameter
-
-
-# Validate pipeline parameters
-# Helper
-def _is_type_match(value: Any, expected_type: str) -> bool:
-    type_map: Dict[str, type] = {"int": int, "float": float, "str": str, "bool": bool}
-    if expected_type not in type_map:
-        raise ValueError(f"Unknown expected type '{expected_type}'")
-
-    return isinstance(value, type_map[expected_type])
 
 
 def get_module_namespace(module: PipelineModule) -> str:
     return module.id.split("#")[0]
-
-
-def validate_parameters(
-    parameters: Dict[str, Any],
-    parameter_defs: Dict[str, Any],
-    module: ModuleBase,
-) -> None:
-    return
-    # Check for unexpected parameters
-    for key, value in parameters.items():
-        if key not in parameter_defs:
-            raise ValueError(f"Unexpected parameter '{key}' for module '{module.name}'")
-
-        param_def = parameter_defs[key]
-        expected_type = param_def.type
-        if not _is_type_match(value, expected_type):
-            raise TypeError(
-                f"Parameter '{key}' for module '{module.name}' should be of type '{expected_type}', "
-                f"but got value '{value}' ({type(value).__name__})"
-            )
-
-    # Check for missing required parameters
-    for param_name, param_def in parameter_defs.items():
-        if param_def.required and param_name not in parameters:
-            raise ValueError(
-                f"Missing required parameter '{param_name}' for module '{module.name}'"
-            )
 
 
 # Process a single frame through the pipeline
@@ -142,12 +106,12 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     for mod in ordered_modules:
         mod_id = mod.id
         mod_instance, params = module_map[mod_id]
-        # Get expected parameter definitions
-        param_defs: Dict[str, Any] = {
-            param.name: param.metadata for param in mod_instance.get_parameters()
-        }
-        # Validate each parameter
-        validate_parameters(params, param_defs, mod_instance)
+        param_dict = {p.key: p.value for p in mod.parameters}
+        try:
+            validated = mod_instance.parameter_model(**param_dict)
+        except ValidationError as e:
+            raise ValueError(f"Parameter validation failed for module {mod.name}:\n{e}")
+        module_map[mod_id] = (mod_instance, validated.model_dump())
 
     # Get source and result module
     source_mod = ordered_modules[0]

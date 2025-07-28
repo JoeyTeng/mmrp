@@ -3,7 +3,7 @@ from typing import Any, Iterator, List, Dict
 import cv2
 import numpy as np
 from app.modules.module import ModuleBase
-from app.schemas.module import ModuleFormat, ModuleParameter
+from app.schemas.module import ModuleFormat, ModuleParameter, VideoSourceParams
 from app.modules.utils.enums import ModuleName, ModuleType, PixelFormat, ColorSpace
 from app.utils.shared_functionality import get_video_path, as_context
 from pathlib import Path
@@ -12,6 +12,8 @@ from pathlib import Path
 class VideoSource(ModuleBase):
     name: ModuleName
     type: ModuleType
+
+    parameter_model: Any = VideoSourceParams
 
     def __init__(self, **data: Dict[str, Any]) -> None:
         super().__init__(**data)

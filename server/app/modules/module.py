@@ -28,6 +28,7 @@ class ModuleBase(BaseModel, ABC):
         description="Module-specific Data including constraints and formats",
     )
 
+    parameter_model: Any = Field(..., exclude=True)
     model_config = ConfigDict(extra="forbid", validate_assignment=True, frozen=False)
 
     @model_validator(mode="before")
