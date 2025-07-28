@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 from app.schemas.module import ParameterConstraint
 from app.modules.utils.enums import (
     Color,
@@ -9,7 +9,7 @@ from app.modules.utils.enums import (
     VideoCodec,
 )
 
-MODULE_CONSTRAINTS: Dict[str, Any] = {
+MODULE_CONSTRAINTS: dict[str, Any] = {
     ModuleName.VIDEO_SOURCE: {
         "path": {
             "constraints": ParameterConstraint(

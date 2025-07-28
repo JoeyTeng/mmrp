@@ -1,9 +1,9 @@
 import importlib
 from pathlib import Path
-from typing import Dict, Type
+from typing import Type
 from app.modules.module import ModuleBase
 
-registry: Dict[str, Type[ModuleBase]] = {}
+registry: dict[str, Type[ModuleBase]] = {}
 base_path = Path("app/modules")
 
 

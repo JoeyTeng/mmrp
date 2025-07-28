@@ -1,7 +1,7 @@
 import json
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from fastapi import HTTPException
 from pydantic import ValidationError
 from app.modules.inputs.video_source import VideoSource
@@ -20,11 +20,11 @@ def get_json_path() -> Path:
     return Path(__file__).parent / "mock_test.json"
 
 
-def load_modules_from_json(file_path: Optional[Path] = None) -> List[ModuleBase]:
+def load_modules_from_json(file_path: Path | None = None) -> list[ModuleBase]:
     path = file_path if file_path is not None else get_json_path()
 
     with open(path) as f:
-        json_data: Dict[str, Any] = json.load(f)
+        json_data: dict[str, Any] = json.load(f)
     return json_to_modules(json_data)
 
 
@@ -33,8 +33,8 @@ def generate_module_uuid(module_name: str) -> str:
     return f"{module_name}#{id}"
 
 
-def json_to_modules(json_data: Dict[str, Any]) -> List[ModuleBase]:
-    module_classes: Dict[ModuleName, type[ModuleBase]] = {
+def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
+    module_classes: dict[ModuleName, type[ModuleBase]] = {
         ModuleName.VIDEO_SOURCE: VideoSource,
         ModuleName.COLOR: ColorModule,
         ModuleName.BLUR: BlurModule,
@@ -42,7 +42,7 @@ def json_to_modules(json_data: Dict[str, Any]) -> List[ModuleBase]:
         ModuleName.RESULT: VideoOutput,
     }
 
-    modules: List[ModuleBase] = []
+    modules: list[ModuleBase] = []
 
     for module_data in json_data.get("data", []):
         try:
@@ -86,7 +86,7 @@ def json_to_modules(json_data: Dict[str, Any]) -> List[ModuleBase]:
     return modules
 
 
-def get_all_mock_modules() -> List[ModuleBase]:
+def get_all_mock_modules() -> list[ModuleBase]:
     try:
         return load_modules_from_json()
     except HTTPException:
