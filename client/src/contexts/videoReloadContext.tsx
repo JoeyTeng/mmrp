@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useCallback,
+} from "react";
 import type { PipelineResponse } from "@/types/pipeline";
 import { useVideoMetrics } from "./VideoMetricsContext";
 
@@ -38,31 +44,27 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
   const [latestResponse, setLatestResponse] = useState<PipelineResponse | null>(
     null,
   );
-  const { setMetrics, setCurrentFrame } = useVideoMetrics();
-
-  const latestVideoInfoRef = useRef<
+  const [videoInfo, setVideoInfo] = useState<
     Record<"left" | "right", { url: string; size: number }>
   >({ left: { url: "", size: 0 }, right: { url: "", size: 0 } });
-  const getLatestVideoInfo = (video: "right" | "left") => {
-    return latestVideoInfoRef.current[video];
-  };
 
-  const setLatestVideoInfo = (
-    video: "left" | "right",
-    url: string,
-    size?: number,
-  ) => {
-    const oldUrl = latestVideoInfoRef.current[video].url;
-    if (oldUrl && oldUrl !== url) {
-      URL.revokeObjectURL(oldUrl);
-    }
-    latestVideoInfoRef.current[video].url = url;
-    if (size) {
-      latestVideoInfoRef.current[video].size = size;
-    } else {
-      latestVideoInfoRef.current[video].size = 0;
-    }
+  const { setMetrics, setCurrentFrame } = useVideoMetrics();
+
+  const getLatestVideoInfo = (video: "right" | "left") => {
+    return videoInfo[video];
   };
+  const setLatestVideoInfo = useCallback(
+    (video: "left" | "right", url: string, size?: number) => {
+      setVideoInfo((prev) => {
+        const oldUrl = prev[video].url;
+        if (oldUrl && oldUrl !== url) {
+          URL.revokeObjectURL(oldUrl);
+        }
+        return { ...prev, [video]: { ...prev[video], url, size: size ?? 0 } };
+      });
+    },
+    [],
+  );
 
   const triggerReload = (res: PipelineResponse) => {
     setLatestResponse(res);
