@@ -11,8 +11,15 @@ type VideoReloadContextType = {
   setIsProcessing: (value: boolean) => void;
   isProcessingError: boolean;
   setError: (value: boolean) => void;
-  getLatestVideoUrl: (video: "left" | "right") => string | undefined;
-  setLatestVideoUrl: (video: "left" | "right", url: string) => void;
+  getLatestVideoInfo: (video: "left" | "right") => {
+    url: string;
+    size: number;
+  };
+  setLatestVideoInfo: (
+    video: "left" | "right",
+    url: string,
+    size?: number,
+  ) => void;
 };
 
 const VideoReloadContext = createContext<VideoReloadContextType | undefined>(
@@ -33,20 +40,28 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
   );
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
-  const latestVideoUrlsRef = useRef<Partial<Record<"left" | "right", string>>>(
-    {},
-  );
-  const getLatestVideoUrl = (video: "right" | "left") => {
-    return latestVideoUrlsRef.current[video];
+  const latestVideoInfoRef = useRef<
+    Record<"left" | "right", { url: string; size: number }>
+  >({ left: { url: "", size: 0 }, right: { url: "", size: 0 } });
+  const getLatestVideoInfo = (video: "right" | "left") => {
+    return latestVideoInfoRef.current[video];
   };
 
-  const setLatestVideoUrl = (video: "left" | "right", url: string) => {
-    const oldUrl = latestVideoUrlsRef.current[video];
+  const setLatestVideoInfo = (
+    video: "left" | "right",
+    url: string,
+    size?: number,
+  ) => {
+    const oldUrl = latestVideoInfoRef.current[video].url;
     if (oldUrl && oldUrl !== url) {
       URL.revokeObjectURL(oldUrl);
     }
-    latestVideoUrlsRef.current[video] = url;
-    console.info(getLatestVideoUrl("left"));
+    latestVideoInfoRef.current[video].url = url;
+    if (size) {
+      latestVideoInfoRef.current[video].size = size;
+    } else {
+      latestVideoInfoRef.current[video].size = 0;
+    }
   };
 
   const triggerReload = (res: PipelineResponse) => {
@@ -64,8 +79,8 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
         setIsProcessing,
         isProcessingError,
         setError,
-        getLatestVideoUrl,
-        setLatestVideoUrl,
+        getLatestVideoInfo,
+        setLatestVideoInfo,
       }}
     >
       {children}

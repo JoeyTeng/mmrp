@@ -17,8 +17,12 @@ const SideBySide = ({ type }: Props) => {
   // Initialise error and loading states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const { latestResponse, isProcessing, isProcessingError, setLatestVideoUrl } =
-    useVideoReload();
+  const {
+    latestResponse,
+    isProcessing,
+    isProcessingError,
+    setLatestVideoInfo,
+  } = useVideoReload();
 
   // Initialise video and player references
   const videoARef = useRef<HTMLVideoElement>(null);
@@ -47,12 +51,12 @@ const SideBySide = ({ type }: Props) => {
       try {
         setIsLoading(true);
         setError("");
-        const originalUrl = await loadVideo(
+        const videoInfo = await loadVideo(
           "example-video.mp4",
           false,
           videoARef,
         );
-        setLatestVideoUrl("left", originalUrl);
+        setLatestVideoInfo("left", videoInfo.url, videoInfo.size);
       } catch (e) {
         setError("Failed to load videos. Please try again. " + e);
       } finally {
@@ -61,7 +65,7 @@ const SideBySide = ({ type }: Props) => {
     };
 
     loadInitialVideo();
-  }, [setCurrentFrame, setLatestVideoUrl, setMetrics, type]);
+  }, [setCurrentFrame, setLatestVideoInfo, setMetrics, type]);
 
   // When reload is triggered, load processed video(s)
   useEffect(() => {
@@ -73,20 +77,20 @@ const SideBySide = ({ type }: Props) => {
       try {
         setIsLoading(true);
         if (latestResponse!.left !== "") {
-          const urlLeft = await loadVideo(
+          const leftVideoInfo = await loadVideo(
             latestResponse!.left,
             true,
             videoARef,
           );
-          setLatestVideoUrl("left", urlLeft);
+          setLatestVideoInfo("left", leftVideoInfo.url, leftVideoInfo.size);
         }
         if (latestResponse!.right !== "") {
-          const urlRight = await loadVideo(
+          const rightVideoInfo = await loadVideo(
             latestResponse!.right,
             true,
             videoBRef,
           );
-          setLatestVideoUrl("right", urlRight);
+          setLatestVideoInfo("right", rightVideoInfo.url, rightVideoInfo.size);
         }
       } catch (e) {
         setError("Failed to load output video: " + e);
@@ -98,7 +102,7 @@ const SideBySide = ({ type }: Props) => {
     if (latestResponse != null) {
       loadOutputVideos();
     }
-  }, [latestResponse, setLatestVideoUrl, type]);
+  }, [latestResponse, setLatestVideoInfo, type]);
 
   return (
     <Box
