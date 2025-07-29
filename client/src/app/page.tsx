@@ -10,10 +10,9 @@ import VideoComparisonView from "@/components/cards/VideoComparisonView";
 export default function Home() {
   return (
     <VideoMetricsProvider>
-      <AppLayout>
-        <Box className="flex flex-col h-full gap-2">
-          {/* Wrap Comparison View and drag-and-drop area with video provider to register pipeline processing */}
-          <VideoReloadProvider>
+      <VideoReloadProvider>
+        <AppLayout>
+          <Box className="flex flex-col h-full gap-2">
             {/* Video Comparison View - Fixed height with min-height */}
             <Box className="h-1/3 min-h-[350px]">
               <VideoComparisonView />
@@ -22,10 +21,10 @@ export default function Home() {
             <Box className="h-2/3 flex-1">
               <DragAndDropArea />
             </Box>
-          </VideoReloadProvider>
-        </Box>
-        <ToastContainer />
-      </AppLayout>
+          </Box>
+          <ToastContainer />
+        </AppLayout>
+      </VideoReloadProvider>
     </VideoMetricsProvider>
   );
 }

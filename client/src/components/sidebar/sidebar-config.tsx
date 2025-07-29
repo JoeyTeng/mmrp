@@ -1,43 +1,6 @@
-import {
-  SaveOutlined,
-  CloudUploadOutlined,
-  FileDownloadOutlined,
-  AppsOutlined,
-  QueryStatsOutlined,
-  FilterAltOutlined,
-} from "@mui/icons-material";
-import Modules from "../drag-and-drop/Modules";
+import { QueryStatsOutlined, FilterAltOutlined } from "@mui/icons-material";
 import { SidebarItem } from "./types";
 import VideoQualityMetrics from "../comparison-metrics/VideoQualityMetrics";
-
-export const LEFT_SIDEBAR_ITEMS: SidebarItem[] = [
-  {
-    id: "save",
-    title: "Save",
-    icon: <SaveOutlined />,
-    action: () => console.log("Save clicked"),
-  },
-  {
-    id: "download",
-    title: "Download",
-    icon: <FileDownloadOutlined />,
-    action: () => console.log("Download clicked"),
-  },
-  {
-    id: "upload",
-    title: "Upload",
-    icon: <CloudUploadOutlined />,
-    action: () => console.log("Upload clicked"),
-  },
-  {
-    id: "modules",
-    title: "Modules",
-    icon: <AppsOutlined />,
-    panelContent: <Modules />,
-    showArrow: true,
-    showAfterDivider: true,
-  },
-];
 
 export const RIGHT_SIDEBAR_ITEMS: SidebarItem[] = [
   {
