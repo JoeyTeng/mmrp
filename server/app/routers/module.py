@@ -1,5 +1,5 @@
 import dataclasses
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile, HTTPException, File
 from typing import Any
 from pathlib import Path
 from app.modules.base_module import ModuleBase, ParameterDefinition
@@ -50,3 +50,23 @@ def get_all_modules() -> list[Module]:
         )
 
     return module_list
+
+
+# Endpoint to upload a new processing module (binary)
+@router.post("/upload", response_model=bool)
+async def upload_module(
+    config: UploadFile = File(...),
+    darwin_exec: UploadFile = File(...),
+    darwin_lib: UploadFile = File(...),
+    linux_exec: UploadFile = File(...),
+    linux_lib: UploadFile = File(...),
+    windows_exec: UploadFile = File(...),
+    windows_lib: UploadFile = File(...),
+) -> bool:
+    try:
+        # Validate config file content
+        print(config)
+        print(windows_exec)
+        return True
+    except Exception as e:
+        raise HTTPException(500, detail=f"Error uploading module: {str(e)}")

@@ -14,6 +14,7 @@ import { toast } from "react-toastify/unstyled";
 import { useState } from "react";
 import SingleFileRow from "./SingleFileRow";
 import DualFileRow from "./DualFileRow";
+import { uploadBinaryToBackend } from "@/services/binaryService";
 
 export default function UploadBinaryModal({
   open,
@@ -50,7 +51,7 @@ export default function UploadBinaryModal({
   };
 
   // Handle form submission and upload files to backend
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const missing: string[] = [];
     if (!files.config) missing.push("config.json");
 
@@ -80,7 +81,16 @@ export default function UploadBinaryModal({
     // TODO: Validate files (check json content and structure, check binaries?)
     // TODO: Send request to backend
     setIsLoading(true);
-    toast.success("Files submitted!");
+    try {
+      const res = await uploadBinaryToBackend(formData);
+      console.log("Upload response:", res);
+      setIsLoading(false);
+      toast.success("Modules uploaded successfully!");
+      handleClose();
+    } catch (error) {
+      toast.error("Upload failed. " + error);
+      setIsLoading(false);
+    }
   };
 
   return (
