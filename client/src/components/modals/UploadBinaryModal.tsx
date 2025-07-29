@@ -9,6 +9,7 @@ import {
   Button,
   Box,
 } from "@mui/material";
+import { DownloadOutlined } from "@mui/icons-material";
 import { toast } from "react-toastify/unstyled";
 import { useState } from "react";
 import SingleFileRow from "./SingleFileRow";
@@ -32,6 +33,8 @@ export default function UploadBinaryModal({
     linux: { exec: null, lib: null },
     windows: { exec: null, lib: null },
   });
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleClose = () => {
     // Clear all files
@@ -76,8 +79,8 @@ export default function UploadBinaryModal({
 
     // TODO: Validate files (check json content and structure, check binaries?)
     // TODO: Send request to backend
+    setIsLoading(true);
     toast.success("Files submitted!");
-    onClose();
   };
 
   return (
@@ -89,7 +92,7 @@ export default function UploadBinaryModal({
           files for each Operating System: macOS, Linux, Windows.
         </DialogContentText>
         <DialogContentText>
-          Please also include a{" "}
+          Please include a{" "}
           <Button
             variant="text"
             size="small"
@@ -98,7 +101,7 @@ export default function UploadBinaryModal({
             download="config_template.json"
             className="font-mono normal-case p-0 min-w-0"
           >
-            config.json
+            config.json <DownloadOutlined fontSize="small" />
           </Button>{" "}
           file to describe the module&apos;s parameters.
         </DialogContentText>
@@ -155,10 +158,11 @@ export default function UploadBinaryModal({
             Cancel
           </Button>
           <Button
-            className="bg-primary"
+            className={isLoading ? "bg-gray-200 text-gray-100" : "bg-primary"}
             variant="contained"
             type="submit"
             onClick={handleSubmit}
+            loading={isLoading}
           >
             Confirm
           </Button>
