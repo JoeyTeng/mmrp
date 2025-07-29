@@ -1,20 +1,13 @@
 "use client";
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  Box,
-} from "@mui/material";
+import { Button, Box } from "@mui/material";
 import { DownloadOutlined } from "@mui/icons-material";
 import { toast } from "react-toastify/unstyled";
 import { useState } from "react";
 import SingleFileRow from "./SingleFileRow";
 import DualFileRow from "./DualFileRow";
 import { uploadBinaryToBackend } from "@/services/binaryService";
+import { GenericModal } from "./GenericModal";
 
 export default function UploadBinaryModal({
   open,
@@ -94,14 +87,16 @@ export default function UploadBinaryModal({
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Upload a New Processing Module</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          To upload a new processing module, you must must include the necessary
+    <GenericModal
+      open={open}
+      onClose={handleClose}
+      onSubmit={handleSubmit}
+      title="Upload Binary Modules"
+      content={
+        <>
+          To upload a new processing module, you must include the necessary
           files for each Operating System: macOS, Linux, Windows.
-        </DialogContentText>
-        <DialogContentText>
+          <br />
           Please include a{" "}
           <Button
             variant="text"
@@ -114,70 +109,55 @@ export default function UploadBinaryModal({
             config.json <DownloadOutlined fontSize="small" />
           </Button>{" "}
           file to describe the module&apos;s parameters.
-        </DialogContentText>
+        </>
+      }
+      loading={isLoading}
+    >
+      <Box className="flex flex-col gap-2 mt-2">
+        <SingleFileRow
+          label="Config file (.json)"
+          file={files.config}
+          accept=".json"
+          onSelect={(f) => setFiles((prev) => ({ ...prev, config: f }))}
+        />
 
-        <Box className="flex flex-col gap-2 mt-2">
-          <SingleFileRow
-            label="Config file (.json)"
-            file={files.config}
-            accept=".json"
-            onSelect={(f) => setFiles((prev) => ({ ...prev, config: f }))}
-          />
+        <DualFileRow
+          label="Darwin (macOS)"
+          files={files.darwin}
+          acceptLib=".dylib"
+          onFileSelect={(type, f) =>
+            setFiles((prev) => ({
+              ...prev,
+              darwin: { ...prev.darwin, [type]: f },
+            }))
+          }
+        />
 
-          <DualFileRow
-            label="Darwin (macOS)"
-            files={files.darwin}
-            acceptLib=".dylib"
-            onFileSelect={(type, f) =>
-              setFiles((prev) => ({
-                ...prev,
-                darwin: { ...prev.darwin, [type]: f },
-              }))
-            }
-          />
+        <DualFileRow
+          label="Linux"
+          files={files.linux}
+          acceptLib=".so"
+          onFileSelect={(type, f) =>
+            setFiles((prev) => ({
+              ...prev,
+              linux: { ...prev.linux, [type]: f },
+            }))
+          }
+        />
 
-          <DualFileRow
-            label="Linux"
-            files={files.linux}
-            acceptLib=".so"
-            onFileSelect={(type, f) =>
-              setFiles((prev) => ({
-                ...prev,
-                linux: { ...prev.linux, [type]: f },
-              }))
-            }
-          />
-
-          <DualFileRow
-            label="Windows"
-            files={files.windows}
-            acceptExec=".exe"
-            acceptLib=".dll"
-            onFileSelect={(type, f) =>
-              setFiles((prev) => ({
-                ...prev,
-                windows: { ...prev.windows, [type]: f },
-              }))
-            }
-          />
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Box className="flex justify-end gap-2 mb-1 mr-1">
-          <Button variant="outlined" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button
-            className={isLoading ? "bg-gray-200 text-gray-100" : "bg-primary"}
-            variant="contained"
-            type="submit"
-            onClick={handleSubmit}
-            loading={isLoading}
-          >
-            Confirm
-          </Button>
-        </Box>
-      </DialogActions>
-    </Dialog>
+        <DualFileRow
+          label="Windows"
+          files={files.windows}
+          acceptExec=".exe"
+          acceptLib=".dll"
+          onFileSelect={(type, f) =>
+            setFiles((prev) => ({
+              ...prev,
+              windows: { ...prev.windows, [type]: f },
+            }))
+          }
+        />
+      </Box>
+    </GenericModal>
   );
 }
