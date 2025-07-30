@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Box } from "@mui/material";
-import { DownloadOutlined } from "@mui/icons-material";
+import { FileOpenOutlined } from "@mui/icons-material";
 import { toast } from "react-toastify/unstyled";
 import { useState } from "react";
 import SingleFileRow from "./SingleFileRow";
@@ -106,7 +106,7 @@ export default function UploadBinaryModal({
             download="config_template.json"
             className="font-mono normal-case p-0 min-w-0"
           >
-            config.json <DownloadOutlined fontSize="small" />
+            config.json <FileOpenOutlined fontSize="small" />
           </Button>{" "}
           file to describe the module&apos;s parameters.
         </>
