@@ -68,6 +68,7 @@ export interface ParameterConfigurationDrawerProps {
 export type ParameterConfigurationProps = {
   node: Node<NodeData, NodeType>;
   onParamChange: (key: string, value: ParamValueType) => void;
+  searchQuery: string;
 };
 
 export type ParameterInfoToolTipProps = {
