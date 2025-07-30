@@ -13,11 +13,11 @@ class ModuleRegistry:
         return cls._modules[module_id]
 
     @classmethod
-    def get_by_spacename(cls, base_id: str) -> ModuleBase:
-        for module_id, module in cls._modules.items():
-            if module_id.startswith(f"{base_id}#"):
+    def get_by_spacename(cls, module_class: str) -> ModuleBase:
+        for module in cls._modules.values():
+            if module.module_class == module_class:
                 return module
-        raise KeyError(f"No module found with spacename starting with: {base_id}")
+        raise KeyError(f"No module found with spacename starting with: {module_class}")
 
     @classmethod
     def get_all(cls) -> dict[str, ModuleBase]:

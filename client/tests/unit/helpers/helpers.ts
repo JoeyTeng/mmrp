@@ -14,6 +14,7 @@ export function makeNode(
     targetPosition: Position.Left,
     data: {
       name: "",
+      moduleClass: "",
       params: {},
       inputFormats: [],
       outputFormats: [],

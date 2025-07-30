@@ -3,6 +3,7 @@ export type ParamConstraintsType = "str" | "int" | "select" | "bool";
 
 export interface Module {
   id: string;
+  moduleClass: string;
   name: string;
   type: NodeType;
   position: {

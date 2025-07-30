@@ -94,6 +94,29 @@ class ModuleData(BaseModel):
 
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
+    @model_validator(mode="before")
+    def parse_raw_parameters(cls, values: dict[str, Any]) -> dict[str, Any]:
+        parameters_ = values.get("parameters", [])
+
+        enriched_parameters: list[ModuleParameter] = []
+        for param_ in parameters_:
+            # Validate and enrich parameter constraints
+            constraint_ = ParameterConstraint.model_validate(param_)
+
+            # Metadata for the parameter
+            metadata_ = ParameterMetadata(
+                type=param_["type"],
+                value=param_.get("default", constraint_.default),
+                constraints=constraint_,
+            )
+
+            # Parameter
+            parameter_ = ModuleParameter(name=param_["name"], metadata=metadata_)
+            enriched_parameters.append(parameter_)
+
+        values["parameters"] = enriched_parameters
+        return values
+
     def get(self, key: str) -> Any:
         return getattr(self, key)
 

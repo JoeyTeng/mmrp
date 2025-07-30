@@ -10,7 +10,7 @@ from app.modules.transforms.color import ColorModule
 from app.modules.transforms.resize import ResizeModule
 from app.modules.generic.binary_module import GenericBinaryModule
 from app.modules.utils.enums import ModuleName
-from app.schemas.module import Position
+from app.schemas.module import ModuleData, Position
 from app.modules.module import ModuleBase
 from app.services.module_registry import ModuleRegistry
 from app.utils.shared_functionality import string_sanitizer
@@ -28,9 +28,8 @@ def get_all_mock_modules(file_path: Path | None = None) -> list[ModuleBase]:
     return json_to_modules(json_data)
 
 
-def generate_module_uuid(module_name: str) -> str:
-    id = uuid.uuid4()
-    return f"{module_name}#{id}"
+def generate_module_uuid() -> str:
+    return f"{uuid.uuid4()}"
 
 
 def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
@@ -46,25 +45,26 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
 
     for module_data in json_data.get("data", []):
         try:
-            name_ = module_data["name"]
+            module_class_ = module_data["name"]
+            name_ = string_sanitizer(module_class_)
             type_ = module_data["type"]
             parameters_ = module_data.get("parameters", [])
-            module_id = generate_module_uuid(name_)
+            module_id = generate_module_uuid()
             position_ = Position(x=0.0, y=0.0)
+            data_ = ModuleData(parameters=parameters_)
 
             try:
-                module_class = module_classes[name_]
+                module_class = module_classes[module_class_]
             except KeyError:
                 module_class = GenericBinaryModule
 
             module = module_class(
                 id=module_id,
-                name=string_sanitizer(name_),
+                module_class=module_class_,
+                name=name_,
                 type=type_,
                 position=position_,
-                data={
-                    "parameters": parameters_,
-                },
+                data=data_,
             )
 
             ModuleRegistry.register(module)

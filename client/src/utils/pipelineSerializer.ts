@@ -32,6 +32,7 @@ export function dumpPipelineToJson(
     return {
       id: id,
       name: node.data.name,
+      module_class: node.data.moduleClass,
       source: upstreamIds,
       parameters,
     };

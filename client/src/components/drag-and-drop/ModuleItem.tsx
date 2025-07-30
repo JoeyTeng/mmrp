@@ -4,11 +4,12 @@ import { Box } from "@mui/material";
 type ModuleItemProps = {
   id: string;
   name: string;
+  moduleClass: string;
 };
 
-export default function ModuleItem({ id, name }: ModuleItemProps) {
+export default function ModuleItem({ id, name, moduleClass }: ModuleItemProps) {
   const onDragStart = (event: React.DragEvent) => {
-    const nodeData = JSON.stringify({ id, name });
+    const nodeData = JSON.stringify({ id, name, moduleClass });
     event.dataTransfer.setData("application/reactflow", nodeData);
     event.dataTransfer.effectAllowed = "copy";
   };

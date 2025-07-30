@@ -13,8 +13,8 @@ from app.schemas.metrics import Metrics
 from app.modules.utils.enums import ModuleName
 
 
-def get_module_namespace(module: PipelineModule) -> str:
-    return module.id.split("#")[0]
+def get_module_class(module: PipelineModule) -> str:
+    return module.module_class
 
 
 # Process a single frame through the pipeline
@@ -86,17 +86,17 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     if not ordered_modules:
         raise ValueError("Pipeline is empty")
 
-    first_module_base = get_module_namespace(ordered_modules[0])
+    first_module_base = get_module_class(ordered_modules[0])
     if first_module_base != ModuleName.VIDEO_SOURCE:
         raise ValueError(f"Pipeline must start with a {ModuleName.VIDEO_SOURCE} module")
 
-    last_module_base = get_module_namespace(ordered_modules[-1])
+    last_module_base = get_module_class(ordered_modules[-1])
     if last_module_base != ModuleName.RESULT:
         raise ValueError(f"Pipeline must end with a {ModuleName.RESULT} module")
 
     module_map: dict[str, tuple[ModuleBase, dict[str, Any]]] = {
         m.id: (
-            ModuleRegistry.get_by_spacename(get_module_namespace(m)),
+            ModuleRegistry.get_by_spacename(get_module_class(m)),
             {p.key: p.value for p in m.parameters},
         )
         for m in ordered_modules
@@ -118,7 +118,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     result_modules = [
         module
         for module in ordered_modules
-        if get_module_namespace(module) == "video_output"
+        if get_module_class(module) == ModuleName.RESULT
     ]
 
     # Check and validate result modules
@@ -136,7 +136,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     processing_nodes = [
         m
         for m in ordered_modules
-        if "video_source" not in m.id and "video_output" not in m.id
+        if m.module_class not in [ModuleName.VIDEO_SOURCE, ModuleName.RESULT]
     ]
 
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (

@@ -10,6 +10,7 @@ export interface NodePort {
 
 export type NodeData = {
   name: string;
+  moduleClass: string;
   params: Record<string, ParamValueType>; // constraint to ensure there's only one value
   inputFormats: NodePort[];
   outputFormats: NodePort[];

@@ -1,19 +1,18 @@
 from abc import ABC, abstractmethod
 from typing import Any
-from pydantic import BaseModel, Field, ConfigDict, model_validator
+from pydantic import BaseModel, Field, ConfigDict
 import numpy as np
 from app.schemas.module import (
     ModuleData,
     ModuleFormat,
     ModuleParameter,
-    ParameterConstraint,
-    ParameterMetadata,
     Position,
 )
 
 
 class ModuleBase(BaseModel, ABC):
     id: str = Field(..., description="Unique Module Identifier -ID")
+    module_class: str = Field(..., description="Module Class name")
     name: str = Field(..., description="Module name in pipeline")
     type: str = Field(..., description="Module type in pipeline")
     position: Position = Field(
@@ -27,30 +26,6 @@ class ModuleBase(BaseModel, ABC):
 
     parameter_model: Any = Field(..., exclude=True)
     model_config = ConfigDict(extra="forbid", validate_assignment=True, frozen=False)
-
-    @model_validator(mode="before")
-    def parse_raw_parameters(cls, values: dict[str, Any]) -> dict[str, Any]:
-        data = values["data"]
-        parameters_ = data.get("parameters", [])
-
-        data["parameters"] = []
-        for param_ in parameters_:
-            # Validate and enrich parameter constraints
-            constraint = ParameterConstraint.model_validate(param_)
-
-            # Metadata for the parameter
-            metadata = ParameterMetadata(
-                type=param_["type"],
-                value=param_.get("default", constraint.default),
-                constraints=constraint,
-            )
-
-            # Parameter
-            parameter_ = ModuleParameter(name=param_["name"], metadata=metadata)
-            data["parameters"].append(parameter_)
-
-        values["data"] = ModuleData(parameters=data["parameters"])
-        return values
 
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
