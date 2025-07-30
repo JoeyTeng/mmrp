@@ -1,4 +1,7 @@
 import dataclasses
+import json
+import io
+import zipfile
 from fastapi import APIRouter, UploadFile, HTTPException, File
 from typing import Any
 from pathlib import Path
@@ -64,9 +67,49 @@ async def upload_module(
     windows_lib: UploadFile = File(...),
 ) -> bool:
     try:
-        # Validate config file content
-        print(config)
-        print(windows_exec)
+        # Create folder structured by OS
+        file_structure: dict[str, list[tuple[str | None, UploadFile]]] = {
+            "Darwin-arm64": [
+                ("config.json", config),
+                (darwin_exec.filename, darwin_exec),
+                (darwin_lib.filename, darwin_lib),
+            ],
+            "Linux-x86_64": [
+                ("config.json", config),
+                (linux_exec.filename, linux_exec),
+                (linux_lib.filename, linux_lib),
+            ],
+            "Windows-AMD64": [
+                ("config.json", config),
+                (windows_exec.filename, windows_exec),
+                (windows_lib.filename, windows_lib),
+            ],
+        }
+
+        zip_buffer = io.BytesIO()
+
+        # Create a zip file
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for folder, files in file_structure.items():
+                for filename, upload_file in files:
+                    if filename is None:
+                        continue  # skip if filename missing
+                    content = await upload_file.read()
+                    zip_path = f"{folder}/{filename}"
+                    zip_file.writestr(zip_path, content)
+                    upload_file.file.seek(0)  # Reset stream in case reused
+
+        zip_buffer.seek(0)
+        # zip = zip_buffer.read()
+
+        # TODO: upload zip to ??
+
+        # Read config file and add binary to module registry
+        contents: bytes = await config.read()
+        text: str = contents.decode("utf-8")
+        data = json.loads(text)
+        print(data)
+        # TODO: add to registry (needs new module structure implementation)
         return True
     except Exception as e:
         raise HTTPException(500, detail=f"Error uploading module: {str(e)}")
