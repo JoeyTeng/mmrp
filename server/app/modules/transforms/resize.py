@@ -6,8 +6,6 @@ from app.modules.module import ModuleBase
 from app.utils.shared_functionality import as_context
 from app.schemas.module import ModuleFormat, ModuleParameter, ResizeParams
 from app.modules.utils.enums import (
-    ModuleName,
-    ModuleType,
     PixelFormat,
     ColorSpace,
     FrameRate,
@@ -16,9 +14,6 @@ from app.modules.utils.enums import (
 
 
 class ResizeModule(ModuleBase):
-    name: ModuleName
-    type: ModuleType
-
     parameter_model: Any = ResizeParams
 
     @override

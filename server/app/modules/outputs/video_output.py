@@ -4,14 +4,11 @@ import cv2
 import numpy as np
 from app.modules.module import ModuleBase
 from app.schemas.module import ModuleFormat, ModuleParameter, VideoOutputParams
-from app.modules.utils.enums import ModuleName, ModuleType, PixelFormat, ColorSpace
+from app.modules.utils.enums import PixelFormat, ColorSpace
 from app.utils.shared_functionality import as_context
 
 
 class VideoOutput(ModuleBase):
-    name: ModuleName
-    type: ModuleType
-
     parameter_model: Any = VideoOutputParams
 
     @override

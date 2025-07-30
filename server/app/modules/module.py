@@ -13,8 +13,8 @@ from app.schemas.module import (
 
 class ModuleBase(BaseModel, ABC):
     id: str = Field(..., description="Unique Module Identifier -ID")
-    name: Any = Field(..., description="Module name in pipeline")
-    type: Any = Field(..., description="Module type in pipeline")
+    name: str = Field(..., description="Module name in pipeline")
+    type: str = Field(..., description="Module type in pipeline")
     position: Position = Field(
         default_factory=lambda: Position(x=0, y=0),
         description="Position in workspace (defaults to 0,0 if not provided)",

@@ -5,12 +5,10 @@ import numpy as np
 from app.modules.module import ModuleBase
 from app.utils.shared_functionality import as_context
 from app.schemas.module import BlurParams, ModuleFormat, ModuleParameter
-from app.modules.utils.enums import ColorSpace, ModuleName, ModuleType, PixelFormat
+from app.modules.utils.enums import ColorSpace, PixelFormat
 
 
 class BlurModule(ModuleBase):
-    name: ModuleName
-    type: ModuleType
     parameter_model: Any = BlurParams
 
     @override

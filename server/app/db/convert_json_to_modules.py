@@ -13,6 +13,7 @@ from app.modules.utils.enums import ModuleName
 from app.schemas.module import Position
 from app.modules.module import ModuleBase
 from app.services.module_registry import ModuleRegistry
+from app.utils.shared_functionality import string_sanitizer
 
 
 def get_json_path() -> Path:
@@ -58,7 +59,7 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
 
             module = module_class(
                 id=module_id,
-                name=name_,
+                name=string_sanitizer(name_),
                 type=type_,
                 position=position_,
                 data={

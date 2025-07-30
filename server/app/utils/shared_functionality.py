@@ -42,7 +42,7 @@ def as_context(
 
 def string_sanitizer(raw_name: str) -> str:
     cleaned = re.sub(
-        r"[^\w]+", " ", raw_name
+        r"[^a-zA-Z0-9]+", " ", raw_name
     )  # Replace all non-alphanumeric characters with space
     cleaned = re.sub(
         r"\s+", " ", cleaned

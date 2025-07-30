@@ -5,13 +5,10 @@ import numpy as np
 from app.modules.module import ModuleBase
 from app.utils.shared_functionality import as_context
 from app.schemas.module import ColorspaceParams, ModuleFormat, ModuleParameter
-from app.modules.utils.enums import ColorSpace, ModuleName, ModuleType, PixelFormat
+from app.modules.utils.enums import ColorSpace, PixelFormat
 
 
 class ColorModule(ModuleBase):
-    name: ModuleName
-    type: ModuleType
-
     parameter_model: Any = ColorspaceParams
 
     @override

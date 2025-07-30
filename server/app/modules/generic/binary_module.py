@@ -5,9 +5,6 @@ from app.schemas.module import GenericParameterModel, ModuleFormat, ModuleParame
 
 
 class GenericBinaryModule(ModuleBase):
-    name: str
-    type: str
-
     parameter_model: Any = GenericParameterModel
 
     @override
