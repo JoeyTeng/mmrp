@@ -35,40 +35,6 @@ export default function ParameterConfiguration({
     );
   }, [modules, node?.data.label]);
 
-  // node.data.params = {
-  //   ...node.data.params,
-  //   string_param: "hello world",
-  //   number_param: 42,
-  //   boolean_param: true,
-  //   select_param: "option1",
-  // };
-
-  // paramLookup.string_param = {
-  //   name: "string_param",
-  //   // constraints: [],
-  //   description: "This is a string input test.",
-  //   type: "str",
-  //   required: false,
-  // };
-
-  // paramLookup.number_param = {
-  //   name: "number_param",
-  //   constraints: [0, 100],
-  //   description: "This is a number input test.",
-  // };
-
-  // paramLookup.boolean_param = {
-  //   name: "boolean_param",
-  //   constraints: [],
-  //   description: "This is a boolean input test.",
-  // };
-
-  // paramLookup.select_param = {
-  //   name: "select_param",
-  //   constraints: ["option1", "option2", "option3"],
-  //   description: "This is a select input test.",
-  // };
-
   const paramKeys = Object.keys(node.data.params);
 
   const fuse = useMemo(() => {
