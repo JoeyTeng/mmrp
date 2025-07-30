@@ -28,11 +28,6 @@ export default function ParameterConfiguration({
     );
   }, [modules, node?.data.name]);
 
-  const getInputType = (key: string) => {
-    const constraints = constraintsLookup.get(key);
-    return constraints.type;
-  };
-
   const handleInputNumber = (key: string, rawValue: string) => {
     const newValue = Number(rawValue);
     const constraints = constraintsLookup.get(key);
@@ -61,9 +56,8 @@ export default function ParameterConfiguration({
 
   const renderParamInput = (key: string, value: NodeParamValue) => {
     const constraints = constraintsLookup.get(key);
-    const inputType = getInputType(key);
 
-    switch (inputType) {
+    switch (constraints.type) {
       case "select":
         return (
           <Box

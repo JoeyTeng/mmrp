@@ -1,5 +1,5 @@
 export type ParamValueType = string | number | boolean;
-export type ParamConstraintsType = "str" | "int" | "selcet" | "bool";
+export type ParamConstraintsType = "str" | "int" | "select" | "bool";
 
 export interface Module {
   id: string;
@@ -42,8 +42,8 @@ export interface ParameterConstraints {
 export interface FormatDefinition {
   pixelFormat?: string;
   colorSpace?: string;
-  width?: number | string;
-  height?: number | string;
+  width?: number;
+  height?: number;
   frameRate?: number; //fps
 }
 
