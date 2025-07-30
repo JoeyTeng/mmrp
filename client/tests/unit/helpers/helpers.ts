@@ -13,7 +13,7 @@ export function makeNode(
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
     data: {
-      label: "",
+      name: "",
       params: {},
       inputFormats: [],
       outputFormats: [],
