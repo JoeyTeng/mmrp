@@ -19,7 +19,7 @@ BINARIES_DIR: Path = BASE_DIR / "binaries"
 
 
 # Returns all modules and their parameters
-@router.get("/", response_model=list[ModuleBase])
+@router.get("/", response_model=list[ModuleBase], response_model_exclude_none=True)
 async def get_modules():
     try:
         return get_all_mock_modules()

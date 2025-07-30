@@ -3,6 +3,7 @@ from typing import Any
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 import numpy as np
 from app.schemas.module import (
+    ModuleData,
     ModuleFormat,
     ModuleParameter,
     ParameterConstraint,
@@ -19,12 +20,8 @@ class ModuleBase(BaseModel, ABC):
         default_factory=lambda: Position(x=0, y=0),
         description="Position in workspace (defaults to 0,0 if not provided)",
     )
-    data: dict[str, Any] = Field(
-        default_factory=lambda: {
-            "parameters": [],
-            "input_formats": [],
-            "output_formats": [],
-        },
+    data: ModuleData = Field(
+        ...,
         description="Module-specific Data including constraints and formats",
     )
 
@@ -39,13 +36,7 @@ class ModuleBase(BaseModel, ABC):
         data["parameters"] = []
         for param_ in parameters_:
             # Validate and enrich parameter constraints
-            constraint = ParameterConstraint.model_validate(
-                {
-                    k: v
-                    for k, v in param_.items()
-                    if k in ParameterConstraint.model_fields
-                }
-            )
+            constraint = ParameterConstraint.model_validate(param_)
 
             # Metadata for the parameter
             metadata = ParameterMetadata(
@@ -56,9 +47,9 @@ class ModuleBase(BaseModel, ABC):
 
             # Parameter
             parameter_ = ModuleParameter(name=param_["name"], metadata=metadata)
-            data["parameters"].append(parameter_.model_dump())
+            data["parameters"].append(parameter_)
 
-        values["data"] = data
+        values["data"] = ModuleData(parameters=data["parameters"])
         return values
 
     def __init__(self, **data: Any) -> None:
@@ -66,19 +57,8 @@ class ModuleBase(BaseModel, ABC):
         self._enrich_data()
 
     def _enrich_data(self) -> None:
-        # Add formats
-        self.data.update(
-            {
-                "input_formats": [
-                    fmt.model_dump(exclude_none=True)
-                    for fmt in self.get_input_formats()
-                ],
-                "output_formats": [
-                    fmt.model_dump(exclude_none=True)
-                    for fmt in self.get_output_formats()
-                ],
-            }
-        )
+        self.data.input_formats = self.get_input_formats()
+        self.data.output_formats = self.get_output_formats()
 
     @abstractmethod
     def get_parameters(self) -> list[ModuleParameter]:
