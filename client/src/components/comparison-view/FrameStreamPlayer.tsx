@@ -3,10 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import PlayerControls from "./PlayerControls";
 import { FrameData, ViewOptions } from "./types";
-import {
-  closeVideoWebSocket,
-  createVideoWebSocket,
-} from "@/services/webSocketClient";
+import { useWebSocket } from "@/contexts/WebSocketContext";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
 import { Metrics } from "@/types/metrics";
 
@@ -41,6 +38,7 @@ const FrameStreamPlayer = ({
   ]);
   const hasCalledFirstFrame = useRef(false);
   const { setMetrics, currentFrame, setCurrentFrame } = useVideoMetrics(); // currentFrame is frame index in range [0, frames.length)
+  const { createConnection, closeConnection } = useWebSocket();
 
   // Trigger onFirstFrame callback once first frame is received
   useEffect(() => {
@@ -57,7 +55,7 @@ const FrameStreamPlayer = ({
     setMetrics([]);
     setCurrentFrame(0);
 
-    createVideoWebSocket(
+    createConnection(
       (data) => {
         if (data instanceof ArrayBuffer) {
           const blob = new Blob([data], { type: currentMimeRef.current });
@@ -118,9 +116,17 @@ const FrameStreamPlayer = ({
     );
 
     return () => {
-      closeVideoWebSocket();
+      closeConnection();
     };
-  }, [filenames, setCurrentFrame, setFrames, setMetrics, view]);
+  }, [
+    closeConnection,
+    createConnection,
+    filenames,
+    setCurrentFrame,
+    setFrames,
+    setMetrics,
+    view,
+  ]);
 
   // Render frame at given index
   const renderFrame = useCallback(

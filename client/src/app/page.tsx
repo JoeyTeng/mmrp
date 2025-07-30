@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify/unstyled";
 import "react-toastify/ReactToastify.css";
 import { VideoMetricsProvider } from "@/contexts/VideoMetricsContext";
 import VideoComparisonView from "@/components/cards/VideoComparisonView";
+import { WebSocketProvider } from "@/contexts/WebSocketContext";
 
 export default function Home() {
   return (
