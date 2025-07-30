@@ -18,11 +18,14 @@ export const loadVideo = async (
       },
     );
 
-    const url = URL.createObjectURL(response.data);
+    const data = response.data;
+
+    const url = URL.createObjectURL(data);
     if (ref.current) {
       ref.current.src = url;
     }
-    return url;
+
+    return { url, size: data.size };
   } catch (e) {
     console.error(`Error loading video ${videoName}`, e);
     throw e;

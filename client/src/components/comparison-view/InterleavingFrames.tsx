@@ -36,7 +36,8 @@ const InterleavingFrames = ({ type }: Props) => {
         setIsLoading(true);
         setError("");
 
-        url = await loadVideo("example-video.mp4", false, videoRef);
+        const videoInfo = await loadVideo("example-video.mp4", false, videoRef);
+        url = videoInfo.url;
       } catch (e) {
         setError("Failed to load video. Please try again. " + e);
       } finally {
