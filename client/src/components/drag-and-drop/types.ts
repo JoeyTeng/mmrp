@@ -70,7 +70,3 @@ export type ParameterConfigurationProps = {
   onParamChange: (key: string, value: ParamValueType) => void;
   searchQuery: string;
 };
-
-export type ParameterInfoToolTipProps = {
-  description: string | null;
-};
