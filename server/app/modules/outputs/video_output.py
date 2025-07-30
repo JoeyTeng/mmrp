@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, override
 import cv2
 import numpy as np
 from app.modules.module import ModuleBase
@@ -14,12 +14,11 @@ class VideoOutput(ModuleBase):
 
     parameter_model: Any = VideoOutputParams
 
-    def __init__(self, **data: dict[str, Any]) -> None:
-        super().__init__(**data)
-
+    @override
     def get_parameters(self) -> list[ModuleParameter]:
         return self.data["parameters"]
 
+    @override
     def get_input_formats(self) -> list[ModuleFormat]:
         return [
             ModuleFormat(
@@ -27,13 +26,16 @@ class VideoOutput(ModuleBase):
             )
         ]
 
+    @override
     def get_output_formats(self) -> list[ModuleFormat]:
         return []
 
+    @override
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:
         # Pass‐through
         raise NotImplementedError
 
+    @override
     def process(
         self, input_data: Iterator[np.ndarray], parameters: dict[str, Any]
     ) -> Any:

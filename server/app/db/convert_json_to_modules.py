@@ -2,7 +2,6 @@ import json
 import uuid
 from pathlib import Path
 from typing import Any
-from fastapi import HTTPException
 from pydantic import ValidationError
 from app.modules.inputs.video_source import VideoSource
 from app.modules.outputs.video_output import VideoOutput
@@ -17,10 +16,10 @@ from app.services.module_registry import ModuleRegistry
 
 
 def get_json_path() -> Path:
-    return Path(__file__).parent / "mock_test.json"
+    return Path(__file__).parent / "mock_data.json"
 
 
-def load_modules_from_json(file_path: Path | None = None) -> list[ModuleBase]:
+def get_all_mock_modules(file_path: Path | None = None) -> list[ModuleBase]:
     path = file_path if file_path is not None else get_json_path()
 
     with open(path) as f:
@@ -66,32 +65,17 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
                     "parameters": parameters_,
                 },
             )
+
             ModuleRegistry.register(module)
             modules.append(module)
         except KeyError as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Missing required field in module data: {str(e)} - module_data: {module_data}",
+            raise ValueError(
+                f"Missing required field in module data: {str(e)} - module_data: {module_data}"
             )
         except ValidationError as e:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Validation error in module: {module_data} : {e.errors()}",
+            raise ValueError(
+                f"Validation error in module: {module_data} : {e.errors()}"
             )
         except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error loading module: {module_data}: {str(e)}",
-            )
+            raise ValueError(f"Error loading module: {module_data}: {str(e)}")
     return modules
-
-  
-def get_all_mock_modules() -> list[ModuleBase]:
-    try:
-        return load_modules_from_json()
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to load mock modules: {str(e)}"
-        )

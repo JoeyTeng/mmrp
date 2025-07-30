@@ -1,5 +1,5 @@
 import contextlib
-from typing import Any, Iterator
+from typing import Any, Iterator, override
 import cv2
 import numpy as np
 from app.modules.module import ModuleBase
@@ -15,28 +15,31 @@ class VideoSource(ModuleBase):
 
     parameter_model: Any = VideoSourceParams
 
-    def __init__(self, **data: dict[str, Any]) -> None:
-        super().__init__(**data)
-
+    @override
     def get_parameters(self) -> list[ModuleParameter]:
         return self.data["parameters"]
 
+    @override
     def get_input_formats(self) -> list[ModuleFormat]:
         return []
 
+    @override
     def get_output_formats(self) -> list[ModuleFormat]:
+        # We support .mp4 imports (decoded by OpenCV as BGR24)
+        # Width/height/fps will be resolved at runtime by the pipeline runner
         return [
             ModuleFormat(
                 pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
             )
         ]
 
+    @override
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:
         # Source frames are injected by the pipeline service, never called directly
         raise NotImplementedError("Frame injection is handled by the pipeline service")
 
     # Process video path
-
+    @override
     def process(
         self, input_data: Any, parameters: dict[str, Any]
     ) -> contextlib.AbstractContextManager[tuple[str, float, Iterator[np.ndarray]]]:

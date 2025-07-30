@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import typing
 import contextlib
 
@@ -37,3 +38,14 @@ def as_context(
                 on_exit(resource)
 
     return wrapper
+
+
+def string_sanitizer(raw_name: str) -> str:
+    cleaned = re.sub(
+        r"[^\w]+", " ", raw_name
+    )  # Replace all non-alphanumeric characters with space
+    cleaned = re.sub(
+        r"\s+", " ", cleaned
+    )  # Replace multiple spaces with a single space
+    cleaned = cleaned.strip()  # Strip leading/trailing whitespace
+    return cleaned.title()  # Capitalize each word

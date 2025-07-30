@@ -1,5 +1,5 @@
 import cv2
-from typing import Any
+from typing import Any, override
 from pathlib import Path
 import numpy as np
 from app.modules.module import ModuleBase
@@ -21,12 +21,11 @@ class ResizeModule(ModuleBase):
 
     parameter_model: Any = ResizeParams
 
-    def __init__(self, **data: dict[str, Any]) -> None:
-        super().__init__(**data)
-
+    @override
     def get_parameters(self) -> list[ModuleParameter]:
         return self.data["parameters"]
 
+    @override
     def get_input_formats(self) -> list[ModuleFormat]:
         return [
             ModuleFormat(
@@ -34,17 +33,19 @@ class ResizeModule(ModuleBase):
             )
         ]
 
+    @override
     def get_output_formats(self) -> list[ModuleFormat]:
         return [
             ModuleFormat(
                 pixel_format=PixelFormat.BGR24,
                 color_space=ColorSpace.BT_709_FULL,
-                width="param:width",
-                height="param:height",
+                width=32,
+                height=1024,
                 frame_rate=FrameRate.FPS_30,
             )
         ]
 
+    @override
     def process_frame(
         self, frame: np.ndarray[Any], parameters: dict[str, Any]
     ) -> np.ndarray[Any]:
@@ -70,6 +71,7 @@ class ResizeModule(ModuleBase):
             case _:
                 raise ValueError(f"Unsupported interpolation type: {interpolation}")
 
+    @override
     def process(self, input_data: str, parameters: dict[str, Any]) -> None:
         width: int = parameters["width"]
         height: int = parameters["height"]

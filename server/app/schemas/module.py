@@ -1,15 +1,17 @@
-from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import Optional, Any, Union
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from typing import Any
 from app.modules.utils.enums import Color, ColorSpace, FrameRate, PixelFormat
 
 
 class ModuleFormat(BaseModel):
-    pixel_format: Optional[PixelFormat] = None
-    color_space: Optional[ColorSpace] = None
-    color: Optional[Color] = None
-    width: Optional[Union[int, str]] = None
-    height: Optional[Union[int, str]] = None
-    frame_rate: Optional[FrameRate] = None
+    pixel_format: PixelFormat | None = None
+    color_space: ColorSpace | None = None
+    color: Color | None = None
+    width: int | None = Field(default=None, ge=32, le=3840, description="Output width")
+    height: int | None = Field(
+        default=None, ge=32, le=2160, description="Output height"
+    )
+    frame_rate: FrameRate | None = None
 
 
 class Position(BaseModel):
@@ -17,14 +19,18 @@ class Position(BaseModel):
     y: float = Field(0.0, ge=0, description="Y coordinate in workspace")
 
 
+# TODO: Make this Generic so the default value will be correctly typed
+#       Reference: https://docs.pydantic.dev/latest/concepts/models/#generic-models
 class ParameterConstraint(BaseModel):
     type: str = Field(..., description="Parameter type")
     default: Any = Field(..., description="Default value for the parameter")
-    min: Optional[float] = None
-    max: Optional[float] = None
-    options: Optional[list[str]] = None
+    min: float | None = None
+    max: float | None = None
+    options: list[str] | None = None
     required: bool = True
-    description: Optional[str] = None
+    description: str | None = None
+
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     @model_validator(mode="before")
     def set_default(cls, values: dict[str, Any]) -> dict[str, Any]:
@@ -46,9 +52,9 @@ class ParameterConstraint(BaseModel):
         }
         return type_defaults.get(param_type.lower(), None)
 
-    def model_dump(self, **kwargs: Any) -> dict[str, Any]:
-        kwargs.setdefault("exclude_none", True)
-        return super().model_dump(**kwargs)
+    # TODO: Function can be updated as needed
+    def __getitem__(self, key: str) -> Any:
+        return self.get_value_by_key(key)
 
     def get_value_by_key(self, key: str) -> Any:
         if hasattr(self, key):
@@ -59,13 +65,11 @@ class ParameterConstraint(BaseModel):
 class ParameterMetadata(BaseModel):
     value: Any = Field(..., description="Parameter value")
     type: str = Field(..., description="Parameter type")
-    constraints: Optional[ParameterConstraint] = Field(
+    constraints: ParameterConstraint | None = Field(
         None, description="Constraints for the parameter"
     )
 
-    def model_dump(self, **kwargs: Any) -> dict[str, Any]:
-        kwargs.setdefault("exclude_none", True)
-        return super().model_dump(**kwargs)
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
 
 class ModuleParameter(BaseModel):
@@ -74,9 +78,24 @@ class ModuleParameter(BaseModel):
         ..., description="Parameter Metadata for the parameter"
     )
 
-    def model_dump(self, **kwargs: Any) -> dict[str, Any]:
-        kwargs.setdefault("exclude_none", True)
-        return super().model_dump(**kwargs)
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+
+class ModuleData(BaseModel):
+    parameters: list[ModuleParameter] = Field(
+        default=[], description="List of data paramaters"
+    )
+    input_formats: list[ModuleFormat] | None = Field(
+        default=None, description="List of input formats"
+    )
+    output_formats: list[ModuleFormat] | None = Field(
+        default=None, description="List of output formats"
+    )
+
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+    def get(self, key: str) -> Any:
+        return getattr(self, key)
 
 
 class VideoSourceParams(BaseModel):
@@ -107,8 +126,8 @@ class ResizeParams(BaseModel):
 
 class VideoOutputParams(BaseModel):
     video_player: str = Field(..., description="Output file path")
-    # codec: Optional[str] = Field(None, description="Video codec")
-    # quality: Optional[int] = Field(23, ge=0, le=51, description="Quality level")
+    # codec: str | None = Field(None, description="Video codec")
+    # quality: int | None = Field(23, ge=0, le=51, description="Quality level")
 
 
 # Binaries can have any parameters, so we need a generic model
@@ -117,9 +136,19 @@ class GenericParameterModel(BaseModel):
         extra = "allow"
 
 
-class VideoCodecParams(ModuleParameter):
+class VideoCodecParams(BaseModel):
+    """Common video encoding parameters shared across different codec implementations.
+
+    This base class defines standard video compression settings that are generally
+    applicable to most modern codecs (H.264/AVC, HEVC, VP9, etc.). Individual codec
+    implementations should extend this class to add codec-specific parameters.
+
+    Attributes:
+        codec: Video compression standard (e.g., 'h264', 'hevc', 'vp9')
+        bitrate: Target bitrate in kbps (100-50000)
+        gop_size: Group-of-pictures size (0=auto)
+    """
+
     codec: str = Field(..., description="Video codec (e.g., h264, hevc, vp9)")
-    bitrate: Optional[int] = Field(
-        None, ge=100, le=50000, description="Bitrate in kbps"
-    )
-    gop_size: Optional[int] = Field(None, ge=0, description="Group of pictures size")
+    bitrate: int | None = Field(None, ge=100, le=50000, description="Bitrate in kbps")
+    gop_size: int | None = Field(None, ge=0, description="Group of pictures size")

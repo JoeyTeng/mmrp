@@ -46,7 +46,6 @@ class Color(StrEnum):
     HSV = "HSV"
     LAB = "Lab"
     RGB = "RGB"
-    BGR = "BGR"
 
 
 class ResizeInterpolation(StrEnum):

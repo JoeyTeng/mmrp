@@ -15,7 +15,13 @@ router = APIRouter(
 def process_pipeline(request: PipelineRequest):
     try:
         return handle_pipeline_request(request)
+    except KeyError as e:
+        raise HTTPException(status_code=400, detail=f"Missing required field: {e}")
+    except TypeError as e:
+        raise HTTPException(status_code=422, detail=f"Type error: {e}")
     except ValidationError as e:
+        raise HTTPException(status_code=422, detail=f"Validation error: {e.errors()}")
+    except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")

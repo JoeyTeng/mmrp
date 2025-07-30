@@ -1,5 +1,5 @@
 import cv2
-from typing import Any
+from typing import Any, override
 from pathlib import Path
 import numpy as np
 from app.modules.module import ModuleBase
@@ -14,12 +14,11 @@ class ColorModule(ModuleBase):
 
     parameter_model: Any = ColorspaceParams
 
-    def __init__(self, **data: dict[str, Any]) -> None:
-        super().__init__(**data)
-
+    @override
     def get_parameters(self) -> list[ModuleParameter]:
         return self.data["parameters"]
 
+    @override
     def get_input_formats(self) -> list[ModuleFormat]:
         return [
             ModuleFormat(
@@ -27,9 +26,11 @@ class ColorModule(ModuleBase):
             ),
         ]
 
+    @override
     def get_output_formats(self) -> list[ModuleFormat]:
         return self.get_input_formats()
 
+    @override
     def process_frame(
         self, frame: np.ndarray[Any], parameters: dict[str, Any]
     ) -> np.ndarray[Any]:
@@ -50,6 +51,7 @@ class ColorModule(ModuleBase):
             f"Unsupported input-output ColorSpace: {input_color} {output_color}"
         )
 
+    @override
     def process(self, input_data: str, parameters: dict[str, Any]) -> None:
         output_path: str = str(
             Path(__file__).resolve().parent.parent.parent

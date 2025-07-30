@@ -5,12 +5,12 @@ from pydantic import ValidationError
 from app.modules.module import ModuleBase
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
-from fastapi import HTTPException
 from app.services.module_registry import ModuleRegistry
 import uuid
 import base64
 from app.utils.quality_metrics import compute_metrics
 from app.schemas.metrics import Metrics
+from app.modules.utils.enums import ModuleName
 
 
 def get_module_namespace(module: PipelineModule) -> str:
@@ -84,15 +84,15 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
     # Validate pipeline structure
     if not ordered_modules:
-        raise HTTPException(status_code=500, detail="Pipeline is empty")
+        raise ValueError("Pipeline is empty")
 
     first_module_base = get_module_namespace(ordered_modules[0])
-    if first_module_base != "video_source":
-        raise ValueError("Pipeline must start with a video_source module")
+    if first_module_base != ModuleName.VIDEO_SOURCE:
+        raise ValueError(f"Pipeline must start with a {ModuleName.VIDEO_SOURCE} module")
 
     last_module_base = get_module_namespace(ordered_modules[-1])
-    if last_module_base != "video_output":
-        raise ValueError("Pipeline must end with a video_output module")
+    if last_module_base != ModuleName.RESULT:
+        raise ValueError(f"Pipeline must end with a {ModuleName.RESULT} module")
 
     module_map: dict[str, tuple[ModuleBase, dict[str, Any]]] = {
         m.id: (
