@@ -18,7 +18,7 @@ class ResizeModule(ModuleBase):
 
     @override
     def get_parameters(self) -> list[ModuleParameter]:
-        return self.data["parameters"]
+        return self.data.parameters
 
     @override
     def get_input_formats(self) -> list[ModuleFormat]:
@@ -42,7 +42,7 @@ class ResizeModule(ModuleBase):
 
     @override
     def process_frame(
-        self, frame: np.ndarray[Any], parameters: dict[str, Any]
+        self, frame: np.ndarray, parameters: dict[str, Any]
     ) -> np.ndarray[Any]:
         width: int = parameters["width"]
         height: int = parameters["height"]

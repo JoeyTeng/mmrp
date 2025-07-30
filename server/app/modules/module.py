@@ -78,6 +78,6 @@ class ModuleBase(BaseModel, ABC):
 
     @abstractmethod
     def process_frame(
-        self, frame: np.ndarray[Any], parameters: dict[str, Any]
+        self, frame: np.ndarray, parameters: dict[str, Any]
     ) -> np.ndarray[Any]:
         pass

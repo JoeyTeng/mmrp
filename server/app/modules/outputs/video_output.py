@@ -13,7 +13,7 @@ class VideoOutput(ModuleBase):
 
     @override
     def get_parameters(self) -> list[ModuleParameter]:
-        return self.data["parameters"]
+        return self.data.parameters
 
     @override
     def get_input_formats(self) -> list[ModuleFormat]:

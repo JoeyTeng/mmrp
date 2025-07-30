@@ -13,7 +13,7 @@ class ColorModule(ModuleBase):
 
     @override
     def get_parameters(self) -> list[ModuleParameter]:
-        return self.data["parameters"]
+        return self.data.parameters
 
     @override
     def get_input_formats(self) -> list[ModuleFormat]:
@@ -29,14 +29,14 @@ class ColorModule(ModuleBase):
 
     @override
     def process_frame(
-        self, frame: np.ndarray[Any], parameters: dict[str, Any]
+        self, frame: np.ndarray, parameters: dict[str, Any]
     ) -> np.ndarray[Any]:
         input: str = parameters["input_colorspace"]
         output: str = parameters["output_colorspace"]
         return self.match_colorspace(frame, input, output)
 
     def match_colorspace(
-        self, frame: np.ndarray[Any], input_color: str, output_color: str
+        self, frame: np.ndarray, input_color: str, output_color: str
     ) -> np.ndarray[Any]:
         if input_color == output_color:
             return frame
