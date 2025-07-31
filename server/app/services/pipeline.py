@@ -136,7 +136,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     processing_nodes = [
         m
         for m in ordered_modules
-        if m.module_class not in [ModuleName.VIDEO_SOURCE, ModuleName.RESULT]
+        if m.module_class not in {ModuleName.VIDEO_SOURCE, ModuleName.RESULT}
     ]
 
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (

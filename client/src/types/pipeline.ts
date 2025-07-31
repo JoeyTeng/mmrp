@@ -8,6 +8,7 @@ export type PipelineParameter = {
 export type PipelineModule = {
   id: string;
   name: string;
+  module_class: string;
   source: string[];
   parameters: PipelineParameter[];
 };

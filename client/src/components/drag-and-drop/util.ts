@@ -41,23 +41,20 @@ export function getInitialNodeParamValue(
       }
       // 4) final fallback
       else {
-        val = paramMetaData.type === "bool" ? false : ""; // safety val for type int and float is empty string
+        val = paramMetaData.type === "boolean" ? false : ""; // safety val for type int and float is empty string
       }
 
-      // 5) additional check if default is in [min,max] range
+      // 5) additional check to make sure default is in [min,max] range
       if (
         paramMetaData.constraints.min != null &&
-        paramMetaData.constraints.max != null
+        paramMetaData.constraints.max != null &&
+        typeof val === "number"
       ) {
         const [min, max] = [
           paramMetaData.constraints.min,
           paramMetaData.constraints.max,
         ];
-        if (typeof val !== "number") {
-          val = min;
-        } else {
-          val = Math.min(Math.max(val, min), max);
-        }
+        val = Math.min(Math.max(val, min), max);
       }
 
       initialParams[p.name] = val;
