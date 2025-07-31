@@ -20,6 +20,7 @@ export interface SidebarItem {
   showArrow?: boolean;
   showAfterDivider?: boolean;
   arrowDirection?: "left" | "right";
+  disabled?: boolean;
 }
 
 export interface SidebarListItem {

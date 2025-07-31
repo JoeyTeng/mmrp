@@ -1,17 +1,22 @@
 import {
-  SaveOutlined,
-  CloudUploadOutlined,
-  FileDownloadOutlined,
-  AppsOutlined,
   QueryStatsOutlined,
   FilterAltOutlined,
+  UploadFileOutlined,
+  AppsOutlined,
+  SaveOutlined,
+  DownloadOutlined,
 } from "@mui/icons-material";
-import Modules from "../drag-and-drop/Modules";
 import { SidebarItem } from "./types";
 import VideoQualityMetrics from "../comparison-metrics/VideoQualityMetrics";
+import Modules from "../drag-and-drop/Modules";
+import { PipelineResponse } from "@/types/pipeline";
 
 export const getLeftSidebarItems = (
   setUploadOpen: (open: boolean) => void,
+  handleDownload: () => void,
+  downloadSize: string,
+  isProcessing: boolean,
+  latestResponse: PipelineResponse | null,
 ): SidebarItem[] => [
   {
     id: "save",
@@ -21,9 +26,10 @@ export const getLeftSidebarItems = (
   },
   {
     id: "download",
-    title: "Download",
-    icon: <FileDownloadOutlined />,
-    action: () => console.log("Download clicked"),
+    title: downloadSize ? `Download Video (${downloadSize})` : "Download Video",
+    icon: <DownloadOutlined />,
+    disabled: isProcessing || !!!latestResponse,
+    action: handleDownload,
   },
   {
     id: "modules",
@@ -36,7 +42,7 @@ export const getLeftSidebarItems = (
   {
     id: "upload",
     title: "Upload Module",
-    icon: <CloudUploadOutlined />,
+    icon: <UploadFileOutlined />,
     action: () => setUploadOpen(true),
     showAfterDivider: true,
   },

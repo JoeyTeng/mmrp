@@ -8,14 +8,18 @@ import {
 } from "../sidebar/sidebar-config";
 import { ModulesContext } from "@/contexts/ModulesContext";
 import { useModules } from "@/hooks/useModule";
+import { useVideoReload } from "@/contexts/videoReloadContext";
 import Loading from "./Loading";
 import UploadBinaryModal from "../modals/UploadBinaryModal";
+import { useDownloadUtils } from "../sidebar/util";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [leftOpenPanelId, setLeftOpenPanelId] = useState<string | null>(null);
   const [rightOpenPanelId, setRightOpenPanelId] = useState<string | null>(null);
   const { modules, loading, reloadModules } = useModules();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const { latestResponse, isProcessing } = useVideoReload();
+  const { handleDownload, downloadSize } = useDownloadUtils();
 
   if (loading) {
     return <Loading />;
@@ -26,7 +30,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Box className="flex h-screen w-screen bg-gray-50">
         <Sidebar
           anchor="left"
-          items={getLeftSidebarItems(setUploadOpen)}
+          items={getLeftSidebarItems(
+            setUploadOpen,
+            handleDownload,
+            downloadSize,
+            isProcessing,
+            latestResponse,
+          )}
           openPanelId={leftOpenPanelId}
           width={45}
           onPanelToggle={setLeftOpenPanelId}
