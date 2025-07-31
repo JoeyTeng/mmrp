@@ -22,7 +22,6 @@ export const ParameterTooltip = ({
           modifiers: [{ name: "offset", options: { offset: [0, -8] } }],
         },
       }}
-      aria-hidden
     >
       {children}
     </Tooltip>
