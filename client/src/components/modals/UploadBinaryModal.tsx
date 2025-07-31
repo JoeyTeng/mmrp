@@ -113,11 +113,11 @@ export default function UploadBinaryModal({
           Please include a{" "}
           <Button
             variant="text"
-            size="small"
+            size="medium"
             component="a"
             href="/config_template.json"
             download="config_template.json"
-            className="font-mono normal-case p-0 min-w-0"
+            className="p-0.5 normal-case font-mono align-baseline"
           >
             config.json <FileOpenOutlined fontSize="small" />
           </Button>{" "}
