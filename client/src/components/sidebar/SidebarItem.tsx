@@ -27,6 +27,7 @@ export const SidebarItem = ({ item, anchor }: SidebarListItem) => {
           justifyContent: "center",
           px: 2.5,
         }}
+        disabled={item.disabled}
       >
         <Tooltip
           title={item.title}

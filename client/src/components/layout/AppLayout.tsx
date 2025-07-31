@@ -2,18 +2,18 @@
 import { useState } from "react";
 import { Sidebar } from "../sidebar/Sidebar";
 import { Box } from "@mui/material";
-import {
-  LEFT_SIDEBAR_ITEMS,
-  RIGHT_SIDEBAR_ITEMS,
-} from "../sidebar/sidebar-config";
+import { RIGHT_SIDEBAR_ITEMS } from "../sidebar/sidebar-config";
 import { ModulesContext } from "@/contexts/ModulesContext";
 import { useModules } from "@/hooks/useModule";
 import Loading from "./Loading";
+import { useLeftSidebarItems } from "../sidebar/useLeftSidebar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [leftOpenPanelId, setLeftOpenPanelId] = useState<string | null>(null);
   const [rightOpenPanelId, setRightOpenPanelId] = useState<string | null>(null);
   const { modules, loading } = useModules();
+
+  const leftSidebarItems = useLeftSidebarItems();
 
   if (loading) {
     return <Loading />;
@@ -24,7 +24,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Box className="flex h-screen w-screen bg-gray-50">
         <Sidebar
           anchor="left"
-          items={LEFT_SIDEBAR_ITEMS}
+          items={leftSidebarItems}
           openPanelId={leftOpenPanelId}
           width={45}
           onPanelToggle={setLeftOpenPanelId}
