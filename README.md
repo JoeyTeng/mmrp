@@ -1,6 +1,6 @@
 # mmrp
 
-Cisco VIPER
+Cisco VIPER: VIsual Pipeline EditoR
 
 ## Contributors
 
