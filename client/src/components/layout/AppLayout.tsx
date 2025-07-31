@@ -14,7 +14,7 @@ import UploadBinaryModal from "../modals/UploadBinaryModal";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [leftOpenPanelId, setLeftOpenPanelId] = useState<string | null>(null);
   const [rightOpenPanelId, setRightOpenPanelId] = useState<string | null>(null);
-  const { modules, loading } = useModules();
+  const { modules, loading, reloadModules } = useModules();
   const [uploadOpen, setUploadOpen] = useState(false);
 
   if (loading) {
@@ -53,6 +53,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <UploadBinaryModal
           open={uploadOpen}
           onClose={() => setUploadOpen(false)}
+          onUploadSuccess={reloadModules}
         />
       </Box>
     </ModulesContext>

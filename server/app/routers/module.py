@@ -1,7 +1,5 @@
 import dataclasses
 import json
-import io
-import zipfile
 from fastapi import APIRouter, UploadFile, HTTPException, File
 from typing import Any
 from pathlib import Path
@@ -86,29 +84,33 @@ async def upload_module(
             ],
         }
 
-        zip_buffer = io.BytesIO()
+        # Create binaries directory if it doesn't exist to save the files
+        BINARIES_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Create a zip file
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            for folder, files in file_structure.items():
-                for filename, upload_file in files:
-                    if filename is None:
-                        continue  # skip if filename missing
-                    content = await upload_file.read()
-                    zip_path = f"{folder}/{filename}"
-                    zip_file.writestr(zip_path, content)
-                    upload_file.file.seek(0)  # Reset stream in case reused
-
-        zip_buffer.seek(0)
-        # zip = zip_buffer.read()
-
-        # TODO: upload zip to ??
-
-        # Read config file and add binary to module registry
-        contents: bytes = await config.read()
-        text: str = contents.decode("utf-8")
+        # First, create a directory for the module
+        config_content: bytes = await config.read()
+        text: str = config_content.decode("utf-8")
         data = json.loads(text)
-        print(data)
+        module_name: str = data.get("name", "unknown_module")
+        module_dir: Path = BINARIES_DIR / module_name
+        if module_dir.exists() and module_dir.is_dir():
+            raise FileExistsError(f"Module {module_name} already exists.")
+        module_dir.mkdir(parents=True, exist_ok=True)
+
+        # Then, save each file in the appropriate OS subdirectory
+        for os_name, files in file_structure.items():
+            os_dir: Path = module_dir / os_name
+            os_dir.mkdir(parents=True, exist_ok=True)
+            for filename, file in files:
+                if filename is not None:
+                    file_path: Path = os_dir / filename
+                    with file_path.open("wb") as f:
+                        if file == config:
+                            f.write(config_content)
+                        else:
+                            f.write(await file.read())
+
+        # Read config file to add binary to module registry
         # TODO: add to registry (needs new module structure implementation)
         return True
     except Exception as e:

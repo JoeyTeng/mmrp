@@ -8,13 +8,16 @@ import SingleFileRow from "./SingleFileRow";
 import DualFileRow from "./DualFileRow";
 import { uploadBinaryToBackend } from "@/services/binaryService";
 import { GenericModal } from "./GenericModal";
+import { AxiosError } from "axios";
 
 export default function UploadBinaryModal({
   open,
   onClose,
+  onUploadSuccess,
 }: {
   open: boolean;
   onClose: () => void;
+  onUploadSuccess: () => void;
 }) {
   const [files, setFiles] = useState<{
     config: File | null;
@@ -76,12 +79,22 @@ export default function UploadBinaryModal({
     setIsLoading(true);
     try {
       const res = await uploadBinaryToBackend(formData);
-      console.log("Upload response:", res);
-      setIsLoading(false);
-      toast.success("Modules uploaded successfully!");
-      handleClose();
+      if (res === true) {
+        toast.success("Modules uploaded successfully!");
+        setIsLoading(false);
+        onUploadSuccess();
+        handleClose();
+      }
     } catch (error) {
-      toast.error("Upload failed. " + error);
+      let message = "An unexpected error occurred.";
+
+      if ((error as AxiosError).isAxiosError) {
+        const axiosError = error as AxiosError<{ detail?: string }>;
+        message =
+          axiosError.response?.data?.detail || axiosError.message || message;
+      }
+
+      toast.error(message);
       setIsLoading(false);
     }
   };
