@@ -1,6 +1,7 @@
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { makeNode } from "../helpers/helpers";
 import type { Edge } from "@xyflow/react";
+import { VideoType } from "@/components/comparison-view/types";
 
 describe("dumpPipelineToJson", () => {
   it("correctly records one incoming edge per node", () => {
@@ -8,7 +9,11 @@ describe("dumpPipelineToJson", () => {
     const nodeB = makeNode("2", { label: "B" });
     const edges: Edge[] = [{ id: "e1", source: "1", target: "2" }];
 
-    const { modules } = dumpPipelineToJson([nodeA, nodeB], edges);
+    const { modules } = dumpPipelineToJson(
+      [nodeA, nodeB],
+      edges,
+      VideoType.Video,
+    );
     const modA = modules.find((m) => m.id === 1)!;
     const modB = modules.find((m) => m.id === 2)!;
 
@@ -24,7 +29,7 @@ describe("dumpPipelineToJson", () => {
       { id: "e2", source: "3", target: "1" }, // second hit: reuses it
     ];
 
-    const { modules } = dumpPipelineToJson([target], edges);
+    const { modules } = dumpPipelineToJson([target], edges, VideoType.Video);
     const mod = modules.find((m) => m.id === 1)!;
     expect(mod.source).toEqual([2, 3]);
   });
@@ -32,7 +37,7 @@ describe("dumpPipelineToJson", () => {
     const params = { kernel_size: 5, method: "gaussian" };
     const node = makeNode("42", { label: "testNode", params });
 
-    const { modules } = dumpPipelineToJson([node], []);
+    const { modules } = dumpPipelineToJson([node], [], VideoType.Video);
     expect(modules).toHaveLength(1);
 
     const [mod] = modules;
