@@ -1,59 +1,44 @@
-from typing import Any, Iterator
-from app.modules.base_module import (
-    ModuleBase,
-    ParameterDefinition,
-    FormatDefinition,
-    ModuleRole,
-)
 from pathlib import Path
-import numpy as np
+from typing import Any, Iterator, override
 import cv2
+import numpy as np
+from app.modules.module import ModuleBase
+from app.schemas.module import ModuleFormat, ModuleParameter, VideoOutputParams
+from app.modules.utils.enums import PixelFormat, ColorSpace
 from app.utils.shared_functionality import as_context
 
 
-# visual purpose
-class Result(ModuleBase):
-    name = "result"
+class VideoOutput(ModuleBase):
+    parameter_model: Any = VideoOutputParams
 
-    role = ModuleRole.OUTPUT_NODE
+    @override
+    def get_parameters(self) -> list[ModuleParameter]:
+        return self.data.parameters
 
-    def get_parameters(self) -> list[ParameterDefinition[Any]]:
+    @override
+    def get_input_formats(self) -> list[ModuleFormat]:
         return [
-            ParameterDefinition(
-                name="video_player",
-                type="str",
-                required=False,
-                description="Select on which side the video should be played (only for two pipelines)",
-                constraints=["left", "right"],
-                default="right",
-            ),
-        ]
-
-    def get_input_formats(self) -> list[FormatDefinition]:
-        # Accept whatever the pipeline hands it (we only decode/write BGR24 i OpenCV)
-        return [
-            FormatDefinition(
-                pixel_format="bgr24",
-                color_space="BT.709 Full",
-                width=None,
-                height=None,
-                frame_rate=None,
+            ModuleFormat(
+                pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
             )
         ]
 
-    def get_output_formats(self) -> list[FormatDefinition]:
-        # No downstream consumers
+    @override
+    def get_output_formats(self) -> list[ModuleFormat]:
         return []
 
+    @override
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:
         # Pass‐through
         raise NotImplementedError
 
+    @override
     def process(
         self, input_data: Iterator[np.ndarray], parameters: dict[str, Any]
     ) -> Any:
+        # mmrp/server/output
         out_path = (
-            Path(__file__).resolve().parent.parent.parent
+            Path(__file__).resolve().parent.parent.parent.parent
             / "output"
             / parameters["path"]
         )

@@ -13,7 +13,8 @@ export function makeNode(
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
     data: {
-      label: "",
+      name: "",
+      moduleClass: "",
       params: {},
       inputFormats: [],
       outputFormats: [],

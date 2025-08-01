@@ -1,8 +1,10 @@
 "use client";
+
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { MoreVertOutlined as MenuIcon } from "@mui/icons-material";
 
-import { NodeData, NodePort, NodeType } from "./types";
+import { NodeData, NodePort } from "./types";
+import { NodeType } from "@/types/module";
 import { IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
 
@@ -15,7 +17,7 @@ export interface FlowNodeProps extends NodeProps<CustomNode> {
 export default function FlowNode({
   id,
   type,
-  data: { label, params, inputFormats = [], outputFormats = [] },
+  data: { name, params, inputFormats = [], outputFormats = [] },
   selected,
   onOpenMenu,
 }: FlowNodeProps) {
@@ -38,7 +40,7 @@ export default function FlowNode({
       className={`w-40 bg-white rounded-lg overflow-hidden text-sm border ${selected ? "border-black-100" : "border-gray-300"}`}
     >
       <div className="pl-3 pr-1 py-1 font-semibold text-gray-800 flex justify-between items-center">
-        {label}
+        {name}
         <IconButton
           onClick={(e) => {
             e.preventDefault();

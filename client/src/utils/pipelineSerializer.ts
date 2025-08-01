@@ -19,10 +19,8 @@ export function dumpPipelineToJson(
   });
 
   const modules: PipelineModule[] = nodes.map((node) => {
-    const numericId = Number.parseInt(node.id);
-    const upstreamIds = (sourceMap.get(node.id) || []).map((srcId) =>
-      Number.parseInt(srcId),
-    );
+    const id = node.id;
+    const upstreamIds = (sourceMap.get(node.id) || []).map((srcId) => srcId);
 
     const parameters: PipelineParameter[] = Object.entries(
       node.data.params,
@@ -32,8 +30,9 @@ export function dumpPipelineToJson(
     }));
 
     return {
-      id: numericId,
-      name: node.data.label,
+      id: id,
+      name: node.data.name,
+      module_class: node.data.moduleClass,
       source: upstreamIds,
       parameters,
     };

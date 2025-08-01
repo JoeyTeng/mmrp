@@ -3,7 +3,8 @@ import { NODE_CONTEXT_MENU, NodeAction } from "./NodeContextMenuConfig";
 import ContextMenu from "./ContextMenu";
 import { useNodeActions } from "./useNodeActions";
 import { Node } from "@xyflow/react";
-import { NodeData, NodeType } from "../types";
+import { NodeData } from "../types";
+import { NodeType } from "@/types/module";
 
 type MenuPayload = {
   position: { x: number; y: number };
