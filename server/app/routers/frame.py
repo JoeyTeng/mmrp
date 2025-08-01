@@ -1,14 +1,18 @@
-from contextlib import ExitStack
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from pathlib import Path
 import cv2
 import asyncio
 import json
 import numpy as np
-from typing import Optional
 from app.utils.shared_functionality import as_context
 from app.utils.quality_metrics import compute_metrics
 from app.schemas.frame import FrameData
+from app.schemas.pipeline import PipelineModule, PipelineRequest
+from app.services.pipeline import (
+    get_execution_order,
+    process_pipeline_frame,
+    validate_parameters,
+)
+from app.services.module import registry
 
 router = APIRouter()
 
@@ -22,74 +26,105 @@ async def video_feed(websocket: WebSocket) -> None:
 
     # Wait for client to specify filenames
     try:
+        # Receive pipeline request JSON
         init_msg: str = await websocket.receive_text()
-        init_data = json.loads(init_msg)
-        filenames: str = init_data.get("filenames")
-    except Exception:
-        await websocket.close()
-        return
+        data = json.loads(init_msg)
+        request: PipelineRequest = PipelineRequest(**data)
 
-    base_path: Path = (
-        Path(__file__).resolve().parent.parent.parent.parent / "server" / "videos"
-    )
-    video_paths: list[Path] = [base_path / name for name in filenames[:2]]
+        # Resolve pipeline modules
+        ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
+        # Check that the pipeline starts with a source module
+        if not ordered_modules or ordered_modules[0].name != "source":
+            raise ValueError("Pipeline must start with a source module")
+        if ordered_modules[-1].name != "result":
+            raise ValueError("Pipeline must end with a result module")
 
-    try:
-        with ExitStack() as stack:
-            caps: list[cv2.VideoCapture] = [
-                stack.enter_context(cv2VideoCaptureContext(str(path)))
-                for path in video_paths
-            ]
+        # Registry lookup
+        module_map = {
+            m.id: (registry[m.name](), {p.key: p.value for p in m.parameters})
+            for m in ordered_modules
+        }
 
-            if not all(cap.isOpened() for cap in caps):
-                await websocket.close()
-                return
+        # Validate module parameters
+        for mod in ordered_modules:
+            mod_id = mod.id
+            mod_instance, params = module_map[mod_id]
+            # Get expected parameter definitions
+            param_defs = {p.name: p for p in mod_instance.get_parameters()}
+            # Validate each parameter
+            validate_parameters(params, param_defs, mod_instance)
 
-            fps: float = caps[0].get(cv2.CAP_PROP_FPS) or 30.0
-            mime_type: str = "image/webp"
+        # Get source and result module
+        source_mod = ordered_modules[0]
+        result_modules = [
+            module for module in ordered_modules if module.name == "result"
+        ]
 
-            while all(cap.isOpened() for cap in caps):
-                frames: list[Optional[np.ndarray]] = []
-                raw_frames: list[
-                    np.ndarray
-                ] = []  # Keep originals for metrics computation
+        # Check and validate result modules
+        if not result_modules:
+            raise ValueError("Pipeline must end with at least one result module")
+        if len(result_modules) > 2:
+            raise ValueError("A maximum of two processed results is supported")
+        for result_mod in result_modules:
+            if not result_mod.source:
+                raise ValueError("Output source cannot be empty")
+            if source_mod.id in result_mod.source:
+                raise ValueError("Pipeline must have at least one processing node")
 
-                for cap in caps:
-                    ret, frame = cap.read()
-                    if not ret:
-                        return  # Exit if any video ends
+        # Get processing nodes (remove source and result modules)
+        processing_nodes = [
+            m for m in ordered_modules if m.name not in {"source", "result"}
+        ]
 
-                    raw_frames.append(frame)
+        with module_map[source_mod.id][0].process(
+            None, module_map[source_mod.id][1]
+        ) as (
+            _,
+            fps,
+            frame_iter,
+        ):
+            for frame in frame_iter:
+                frame_cache = {source_mod.id: frame}
+                process_pipeline_frame(frame_cache, processing_nodes, module_map)
 
-                    encode_success: bool
-                    buffer: Optional[np.ndarray]
-                    encode_success, buffer = cv2.imencode(
-                        ".webp", frame, [cv2.IMWRITE_WEBP_QUALITY, 100]
+                result_frames: list[np.ndarray] = []
+
+                if len(result_modules) == 2:
+                    for result_mod in result_modules:
+                        sid = result_mod.source[0]
+                        result_frames.append(frame_cache[sid])
+                elif len(result_modules) == 1:
+                    sid = result_modules[0].source[0]
+                    result_frames.append(frame)  # original
+                    result_frames.append(frame_cache[sid])  # processed
+
+                encoded_blobs: list[bytes] = []
+                mime = "image/webp"
+
+                for frm in result_frames:
+                    success, buffer = cv2.imencode(
+                        ".webp", frm, [cv2.IMWRITE_WEBP_QUALITY, 100]
                     )
-                    assert isinstance(buffer, (np.ndarray, type(None)))
+                    if not success:
+                        # fallback to PNG
+                        success, buffer = cv2.imencode(".png", frm)
+                        mime = "image/png"
 
-                    if not encode_success:
-                        mime_type = "image/png"
-                        encode_success, buffer = cv2.imencode(".png", frame)
-                        assert isinstance(buffer, (np.ndarray, type(None)))
+                    if not success:
+                        continue
 
-                    if encode_success:
-                        frames.append(buffer)
-                    else:
-                        frames.append(None)
+                    encoded_blobs.append(buffer.tobytes())
 
-                # Skip sending frames if any encoding failed
-                if any(buf is None for buf in frames):
-                    continue
+                    # Compute quality metrics
+                    metrics = compute_metrics(result_frames[0], result_frames[1])
 
-                metrics = compute_metrics(raw_frames[0], raw_frames[1])
-                metadata = FrameData(fps=fps, mime=mime_type, metrics=metrics)
+                    # Send metadata per frame pair
+                    metadata = FrameData(fps=fps, mime=mime, metrics=metrics)
+                    await websocket.send_text(metadata.model_dump_json())
 
-                await websocket.send_text(metadata.model_dump_json())
-
-                for buf in frames:
-                    if buf is not None:
-                        await websocket.send_bytes(buf.tobytes())
+                # Send both frames
+                for blob in encoded_blobs:
+                    await websocket.send_bytes(blob)
 
                 await asyncio.sleep(0)
 

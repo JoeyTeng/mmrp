@@ -6,6 +6,7 @@ import { ReactFlowProvider, type Node, type Edge } from "@xyflow/react";
 import { NodeData, NodeType } from "../drag-and-drop/types";
 import ParameterConfigurationDrawer from "@/components/drag-and-drop/parameter-configuration/ParameterConfigurationDrawer";
 import { useState } from "react";
+import { VideoType } from "../comparison-view/types";
 
 const initialNodes: Node<NodeData, NodeType>[] = [
   {
@@ -136,7 +137,11 @@ const initialEdges: Edge[] = [
   },
 ];
 
-export default function DragAndDropArea() {
+interface Props {
+  videoType: VideoType;
+}
+
+export default function DragAndDropArea({ videoType }: Props) {
   const [editingNode, setEditingNode] = useState<Node<
     NodeData,
     NodeType
@@ -149,6 +154,7 @@ export default function DragAndDropArea() {
         defaultEdges={initialEdges}
         editingNode={editingNode}
         onEditNode={setEditingNode}
+        videoType={videoType}
       />
       {editingNode && (
         <ParameterConfigurationDrawer

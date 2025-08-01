@@ -59,6 +59,7 @@ export const WebSocketProvider = ({
       ws.onopen = () => {
         console.log("WebSocket connection opened");
         if (initMessage) {
+          console.log(JSON.stringify(initMessage));
           ws.send(JSON.stringify(initMessage));
         }
         onOpen?.();

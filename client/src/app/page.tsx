@@ -1,3 +1,5 @@
+"use client";
+
 import DragAndDropArea from "@/components/cards/DragAndDropArea";
 import AppLayout from "@/components/layout/AppLayout";
 import { VideoReloadProvider } from "@/contexts/videoReloadContext";
@@ -7,8 +9,13 @@ import "react-toastify/ReactToastify.css";
 import { VideoMetricsProvider } from "@/contexts/VideoMetricsContext";
 import VideoComparisonView from "@/components/cards/VideoComparisonView";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
+import { VideoType } from "@/components/comparison-view/types";
+import { useState } from "react";
+import { FramesProvider } from "@/contexts/FramesContext";
 
 export default function Home() {
+  const [videoType, setVideoType] = useState(VideoType.Video);
+
   return (
     <VideoMetricsProvider>
       <AppLayout>
@@ -16,14 +23,19 @@ export default function Home() {
           {/* Wrap Comparison View and drag-and-drop area with video provider to register pipeline processing */}
           <VideoReloadProvider>
             <WebSocketProvider>
-              {/* Video Comparison View - Fixed height with min-height */}
-              <Box className="h-1/3 min-h-[350px]">
-                <VideoComparisonView />
-              </Box>
-              {/* Flow Canvas - Takes remaining space with min-height */}
-              <Box className="h-2/3 flex-1">
-                <DragAndDropArea />
-              </Box>
+              <FramesProvider>
+                {/* Video Comparison View - Fixed height with min-height */}
+                <Box className="h-1/3 min-h-[350px]">
+                  <VideoComparisonView
+                    videoType={videoType}
+                    setVideoType={setVideoType}
+                  />
+                </Box>
+                {/* Flow Canvas - Takes remaining space with min-height */}
+                <Box className="h-2/3 flex-1">
+                  <DragAndDropArea videoType={videoType} />
+                </Box>
+              </FramesProvider>
             </WebSocketProvider>
           </VideoReloadProvider>
         </Box>

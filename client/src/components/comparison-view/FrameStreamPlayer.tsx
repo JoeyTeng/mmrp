@@ -6,6 +6,7 @@ import { FrameData, ViewOptions } from "./types";
 import { useWebSocket } from "@/contexts/WebSocketContext";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
 import { Metrics } from "@/types/metrics";
+import { useFrames } from "@/contexts/FramesContext";
 
 type Props = {
   view: ViewOptions;
@@ -27,18 +28,17 @@ const FrameStreamPlayer = ({
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isUserPaused, setIsUserPaused] = useState(true);
-  const [frames, setFrames] = useState<FrameData[]>([]);
   const currentFpsRef = useRef(30);
   const currentMimeRef = useRef("image/webp");
   const latestMetricsRef = useRef<Partial<Metrics>>({});
   const [isStreamActive, setIsStreamActive] = useState(false);
-  const [filenames] = useState([
-    "example-video.mp4",
-    "example-video-filter.mp4",
-  ]);
   const hasCalledFirstFrame = useRef(false);
   const { setMetrics, currentFrame, setCurrentFrame } = useVideoMetrics(); // currentFrame is frame index in range [0, frames.length)
   const { createConnection, closeConnection } = useWebSocket();
+  const { frames, setFrames } = useFrames();
+  const effectiveFrameCount =
+    view === ViewOptions.Interleaving ? frames.length * 2 : frames.length;
+  const [index, setIndex] = useState(0); // index [0, frames.length) in Side-by-side, [0, 2 * frames.length) in Interleaving frames
 
   // Trigger onFirstFrame callback once first frame is received
   useEffect(() => {
@@ -53,7 +53,58 @@ const FrameStreamPlayer = ({
     const expectedFrames = 2;
     let frameBuffer: Blob[] = [];
     setMetrics([]);
+    setFrames([]);
     setCurrentFrame(0);
+    setIndex(0);
+    const pipelineRequest = {
+      modules: [
+        {
+          id: 1,
+          name: "source",
+          source: [],
+          parameters: [{ key: "path", value: "example-video.mp4" }],
+        },
+        {
+          id: 2,
+          name: "colorspace",
+          source: [1],
+          parameters: [
+            { key: "input_colorspace", value: "RGB" },
+            { key: "output_colorspace", value: "YCrCb" },
+          ],
+        },
+        {
+          id: 3,
+          name: "blur",
+          source: [2],
+          parameters: [
+            { key: "kernel_size", value: 5 },
+            { key: "method", value: "gaussian" },
+          ],
+        },
+        {
+          id: 4,
+          name: "result",
+          source: [3],
+          parameters: [{ key: "video_player", value: "left" }],
+        },
+        {
+          id: 1753191371256,
+          name: "blur",
+          source: [1],
+          parameters: [
+            { key: "kernel_size", value: 5 },
+            { key: "method", value: "gaussian" },
+          ],
+        },
+        {
+          id: 1753191375784,
+          name: "result",
+          source: [1753191371256],
+          parameters: [{ key: "video_player", value: "right" }],
+        },
+      ],
+    };
 
     createConnection(
       (data) => {
@@ -71,25 +122,13 @@ const FrameStreamPlayer = ({
               ssim: latestMetricsRef.current.ssim!,
             };
 
-            if (view === ViewOptions.SideBySide) {
-              const newFrame = {
-                blob: [frameBuffer[0], frameBuffer[1]],
-                ...commonFrameData,
-              };
-
-              setFrames((prev) => [...prev, newFrame]);
-              setMetrics((prev) => [...prev, metrics]);
-            } else {
-              const [original, filtered] = frameBuffer;
-
-              const newFrames = [
-                { blob: [original], ...commonFrameData },
-                { blob: [filtered], ...commonFrameData },
-              ];
-
-              setFrames((prev) => [...prev, ...newFrames]);
-              setMetrics((prev) => [...prev, metrics, metrics]);
-            }
+            const [original, filtered] = frameBuffer;
+            const frame: FrameData = {
+              blob: [original, filtered],
+              ...commonFrameData,
+            };
+            setFrames((prev) => [...prev, frame]);
+            setMetrics((prev) => [...prev, metrics]);
 
             frameBuffer = [];
             latestMetricsRef.current = {};
@@ -112,7 +151,7 @@ const FrameStreamPlayer = ({
       () => {
         setIsStreamActive(false);
       },
-      { filenames },
+      pipelineRequest,
     );
 
     return () => {
@@ -121,7 +160,6 @@ const FrameStreamPlayer = ({
   }, [
     closeConnection,
     createConnection,
-    filenames,
     setCurrentFrame,
     setFrames,
     setMetrics,
@@ -130,19 +168,44 @@ const FrameStreamPlayer = ({
 
   // Render frame at given index
   const renderFrame = useCallback(
-    (index: number): void => {
-      if (index >= frames.length) return;
+    (virtualIndex: number) => {
+      if (virtualIndex >= effectiveFrameCount) return;
 
-      const frame = frames[index];
+      const frameIndex =
+        view === ViewOptions.Interleaving
+          ? Math.floor(virtualIndex / 2)
+          : virtualIndex;
 
-      for (let i = 0; i < canvasRefs.length; i++) {
-        const canvas = canvasRefs[i]?.current;
-        const blob = frame.blob[i]; // Match frame blob to canvas
+      const blobIndex =
+        view === ViewOptions.Interleaving ? virtualIndex % 2 : null;
 
-        if (!canvas || !blob) continue;
+      const frame = frames[frameIndex];
+      if (!frame) return;
 
-        const url = URL.createObjectURL(blob);
+      if (view === ViewOptions.SideBySide) {
+        frame.blob.forEach((blob, i) => {
+          const canvas = canvasRefs[i]?.current;
+          if (!canvas || !blob) return;
+
+          const img = new Image();
+          const url = URL.createObjectURL(blob);
+          img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx?.clearRect(0, 0, canvas.width, canvas.height);
+            ctx?.drawImage(img, 0, 0);
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
+        });
+      } else {
+        const blob = frame.blob[blobIndex!];
+        const canvas = canvasRefs[0]?.current;
+        if (!canvas || !blob) return;
+
         const img = new Image();
+        const url = URL.createObjectURL(blob);
         img.onload = () => {
           canvas.width = img.width;
           canvas.height = img.height;
@@ -154,7 +217,7 @@ const FrameStreamPlayer = ({
         img.src = url;
       }
     },
-    [frames, canvasRefs],
+    [frames, view, canvasRefs, effectiveFrameCount],
   );
 
   // Handle play/pause
@@ -165,6 +228,7 @@ const FrameStreamPlayer = ({
     } else {
       if (currentFrame >= frames.length - 1 && frames.length > 0) {
         setCurrentFrame(0);
+        setIndex(0);
       }
       setIsPlaying(true);
       setIsUserPaused(false);
@@ -173,15 +237,26 @@ const FrameStreamPlayer = ({
 
   // Step forward/backward by delta frames
   const stepFrame = (delta: number) => {
-    const next = Math.min(Math.max(currentFrame + delta, 0), frames.length - 1);
-    setCurrentFrame(next);
+    const newIndex = Math.min(
+      Math.max(index + delta, 0),
+      effectiveFrameCount - 1,
+    );
+    const newFrameIndex =
+      view === ViewOptions.Interleaving ? Math.floor(newIndex / 2) : newIndex;
+
+    setCurrentFrame(newFrameIndex);
+    setIndex(newIndex);
     setIsPlaying(false);
     setIsUserPaused(true);
   };
 
   // Handle slider movement
   const onSliderChange = (value: number) => {
-    setCurrentFrame(Math.min(value, frames.length - 1));
+    const newFrameIndex =
+      view === ViewOptions.Interleaving ? Math.floor(value / 2) : value;
+
+    setCurrentFrame(newFrameIndex);
+    setIndex(value);
     setIsPlaying(false);
     setIsUserPaused(true);
   };
@@ -196,7 +271,7 @@ const FrameStreamPlayer = ({
       return;
     }
 
-    if (currentFrame >= frames.length - 1) {
+    if (index >= effectiveFrameCount - 1) {
       setIsPlaying(false);
       if (!isStreamActive) {
         setIsUserPaused(true);
@@ -204,15 +279,16 @@ const FrameStreamPlayer = ({
       return;
     }
 
-    // Render current frame
-    renderFrame(currentFrame);
+    renderFrame(index);
 
-    // Schedule next frame
     const fps = frames[currentFrame]?.fps || 30;
     const delay = 1000 / fps;
 
     playbackTimer.current = setTimeout(() => {
-      setCurrentFrame((prev) => prev + 1);
+      setIndex((prev) => prev + 1);
+      setCurrentFrame(
+        view === ViewOptions.Interleaving ? Math.floor(index / 2) : index,
+      );
     }, delay);
 
     return () => {
@@ -226,16 +302,19 @@ const FrameStreamPlayer = ({
     currentFrame,
     frames,
     renderFrame,
+    view,
     isStreamActive,
+    effectiveFrameCount,
     setCurrentFrame,
+    index,
   ]);
 
-  // When currentFrame changes and playback is paused, render frame immediately
+  // When virtualFrame changes and playback is paused, render frame immediately
   useEffect(() => {
     if (!isPlaying && frames.length > 0) {
-      renderFrame(currentFrame);
+      renderFrame(index);
     }
-  }, [currentFrame, isPlaying, frames, renderFrame]);
+  }, [isPlaying, frames, renderFrame, index]);
 
   // Auto-resuming playback
   useEffect(() => {
@@ -244,23 +323,12 @@ const FrameStreamPlayer = ({
     }
   }, [frames, isPlaying, isUserPaused, currentFrame]);
 
-  const sourceLabel = getSourceLabel?.(currentFrame);
-
-  // Frame label in range [1, frames.length]
-  const currentFrameLabel =
-    view === ViewOptions.SideBySide
-      ? currentFrame + 1
-      : Math.ceil((currentFrame + 1) / 2);
-
-  const totalFramesLabel =
-    view === ViewOptions.SideBySide
-      ? frames.length
-      : Math.ceil(frames.length / 2);
+  const sourceLabel = getSourceLabel?.(index);
 
   return (
     <PlayerControls
-      currentFrame={currentFrameLabel}
-      totalFrames={totalFramesLabel}
+      currentFrame={currentFrame + 1}
+      totalFrames={frames.length}
       isPlaying={!isUserPaused}
       showMute={false}
       isMuted={true}
@@ -271,8 +339,8 @@ const FrameStreamPlayer = ({
       onFullscreen={onFullscreen}
       showSource={showSource}
       sourceLabel={sourceLabel}
-      sliderValue={currentFrame}
-      sliderMax={frames.length - 1}
+      sliderValue={index}
+      sliderMax={effectiveFrameCount - 1}
       sliderStep={1}
     />
   );

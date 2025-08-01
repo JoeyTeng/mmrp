@@ -43,6 +43,7 @@ export default function FlowCanvas({
   defaultEdges,
   editingNode,
   onEditNode,
+  videoType,
 }: FlowCanvasProps) {
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
@@ -221,7 +222,7 @@ export default function FlowCanvas({
     >[];
     const edges: Edge[] = getEdges();
     if (checkPipeline(nodes, edges)) {
-      const pipeline = dumpPipelineToJson(nodes, edges);
+      const pipeline = dumpPipelineToJson(nodes, edges, videoType);
       console.debug(JSON.stringify(pipeline, null, 2));
       try {
         toast.success("Pipeline valid, starting processing");

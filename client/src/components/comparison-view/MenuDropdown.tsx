@@ -10,7 +10,7 @@ import {
   ListSubheader,
 } from "@mui/material";
 import { MenuOutlined } from "@mui/icons-material";
-import { MenuDropdownProps, VideoType, ViewOptions } from "./types";
+import { MenuDropdownProps, ViewOptions } from "./types";
 
 const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -22,8 +22,8 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
 
   const handleClose = () => setAnchorEl(null);
 
-  const handleSelection = (view: ViewOptions, type: VideoType) => {
-    onSelect({ view, type });
+  const handleSelection = (view: ViewOptions) => {
+    onSelect(view);
     handleClose();
   };
 
@@ -41,15 +41,10 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
         <ListSubheader sx={{ fontSize: "0.875rem", lineHeight: "2" }}>
           Select view:
         </ListSubheader>
-        {Object.values(ViewOptions).map((view) => (
-          <Box key={view}>
-            <MenuItem onClick={() => handleSelection(view, VideoType.Video)}>
-              <ListItemText>{`${view} - Video`}</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={() => handleSelection(view, VideoType.Stream)}>
-              <ListItemText>{`${view} - Stream`}</ListItemText>
-            </MenuItem>
-          </Box>
+        {Object.values(ViewOptions).map((option) => (
+          <MenuItem dense key={option} onClick={() => handleSelection(option)}>
+            <ListItemText>{option}</ListItemText>
+          </MenuItem>
         ))}
       </Menu>
     </Box>

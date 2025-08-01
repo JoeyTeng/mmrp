@@ -10,13 +10,8 @@ export enum VideoType {
   Stream = "Stream of frames",
 }
 
-export type MenuSelection = {
-  view: ViewOptions;
-  type: VideoType;
-};
-
 export interface MenuDropdownProps {
-  onSelect: (view: MenuSelection) => void;
+  onSelect: (view: ViewOptions) => void;
 }
 
 export type FrameData = {
