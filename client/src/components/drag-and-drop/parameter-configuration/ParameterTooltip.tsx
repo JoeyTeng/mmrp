@@ -16,7 +16,7 @@ export const ParameterTooltip = ({
     <Tooltip
       title={description}
       arrow
-      placement="top"
+      placement="left"
       slotProps={{
         popper: {
           modifiers: [{ name: "offset", options: { offset: [0, -8] } }],
