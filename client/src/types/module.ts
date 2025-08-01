@@ -26,7 +26,7 @@ export interface ParameterDefinition {
 
 export interface ParameterData {
   value: ParamValueType;
-  type: ParamValueType;
+  type: ParamConstraintsType;
   constraints: ParameterConstraints;
 }
 

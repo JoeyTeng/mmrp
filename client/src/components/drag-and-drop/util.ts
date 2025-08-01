@@ -41,7 +41,7 @@ export function getInitialNodeParamValue(
       }
       // 4) final fallback
       else {
-        val = paramMetaData.type === "boolean" ? false : ""; // safety val for type int and float is empty string
+        val = paramMetaData.type === "bool" ? false : ""; // safety val for type int and float is empty string
       }
 
       // 5) additional check to make sure default is in [min,max] range

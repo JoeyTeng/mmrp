@@ -128,7 +128,7 @@ export default function ParameterConfiguration({
           </Box>
         );
 
-      case "boolean":
+      case "bool":
         return (
           <Box
             key={key}
