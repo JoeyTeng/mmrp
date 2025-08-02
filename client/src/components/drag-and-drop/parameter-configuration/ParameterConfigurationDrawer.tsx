@@ -7,6 +7,7 @@ import { NodeData, ParameterConfigurationDrawerProps } from "../types";
 import { NodeType, ParamValueType } from "@/types/module";
 import ParameterConfiguration from "./ParameterConfiguration";
 import { Box, Button } from "@mui/material";
+import { stringSanitizer } from "@/utils/sharedFunctionality";
 
 export default function ParameterConfigurationDrawer({
   editingNode,
@@ -55,7 +56,11 @@ export default function ParameterConfigurationDrawer({
     <AppDrawer
       open={Boolean(editingNode)}
       onClose={handleCancel}
-      title={editingNode ? `Edit ${editingNode.data.name}` : "Edit Parameters"}
+      title={
+        editingNode
+          ? `Edit ${stringSanitizer(editingNode.data.name)}`
+          : "Edit Parameters"
+      }
       width={400}
       anchor="right"
     >

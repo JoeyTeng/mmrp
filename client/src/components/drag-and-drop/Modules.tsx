@@ -2,6 +2,7 @@ import ModuleItem from "@/components/drag-and-drop/ModuleItem";
 import { Box } from "@mui/material";
 import { useContext } from "react";
 import { ModulesContext } from "@/contexts/ModulesContext";
+import { stringSanitizer } from "@/utils/sharedFunctionality";
 
 export default function Modules() {
   const modules = useContext(ModulesContext);
@@ -14,7 +15,7 @@ export default function Modules() {
           <ModuleItem
             key={item.id}
             id={item.id}
-            name={item.name}
+            name={stringSanitizer(item.name)}
             moduleClass={item.moduleClass}
           />
         ))}

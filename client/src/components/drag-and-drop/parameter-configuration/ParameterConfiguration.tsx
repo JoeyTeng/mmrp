@@ -20,8 +20,15 @@ export default function ParameterConfiguration({
 
   const constraintsLookup = useMemo(() => {
     const foundModule = modules.find((item) => item.name === node?.data.name);
+
     return (
       foundModule?.data.parameters.reduce((acc, { name, metadata }) => {
+        const isInputOrOutput = name === "input" || name === "output";
+        const isRequired = metadata.constraints?.required;
+
+        // Skip if name is "input" or "output" and not required because this is handled by source/result node
+        if (isInputOrOutput && !isRequired) return acc;
+
         acc.set(name, metadata.constraints);
         return acc;
       }, new Map<string, ParameterConstraints>()) ?? new Map()
@@ -56,6 +63,9 @@ export default function ParameterConfiguration({
 
   const renderParamInput = (key: string, value: NodeParamValue) => {
     const constraints = constraintsLookup.get(key);
+    if (!constraints) {
+      return null;
+    }
 
     switch (constraints.type) {
       case "select":

@@ -7,6 +7,7 @@ class ModuleName(StrEnum):
     BLUR = "blur"
     RESIZE = "resize"
     RESULT = "video_output"
+    BINARY = "binary"
 
 
 class ModuleType(StrEnum):

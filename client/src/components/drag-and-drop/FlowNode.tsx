@@ -7,6 +7,7 @@ import { NodeData, NodePort } from "./types";
 import { NodeType } from "@/types/module";
 import { IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
+import { stringSanitizer } from "@/utils/sharedFunctionality";
 
 type CustomNode = Node<NodeData>;
 
@@ -40,7 +41,7 @@ export default function FlowNode({
       className={`w-40 bg-white rounded-lg overflow-hidden text-sm border ${selected ? "border-black-100" : "border-gray-300"}`}
     >
       <div className="pl-3 pr-1 py-1 font-semibold text-gray-800 flex justify-between items-center">
-        {name}
+        {stringSanitizer(name)}
         <IconButton
           onClick={(e) => {
             e.preventDefault();
@@ -57,6 +58,7 @@ export default function FlowNode({
       <div className="px-3 py-1 space-y-1">
         {/* by default show the first 4 params */}
         {Object.entries(params)
+          .filter(([key]) => key !== "input" && key !== "output") // filter out "input" and "output"; this is handled by source/result node
           .slice(0, MAX_VISIBLE)
           .map(([key, value]) => (
             <div key={key} className="flex justify-between">

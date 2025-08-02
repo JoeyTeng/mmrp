@@ -5,7 +5,6 @@ import numpy as np
 from app.modules.module import ModuleBase
 from app.utils.shared_functionality import as_context
 from app.schemas.module import ColorspaceParams, ModuleFormat, ModuleParameter
-from app.modules.utils.enums import ColorSpace, PixelFormat
 
 
 class ColorModule(ModuleBase):
@@ -17,11 +16,7 @@ class ColorModule(ModuleBase):
 
     @override
     def get_input_formats(self) -> list[ModuleFormat]:
-        return [
-            ModuleFormat(
-                pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
-            ),
-        ]
+        return self.data.input_formats or []
 
     @override
     def get_output_formats(self) -> list[ModuleFormat]:

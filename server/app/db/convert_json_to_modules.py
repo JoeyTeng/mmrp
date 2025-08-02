@@ -13,7 +13,6 @@ from app.modules.utils.enums import ModuleName
 from app.schemas.module import ModuleData, Position
 from app.modules.module import ModuleBase
 from app.services.module_registry import ModuleRegistry
-from app.utils.shared_functionality import string_sanitizer
 
 
 def get_json_path() -> Path:
@@ -39,6 +38,7 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
         ModuleName.BLUR: BlurModule,
         ModuleName.RESIZE: ResizeModule,
         ModuleName.RESULT: VideoOutput,
+        ModuleName.BINARY: GenericBinaryModule,
     }
 
     modules: list[ModuleBase] = []
@@ -46,17 +46,27 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
     for module_data in json_data.get("data", []):
         try:
             module_class_ = module_data["name"]
-            name_ = string_sanitizer(module_class_)
+            if module_class_ not in module_classes:
+                module_class_ = ModuleName.BINARY
+            name_ = module_data[
+                "name"
+            ]  # In the registry, the name should be the raw name
             type_ = module_data["type"]
             parameters_ = module_data.get("parameters", [])
+            input_formats_ = module_data.get("input_formats", [])
+            output_formats_ = module_data.get("output_formats", [])
             module_id = generate_module_uuid()
             position_ = Position(x=0.0, y=0.0)
-            data_ = ModuleData(parameters=parameters_)
+            data_ = ModuleData(
+                parameters=parameters_,
+                input_formats=input_formats_,
+                output_formats=output_formats_,
+            )
 
             try:
                 module_class = module_classes[module_class_]
             except KeyError:
-                module_class = GenericBinaryModule
+                raise
 
             module = module_class(
                 id=module_id,

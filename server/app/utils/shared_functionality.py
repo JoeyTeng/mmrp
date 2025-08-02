@@ -1,7 +1,8 @@
 from pathlib import Path
-import re
 import typing
 import contextlib
+import cv2
+import numpy as np
 
 
 # Get path of input video
@@ -40,12 +41,59 @@ def as_context(
     return wrapper
 
 
-def string_sanitizer(raw_name: str) -> str:
-    cleaned = re.sub(
-        r"[^a-zA-Z0-9]+", " ", raw_name
-    )  # Replace all non-alphanumeric characters with space
-    cleaned = re.sub(
-        r"\s+", " ", cleaned
-    )  # Replace multiple spaces with a single space
-    cleaned = cleaned.strip()  # Strip leading/trailing whitespace
-    return cleaned.title()  # Capitalize each word
+# Write a YUV frame from a numpy ndarray
+def write_yuv420_frame(frame: np.ndarray, path: Path) -> Path:
+    """Write a single BGR frame to YUV420p raw file."""
+    yuv = cv2.cvtColor(frame, cv2.COLOR_BGR2YUV_I420)
+    with open(path, "wb") as f:
+        f.write(yuv.tobytes())
+    return path
+
+
+# Decode YUV frame to numpy ndarray
+def read_yuv420_frame(path: Path, width: int, height: int) -> np.ndarray:
+    """Read a single YUV420p frame and convert back to BGR ndarray."""
+    frame_size = width * height * 3 // 2  # YUV420p = 1.5 bytes per pixel
+    with open(path, "rb") as f:
+        yuv = np.frombuffer(f.read(frame_size), dtype=np.uint8)
+
+    yuv = yuv.reshape((height * 3 // 2, width))
+    bgr = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR_I420)
+    return bgr
+
+
+# Decode a video file to a specified output format such as YUV
+def decode_video(video_path: Path, input_colorspace: str, output_format: str = "yuv"):
+    video = str(video_path)
+    output_path = str(video_path.parent / f"{video_path.stem}.{output_format}")
+
+    # Use this to map output format to OpenCV constants
+    # TODO: Add more formats if needed
+    match output_format:
+        case "yuv":
+            output: str = "YUV_I420"
+        case _:
+            output: str = "YUV_I420"
+
+    # Video capture setup
+    cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
+
+    with cv2VideoCaptureContext(video) as cap:
+        if not cap.isOpened():
+            raise ValueError(f"Could not open video file: {video}")
+
+        with open(output_path, "wb") as out_file:
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                constant_name = f"COLOR_{input_colorspace}2{output}"
+                if not hasattr(cv2, constant_name):
+                    raise ValueError(
+                        f"Unsupported conversion: {input_colorspace} to {output}"
+                    )
+                color = getattr(cv2, constant_name)
+                output_frame = cv2.cvtColor(frame, color)
+                out_file.write(output_frame.tobytes())
+
+    return Path(output_path)
