@@ -1,47 +1,61 @@
 import { camelizeKeys } from "@/utils/camelize";
-import type { ModuleMeta } from "@/types/module";
+import type { Module } from "@/types/module";
 
 export const snakeCasedModules = [
   {
     id: 0,
     name: "blur",
-    role: "process_node",
-    parameters: [
-      {
-        name: "kernel_size",
-        type: "int",
-        description: null,
-        default: 5,
-        constraints: null,
-        required: true,
-      },
-      {
-        name: "method",
-        type: "str",
-        description: null,
-        default: "gaussian",
-        constraints: ["gaussian", "median", "bilateral"],
-        required: true,
-      },
-    ],
-    input_formats: [
-      {
-        pixel_format: "bgr24",
-        color_space: "BT.709 Full",
-        width: null,
-        height: null,
-        frame_rate: null,
-      },
-    ],
-    output_formats: [
-      {
-        pixel_format: "bgr24",
-        color_space: "BT.709 Full",
-        width: null,
-        height: null,
-        frame_rate: null,
-      },
-    ],
+    type: "process_node",
+    position: { x: 0, y: 0 },
+    data: {
+      parameters: [
+        {
+          name: "kernel_size",
+          metadata: {
+            value: 5,
+            type: "int",
+            constraints: {
+              type: "int",
+              default: 5,
+              required: true,
+              description: null,
+            },
+          },
+        },
+        {
+          name: "method",
+          metadata: {
+            value: "gaussian",
+            type: "str",
+            constraints: {
+              type: "select",
+              default: "gaussian",
+              required: true,
+              description: null,
+              options: ["gaussian", "median", "bilateral"],
+            },
+          },
+        },
+      ],
+      input_formats: [
+        {
+          pixel_format: "bgr24",
+          color_space: "BT.709 Full",
+          width: null,
+          height: null,
+          frame_rate: null,
+        },
+      ],
+      output_formats: [
+        {
+          pixel_format: "bgr24",
+          color_space: "BT.709 Full",
+          width: null,
+          height: null,
+          frame_rate: null,
+        },
+      ],
+    },
   },
 ];
 
@@ -65,7 +79,7 @@ describe("camelizeKeys()", () => {
   });
 
   it("preserves array length and core module values", () => {
-    const result = camelizeKeys(snakeCasedModules) as unknown as ModuleMeta[];
+    const result = camelizeKeys(snakeCasedModules) as unknown as Module[];
     expect(result).toHaveLength(snakeCasedModules.length);
 
     const original = snakeCasedModules[0];
@@ -73,25 +87,25 @@ describe("camelizeKeys()", () => {
     expect(mod).toMatchObject({
       id: original.id,
       name: original.name,
-      role: original.role,
+      type: original.type,
     });
   });
 
   it("leaves snakecased values untouched even in nested objects", () => {
-    const [mod] = camelizeKeys(snakeCasedModules) as unknown as ModuleMeta[];
+    const [mod] = camelizeKeys(snakeCasedModules) as unknown as Module[];
 
-    expect(mod.parameters[0]).toHaveProperty("name", "kernel_size");
+    expect(mod.data.parameters[0]).toHaveProperty("name", "kernel_size");
   });
 
   it("camelCases all format object keys", () => {
-    const [mod] = camelizeKeys(snakeCasedModules) as unknown as ModuleMeta[];
+    const [mod] = camelizeKeys(snakeCasedModules) as unknown as Module[];
 
-    expect(mod.inputFormats[0]).toHaveProperty("pixelFormat");
-    expect(mod.inputFormats[0]).toHaveProperty("colorSpace");
-    expect(mod.inputFormats[0]).toHaveProperty("frameRate");
+    expect(mod.data.inputFormats[0]).toHaveProperty("pixelFormat");
+    expect(mod.data.inputFormats[0]).toHaveProperty("colorSpace");
+    expect(mod.data.inputFormats[0]).toHaveProperty("frameRate");
 
-    expect(mod.outputFormats[0]).toHaveProperty("pixelFormat");
-    expect(mod.outputFormats[0]).toHaveProperty("frameRate");
+    expect(mod.data.outputFormats[0]).toHaveProperty("pixelFormat");
+    expect(mod.data.outputFormats[0]).toHaveProperty("frameRate");
   });
 
   it("no underscore is part of the object keys", () => {

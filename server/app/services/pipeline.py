@@ -1,77 +1,48 @@
 import numpy as np
 from collections import defaultdict, deque
 from typing import Any, Iterator
-from app.modules.base_module import ModuleBase, ParameterDefinition
+from pydantic import ValidationError
+from app.modules.module import ModuleBase
 from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
-from app.services.module import registry
+from app.services.module_registry import ModuleRegistry
 import uuid
 import base64
 from app.utils.quality_metrics import compute_metrics
 from app.schemas.metrics import Metrics
+from app.modules.utils.enums import ModuleName
 
 
-# Validate pipeline parameters
-# Helper
-def _is_type_match(value: Any, expected_type: str) -> bool:
-    type_map: dict[str, type] = {"int": int, "float": float, "str": str, "bool": bool}
-    if expected_type not in type_map:
-        raise ValueError(f"Unknown expected type '{expected_type}'")
-
-    return isinstance(value, type_map[expected_type])
-
-
-def validate_parameters(
-    parameters: dict[str, Any],
-    parameter_defs: dict[str, ParameterDefinition[Any]],
-    module: ModuleBase,
-):
-    # Check for unexpected parameters
-    for key, value in parameters.items():
-        if key not in parameter_defs:
-            raise ValueError(f"Unexpected parameter '{key}' for module '{module.name}'")
-
-        expected_type = parameter_defs[key].type
-        if not _is_type_match(value, expected_type):
-            raise TypeError(
-                f"Parameter '{key}' for module '{module.name}' should be of type '{expected_type}', "
-                f"but got value '{value}' ({type(value).__name__})"
-            )
-
-    # Check for missing required parameters
-    for param_name, param_def in parameter_defs.items():
-        if param_def.required and param_name not in parameters:
-            raise ValueError(
-                f"Missing required parameter '{param_name}' for module '{module.name}'"
-            )
+def get_module_class(module: PipelineModule) -> str:
+    return module.module_class
 
 
 # Process a single frame through the pipeline
 def process_pipeline_frame(
-    frame_cache: dict[int, np.ndarray],
+    frame_cache: dict[str, np.ndarray],
     ordered_modules: list[PipelineModule],
-    module_map: dict[int, tuple[ModuleBase, dict[str, Any]]],
-):
+    module_map: dict[str, tuple[ModuleBase, dict[str, Any]]],
+) -> None:
     for mod in ordered_modules:
         mod_id = mod.id
         mod_instance, params = module_map[mod_id]
 
-        input_frames = [frame_cache[src_id] for src_id in (mod.source or [0])]
+        input_frames = [frame_cache[src_id] for src_id in mod.source]
         frame_output = mod_instance.process_frame(input_frames[0], params)
         frame_cache[mod_id] = frame_output
 
 
 # Get modules in correct execution order in the pipeline
-def get_execution_order(modules: list[PipelineModule]):
+def get_execution_order(modules: list[PipelineModule]) -> list[PipelineModule]:
     # Map module id -> module
-    module_map: dict[int, PipelineModule] = {mod.id: mod for mod in modules}
+    module_map: dict[str, PipelineModule] = {mod.id: mod for mod in modules}
     all_module_ids = set(module_map.keys())
 
     # Build the dependency graph (adjacency list of dependent ids)
-    graph: defaultdict[int, list[int]] = defaultdict(list)
+    graph: defaultdict[str, list[str]] = defaultdict(list)
 
     # Tracks how many dependecies each module has
-    indegree = {mod.id: len(mod.source) for mod in modules}
+    indegree: dict[str, int] = {mod.id: len(mod.source) for mod in modules}
 
     for mod in modules:
         if mod.source:
@@ -83,7 +54,7 @@ def get_execution_order(modules: list[PipelineModule]):
                 graph[dep_id].append(mod.id)
 
     # Start with modules that have no dependencies
-    queue: deque[int] = deque(
+    queue: deque[str] = deque(
         [module_id for module_id, degree in indegree.items() if degree == 0]
     )
     execution_order: list[PipelineModule] = []
@@ -110,17 +81,24 @@ def get_execution_order(modules: list[PipelineModule]):
 
 # Handle the pipeline request and process the video
 def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
-    # Resolve pipeline modules
     ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
-    # Check that the pipeline starts with a source module
-    if not ordered_modules or ordered_modules[0].name != "source":
-        raise ValueError("Pipeline must start with a source module")
-    if ordered_modules[-1].name != "result":
-        raise ValueError("Pipeline must end with a result module")
+    # Validate pipeline structure
+    if not ordered_modules:
+        raise ValueError("Pipeline is empty")
 
-    # Registry lookup
-    module_map: dict[int, tuple[ModuleBase, dict[str, Any]]] = {
-        m.id: (registry[m.name](), {p.key: p.value for p in m.parameters})
+    first_module_base = get_module_class(ordered_modules[0])
+    if first_module_base != ModuleName.VIDEO_SOURCE:
+        raise ValueError(f"Pipeline must start with a {ModuleName.VIDEO_SOURCE} module")
+
+    last_module_base = get_module_class(ordered_modules[-1])
+    if last_module_base != ModuleName.RESULT:
+        raise ValueError(f"Pipeline must end with a {ModuleName.RESULT} module")
+
+    module_map: dict[str, tuple[ModuleBase, dict[str, Any]]] = {
+        m.id: (
+            ModuleRegistry.get_by_spacename(get_module_class(m)),
+            {p.key: p.value for p in m.parameters},
+        )
         for m in ordered_modules
     }
 
@@ -128,14 +106,20 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     for mod in ordered_modules:
         mod_id = mod.id
         mod_instance, params = module_map[mod_id]
-        # Get expected parameter definitions
-        param_defs = {p.name: p for p in mod_instance.get_parameters()}
-        # Validate each parameter
-        validate_parameters(params, param_defs, mod_instance)
+        param_dict = {p.key: p.value for p in mod.parameters}
+        try:
+            validated = mod_instance.parameter_model(**param_dict)
+        except ValidationError as e:
+            raise ValueError(f"Parameter validation failed for module {mod.name}:\n{e}")
+        module_map[mod_id] = (mod_instance, validated.model_dump())
 
     # Get source and result module
     source_mod = ordered_modules[0]
-    result_modules = [module for module in ordered_modules if module.name == "result"]
+    result_modules = [
+        module
+        for module in ordered_modules
+        if get_module_class(module) == ModuleName.RESULT
+    ]
 
     # Check and validate result modules
     if not result_modules:
@@ -150,10 +134,11 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
 
     # Get processing nodes (remove source and result modules)
     processing_nodes = [
-        m for m in ordered_modules if m.name not in {"source", "result"}
+        m
+        for m in ordered_modules
+        if m.module_class not in {ModuleName.VIDEO_SOURCE, ModuleName.RESULT}
     ]
 
-    # Source module processes video input and yields framerate
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
         source_file,
         fps,
@@ -162,13 +147,13 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         # Frame storage of original frames
         original_frames: list[np.ndarray] = []
         # Frame storage per result module
-        result_frames: dict[int, list[np.ndarray]] = {
+        result_frames: dict[str, list[np.ndarray]] = {
             mod.id: [] for mod in result_modules
         }
 
         # Run frames through whole pipeline and return the frames that need to be written
-        def base_pipeline_iterator() -> Iterator[tuple[int, np.ndarray]]:
-            frame_cache: dict[int, np.ndarray] = {}
+        def base_pipeline_iterator() -> Iterator[tuple[str, np.ndarray]]:
+            frame_cache: dict[str, np.ndarray] = {}
             for frame in frame_iter:
                 original_frames.append(frame.copy())
                 frame_cache.clear()
@@ -198,6 +183,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             params["path"] = filename
             params["fps"] = fps
 
+            # Pass only the frames for the specific result module
             def frame_iter_result() -> Iterator[np.ndarray]:
                 yield from result_frames[result_mod.id]
 

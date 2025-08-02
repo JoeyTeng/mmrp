@@ -3,12 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
 import { AppDrawer } from "@/components/sidebar/AppDrawer";
-import {
-  NodeData,
-  NodeType,
-  ParamValueType,
-  ParameterConfigurationDrawerProps,
-} from "../types";
+import { NodeData, ParameterConfigurationDrawerProps } from "../types";
+import { NodeType, ParamValueType } from "@/types/module";
 import ParameterConfiguration from "./ParameterConfiguration";
 import { Box, Button } from "@mui/material";
 
@@ -59,7 +55,7 @@ export default function ParameterConfigurationDrawer({
     <AppDrawer
       open={Boolean(editingNode)}
       onClose={handleCancel}
-      title={editingNode ? `Edit ${editingNode.data.label}` : "Edit Parameters"}
+      title={editingNode ? `Edit ${editingNode.data.name}` : "Edit Parameters"}
       width={400}
       anchor="right"
     >

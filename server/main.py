@@ -4,14 +4,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 import shutil
 import uvicorn
-from app.routers import pipeline, video, module, frame, binaries
-from app.services.module import load_modules
+from app.routers import pipeline, video, modules, frame, binaries
+from app.db.convert_json_to_modules import get_all_mock_modules
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load a registry of all modules at start up
-    load_modules()
+    get_all_mock_modules()
 
     yield  # Application is running
 
@@ -38,7 +38,7 @@ app.add_middleware(
 
 app.include_router(pipeline.router)
 app.include_router(video.router)
-app.include_router(module.router)
+app.include_router(modules.router)
 app.include_router(frame.router)
 app.include_router(binaries.router)
 

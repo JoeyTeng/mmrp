@@ -8,7 +8,7 @@ from app.schemas.metrics import Metrics
 def compute_psnr(img1: np.ndarray, img2: np.ndarray) -> float:
     mse = np.mean((img1.astype(np.float32) - img2.astype(np.float32)) ** 2)
     if mse == 0:
-        return float("inf")
+        return 100.0
     PIXEL_MAX = 255.0
     return 20 * np.log10(PIXEL_MAX / np.sqrt(mse))
 

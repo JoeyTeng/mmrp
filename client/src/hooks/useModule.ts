@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "@/services/apiClient";
 import { camelizeKeys } from "@/utils/camelize";
-import { ModuleMeta } from "@/types/module";
+import { Module } from "@/types/module";
 
 export function useModules() {
-  const [modules, setModules] = useState<ModuleMeta[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadModules = () => {
     setLoading(true);
     apiClient
-      .get<ModuleMeta[]>("/module/") // TODO: Validate response schema
-      .then((res) => setModules(camelizeKeys(res.data) as ModuleMeta[]))
+      .get<Module[]>("/modules/") // TODO: Validate response schema
+      .then((res) => setModules(camelizeKeys(res.data) as Module[]))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };

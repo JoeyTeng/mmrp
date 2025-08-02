@@ -8,7 +8,7 @@ export async function uploadBinaryToBackend(files: FormData): Promise<boolean> {
       "The config file does not follow the required structure. (See template)",
     );
   }
-  const response = await apiClient.post<boolean>("/module/upload", files, {
+  const response = await apiClient.post<boolean>("/modules/upload", files, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

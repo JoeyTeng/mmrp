@@ -1,0 +1,82 @@
+import json
+import uuid
+from pathlib import Path
+from typing import Any
+from pydantic import ValidationError
+from app.modules.inputs.video_source import VideoSource
+from app.modules.outputs.video_output import VideoOutput
+from app.modules.transforms.blur import BlurModule
+from app.modules.transforms.color import ColorModule
+from app.modules.transforms.resize import ResizeModule
+from app.modules.generic.binary_module import GenericBinaryModule
+from app.modules.utils.enums import ModuleName
+from app.schemas.module import ModuleData, Position
+from app.modules.module import ModuleBase
+from app.services.module_registry import ModuleRegistry
+from app.utils.shared_functionality import string_sanitizer
+
+
+def get_json_path() -> Path:
+    return Path(__file__).parent / "mock_data.json"
+
+
+def get_all_mock_modules(file_path: Path | None = None) -> list[ModuleBase]:
+    path = file_path if file_path is not None else get_json_path()
+
+    with open(path) as f:
+        json_data: dict[str, Any] = json.load(f)
+    return json_to_modules(json_data)
+
+
+def generate_module_uuid() -> str:
+    return f"{uuid.uuid4()}"
+
+
+def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
+    module_classes: dict[ModuleName, type[ModuleBase]] = {
+        ModuleName.VIDEO_SOURCE: VideoSource,
+        ModuleName.COLOR: ColorModule,
+        ModuleName.BLUR: BlurModule,
+        ModuleName.RESIZE: ResizeModule,
+        ModuleName.RESULT: VideoOutput,
+    }
+
+    modules: list[ModuleBase] = []
+
+    for module_data in json_data.get("data", []):
+        try:
+            module_class_ = module_data["name"]
+            name_ = string_sanitizer(module_class_)
+            type_ = module_data["type"]
+            parameters_ = module_data.get("parameters", [])
+            module_id = generate_module_uuid()
+            position_ = Position(x=0.0, y=0.0)
+            data_ = ModuleData(parameters=parameters_)
+
+            try:
+                module_class = module_classes[module_class_]
+            except KeyError:
+                module_class = GenericBinaryModule
+
+            module = module_class(
+                id=module_id,
+                module_class=module_class_,
+                name=name_,
+                type=type_,
+                position=position_,
+                data=data_,
+            )
+
+            ModuleRegistry.register(module)
+            modules.append(module)
+        except KeyError as e:
+            raise ValueError(
+                f"Missing required field in module data: {str(e)} - module_data: {module_data}"
+            )
+        except ValidationError as e:
+            raise ValueError(
+                f"Validation error in module: {module_data} : {e.errors()}"
+            )
+        except Exception as e:
+            raise ValueError(f"Error loading module: {module_data}: {str(e)}")
+    return modules
