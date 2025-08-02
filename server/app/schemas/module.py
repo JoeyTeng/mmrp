@@ -4,14 +4,16 @@ from app.modules.utils.enums import Color, ColorSpace, FrameRate, PixelFormat
 
 
 class ModuleFormat(BaseModel):
-    pixel_format: PixelFormat | None = None
-    color_space: ColorSpace | None = None
+    pixel_format: list[PixelFormat] | None = None
+    color_space: list[ColorSpace] | None = None
     color: Color | None = None
     width: int | None = Field(default=None, ge=32, le=3840, description="Output width")
     height: int | None = Field(
         default=None, ge=32, le=2160, description="Output height"
     )
-    frame_rate: FrameRate | None = None
+    frame_rate: FrameRate | None = Field(
+        default=None, description="Frame rate of the video format"
+    )
 
 
 class Position(BaseModel):

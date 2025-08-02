@@ -24,7 +24,7 @@ class ResizeModule(ModuleBase):
     def get_input_formats(self) -> list[ModuleFormat]:
         return [
             ModuleFormat(
-                pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
+                pixel_format=[PixelFormat.BGR24], color_space=[ColorSpace.BT_709_FULL]
             )
         ]
 
@@ -32,8 +32,8 @@ class ResizeModule(ModuleBase):
     def get_output_formats(self) -> list[ModuleFormat]:
         return [
             ModuleFormat(
-                pixel_format=PixelFormat.BGR24,
-                color_space=ColorSpace.BT_709_FULL,
+                pixel_format=[PixelFormat.BGR24],
+                color_space=[ColorSpace.BT_709_FULL],
                 width=32,  # TODO: placeholder, will be set in process
                 height=1024,  # TODO: placeholder, will be set in process
                 frame_rate=FrameRate.FPS_30,

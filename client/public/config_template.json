@@ -6,7 +6,7 @@
       "type": "video",
       "formats": {
         "pixelFormat": [
-          "rgb24",
+          "bgr24",
           "rgb24",
           "gray8",
           "yuv420p 8bit",
@@ -21,7 +21,7 @@
         ],
         "width": 0,
         "height": 0,
-        "frameRate": 30
+        "frameRate": "29.97"
       }
     }
   ],
@@ -30,7 +30,7 @@
       "type": "video",
       "formats": {
         "pixelFormat": [
-          "rgb24",
+          "bgr24",
           "rgb24",
           "gray8",
           "yuv420p 8bit",
@@ -45,7 +45,7 @@
         ],
         "width": 0,
         "height": 0,
-        "frameRate": 30
+        "frameRate": "29.97"
       }
     }
   ],

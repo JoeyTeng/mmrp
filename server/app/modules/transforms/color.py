@@ -19,7 +19,7 @@ class ColorModule(ModuleBase):
     def get_input_formats(self) -> list[ModuleFormat]:
         return [
             ModuleFormat(
-                pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
+                pixel_format=[PixelFormat.BGR24], color_space=[ColorSpace.BT_709_FULL]
             ),
         ]
 

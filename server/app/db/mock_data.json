@@ -3,6 +3,17 @@
     {
       "name": "video_source",
       "type": "inputNode",
+      "input_formats": [],
+      "output_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ]
+        }
+      ],
       "parameters": [
         {
           "name": "path",
@@ -10,13 +21,33 @@
           "type": "str",
           "default": "example-video.mp4",
           "required": true,
-          "description":"Input file path"
+          "description": "Input file path"
         }
       ]
     },
     {
       "name": "color",
       "type": "processNode",
+      "input_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ]
+        }
+      ],
+      "output_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ]
+        }
+      ],
       "parameters": [
         {
           "name": "input_colorspace",
@@ -30,7 +61,7 @@
             "Lab",
             "RGB"
           ],
-          "description":"Input color space"
+          "description": "Input color space"
         },
         {
           "name": "output_colorspace",
@@ -44,13 +75,33 @@
             "Lab",
             "RGB"
           ],
-          "description":"Input color space"
+          "description": "Input color space"
         }
       ]
     },
     {
       "name": "blur",
       "type": "processNode",
+      "input_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ]
+        }
+      ],
+      "output_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ]
+        }
+      ],
       "parameters": [
         {
           "name": "kernel_size",
@@ -60,7 +111,7 @@
           "min": 1,
           "max": 31,
           "required": true,
-          "description":"Kernel size (must be odd)"
+          "description": "Kernel size (must be odd)"
         },
         {
           "name": "method",
@@ -68,7 +119,11 @@
           "type": "str",
           "required": true,
           "default": "gaussian",
-          "options": ["gaussian", "median", "average"],
+          "options": [
+            "gaussian",
+            "median",
+            "average"
+          ],
           "description": "Blur algorithm type"
         }
       ]
@@ -76,6 +131,29 @@
     {
       "name": "resize",
       "type": "processNode",
+      "input_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ]
+        }
+      ],
+      "output_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ],
+          "width": 32,
+          "height": 1024,
+          "frame_rate": "30"
+        }
+      ],
       "parameters": [
         {
           "name": "width",
@@ -103,7 +181,12 @@
           "type": "str",
           "required": true,
           "default": "linear",
-          "options": ["linear", "nearest", "cubic", "area"],
+          "options": [
+            "linear",
+            "nearest",
+            "cubic",
+            "area"
+          ],
           "description": "Interpolation method"
         }
       ]
@@ -111,6 +194,17 @@
     {
       "name": "video_output",
       "type": "outputNode",
+      "input_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ]
+        }
+      ],
+      "output_formats": [],
       "parameters": [
         {
           "name": "video_player",
@@ -118,7 +212,10 @@
           "type": "str",
           "default": "right",
           "required": true,
-          "options": ["left", "right"],
+          "options": [
+            "left",
+            "right"
+          ],
           "description": "Output Video Player"
         }
       ]
@@ -126,37 +223,65 @@
     {
       "name": "simple-video-processor-app",
       "type": "processNode",
-      "executable": "simple-video-processor-app",
+      "input_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ],
+          "frame_rate": "29.97"
+        }
+      ],
+      "output_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ],
+          "width": 1280,
+          "height": 720,
+          "frame_rate": "29.97"
+        }
+      ],
       "parameters": [
         {
           "name": "input",
           "flag": "-i",
           "type": "str",
-          "required": true
+          "required": false,
+          "description": "Input is taken from previous node"
         },
         {
           "name": "width",
           "flag": "-w",
           "type": "int",
-          "required": true
+          "required": true,
+          "default": 1280
         },
         {
           "name": "height",
           "flag": "-h",
           "type": "int",
-          "required": true
+          "required": true,
+          "default": 720
         },
         {
           "name": "mode",
           "flag": "-m",
           "type": "int",
-          "required": true
+          "required": true,
+          "default": 1,
+          "description": "Identity mode: 0"
         },
         {
           "name": "operator",
           "flag": "--operator",
           "type": "int",
-          "required": true
+          "required": false
         },
         {
           "name": "y",
@@ -168,19 +293,20 @@
           "name": "u",
           "flag": "--u",
           "type": "int",
-          "required": true
+          "required": false
         },
         {
           "name": "v",
           "flag": "--v",
           "type": "int",
-          "required": true
+          "required": false
         },
         {
           "name": "output",
           "flag": "-o",
           "type": "str",
-          "required": true
+          "required": false,
+          "description": "Output is written in Result node and displayed in the specified video player"
         },
         {
           "name": "verbose",

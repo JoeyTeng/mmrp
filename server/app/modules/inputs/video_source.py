@@ -26,7 +26,7 @@ class VideoSource(ModuleBase):
         # Width/height/fps will be resolved at runtime by the pipeline runner
         return [
             ModuleFormat(
-                pixel_format=PixelFormat.BGR24, color_space=ColorSpace.BT_709_FULL
+                pixel_format=[PixelFormat.BGR24], color_space=[ColorSpace.BT_709_FULL]
             )
         ]
 

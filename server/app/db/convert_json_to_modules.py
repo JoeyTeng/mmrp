@@ -49,9 +49,15 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
             name_ = string_sanitizer(module_class_)
             type_ = module_data["type"]
             parameters_ = module_data.get("parameters", [])
+            input_formats_ = module_data.get("input_formats", [])
+            output_formats_ = module_data.get("output_formats", [])
             module_id = generate_module_uuid()
             position_ = Position(x=0.0, y=0.0)
-            data_ = ModuleData(parameters=parameters_)
+            data_ = ModuleData(
+                parameters=parameters_,
+                input_formats=input_formats_,
+                output_formats=output_formats_,
+            )
 
             try:
                 module_class = module_classes[module_class_]

@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from app.modules.module import ModuleBase
 from app.db.convert_json_to_modules import get_all_mock_modules
+from app.services.modules import append_to_mock_data
 
 router = APIRouter(
     prefix="/modules",
@@ -91,7 +92,7 @@ async def upload_module(
                             f.write(await file.read())
 
         # Read config file to add binary to module registry
-        # TODO: add to registry (needs new module structure implementation)
+        append_to_mock_data(data)
         return True
     except Exception as e:
         raise HTTPException(500, detail=f"Error uploading module: {str(e)}")
