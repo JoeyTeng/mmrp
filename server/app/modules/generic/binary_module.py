@@ -65,15 +65,12 @@ class GenericBinaryModule(ModuleBase):
         try:
             # 1. Write input frame
             write_yuv420_frame(frame, input_path)
-            print(f"INPUT written: {input_path}")
 
             # 2. Run binary
             out = self.execute_binary(parameters, input=input_path, output=output_path)
-            print(f"OUTPUT written: {out}")
 
-            # 3. Read processed frame (assumes same width/height — or read actual size)
+            # 3. Read processed frame
             result_frame = read_yuv420_frame(out, width, height)
-            print(f"RESULT FRAME: shape {result_frame.shape}")
 
         finally:
             input_path.unlink(missing_ok=True)
