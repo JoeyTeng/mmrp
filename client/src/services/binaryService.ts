@@ -4,9 +4,7 @@ import { apiClient } from "./apiClient";
 export async function uploadBinaryToBackend(files: FormData): Promise<boolean> {
   const validJson = await validateConfigFile(files.get("config") as File);
   if (!validJson) {
-    throw new Error(
-      "The config file does not follow the required structure. (See template)",
-    );
+    return false;
   }
   const response = await apiClient.post<boolean>("/modules/upload", files, {
     headers: {

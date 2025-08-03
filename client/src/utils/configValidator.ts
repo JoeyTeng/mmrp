@@ -24,9 +24,17 @@ export async function validateConfigFile(config: File): Promise<boolean> {
   // Check required fields
   const hasName = typeof json.name === "string";
   const hasExecutable = typeof json.executable === "string";
+  const hasInputFormat = Array.isArray(json.inputFormat);
+  const hasOutputFormat = Array.isArray(json.outputFormat);
   const hasParameters = Array.isArray(json.parameters);
 
-  if (!hasName || !hasExecutable || !hasParameters) {
+  if (
+    !hasName ||
+    !hasExecutable ||
+    !hasInputFormat ||
+    !hasOutputFormat ||
+    !hasParameters
+  ) {
     return false;
   }
 

@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 from app.modules.module import ModuleBase
 from app.schemas.module import ModuleFormat, ModuleParameter, VideoSourceParams
-from app.modules.utils.enums import PixelFormat, ColorSpace
 from app.utils.shared_functionality import get_video_path, as_context
 from pathlib import Path
 
@@ -24,11 +23,7 @@ class VideoSource(ModuleBase):
     def get_output_formats(self) -> list[ModuleFormat]:
         # We support .mp4 imports (decoded by OpenCV as BGR24)
         # Width/height/fps will be resolved at runtime by the pipeline runner
-        return [
-            ModuleFormat(
-                pixel_format=[PixelFormat.BGR24], color_space=[ColorSpace.BT_709_FULL]
-            )
-        ]
+        return self.data.output_formats or []
 
     @override
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:

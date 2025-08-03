@@ -5,12 +5,7 @@ import numpy as np
 from app.modules.module import ModuleBase
 from app.utils.shared_functionality import as_context
 from app.schemas.module import ModuleFormat, ModuleParameter, ResizeParams
-from app.modules.utils.enums import (
-    PixelFormat,
-    ColorSpace,
-    FrameRate,
-    ResizeInterpolation,
-)
+from app.modules.utils.enums import ResizeInterpolation
 
 
 class ResizeModule(ModuleBase):
@@ -22,23 +17,11 @@ class ResizeModule(ModuleBase):
 
     @override
     def get_input_formats(self) -> list[ModuleFormat]:
-        return [
-            ModuleFormat(
-                pixel_format=[PixelFormat.BGR24], color_space=[ColorSpace.BT_709_FULL]
-            )
-        ]
+        return self.data.input_formats or []
 
     @override
     def get_output_formats(self) -> list[ModuleFormat]:
-        return [
-            ModuleFormat(
-                pixel_format=[PixelFormat.BGR24],
-                color_space=[ColorSpace.BT_709_FULL],
-                width=32,  # TODO: placeholder, will be set in process
-                height=1024,  # TODO: placeholder, will be set in process
-                frame_rate=FrameRate.FPS_30,
-            )
-        ]
+        return self.data.output_formats or []
 
     @override
     def process_frame(

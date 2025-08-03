@@ -41,7 +41,7 @@ export default function UploadBinaryModal({
       linux: { exec: null, lib: null },
       windows: { exec: null, lib: null },
     });
-
+    setIsLoading(false);
     // Close modal
     onClose();
   };
@@ -74,16 +74,19 @@ export default function UploadBinaryModal({
     formData.append("windows_exec", files.windows.exec!);
     formData.append("windows_lib", files.windows.lib!);
 
-    // TODO: Validate files (check json content and structure, check binaries?)
-    // TODO: Send request to backend
     setIsLoading(true);
     try {
       const res = await uploadBinaryToBackend(formData);
       if (res === true) {
-        toast.success("Modules uploaded successfully!");
         setIsLoading(false);
         onUploadSuccess();
         handleClose();
+      }
+      // Error in validation --> res == false
+      if (res === false) {
+        toast.error(
+          "The config file does not follow the required structure. (See template)",
+        );
       }
     } catch (error) {
       let message = "An unexpected error occurred.";
