@@ -12,6 +12,7 @@ import platform
 import subprocess
 import json
 import tempfile
+import os
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 
@@ -53,29 +54,30 @@ class GenericBinaryModule(ModuleBase):
     ) -> np.ndarray:
         width, height = frame.shape[1], frame.shape[0]
 
-        with (
-            tempfile.NamedTemporaryFile(suffix=".yuv", delete=False) as input_temp,
-            tempfile.NamedTemporaryFile(suffix=".yuv", delete=False) as output_temp,
-        ):
-            input_path = Path(input_temp.name)
-            output_path = Path(output_temp.name)
+        fd_in, input_path_raw = tempfile.mkstemp(suffix=".yuv")
+        fd_out, output_path_raw = tempfile.mkstemp(suffix=".yuv")
+        os.close(fd_in)
+        os.close(fd_out)
 
-            try:
-                # 1. Write frame to YUV
-                write_yuv420_frame(frame, input_path)
+        input_path = Path(input_path_raw)
+        output_path = Path(output_path_raw)
 
-                # 2. Run the binary
-                out = self.execute_binary(
-                    parameters, input=input_path, output=output_path
-                )
+        try:
+            # 1. Write input frame
+            write_yuv420_frame(frame, input_path)
+            print(f"INPUT written: {input_path}")
 
-                # 3. Read processed frame
-                result_frame = read_yuv420_frame(out, width, height)
+            # 2. Run binary
+            out = self.execute_binary(parameters, input=input_path, output=output_path)
+            print(f"OUTPUT written: {out}")
 
-            finally:
-                # 4. Clean up temp files
-                input_path.unlink(missing_ok=True)
-                output_path.unlink(missing_ok=True)
+            # 3. Read processed frame (assumes same width/height — or read actual size)
+            result_frame = read_yuv420_frame(out, width, height)
+            print(f"RESULT FRAME: shape {result_frame.shape}")
+
+        finally:
+            input_path.unlink(missing_ok=True)
+            output_path.unlink(missing_ok=True)
 
         return result_frame
 
@@ -143,7 +145,6 @@ class GenericBinaryModule(ModuleBase):
         try:
             result = subprocess.run(command, check=True, capture_output=True, text=True)
             print("STDOUT:", result.stdout)
-            print("STDERR:", result.stderr)
         except subprocess.CalledProcessError as e:
             print("Execution failed:")
             print("STDOUT:\n", e.stdout)

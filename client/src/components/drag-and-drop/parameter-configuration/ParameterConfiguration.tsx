@@ -15,9 +15,6 @@ export default function ParameterConfiguration({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const modules = useContext(ModulesContext);
 
-  const MIN_VALUE = 0;
-  const MAX_VALUE = 100;
-
   const constraintsLookup = useMemo(() => {
     const foundModule = modules.find((item) => item.name === node?.data.name);
 
@@ -39,25 +36,24 @@ export default function ParameterConfiguration({
     const newValue = Number(rawValue);
     const constraints = constraintsLookup.get(key);
 
-    let min = MIN_VALUE;
-    let max = MAX_VALUE;
-
+    let clampedValue: number = newValue;
     if (constraints.min !== undefined && constraints.max !== undefined) {
-      min = constraints.min;
-      max = constraints.max;
+      const min = constraints.min;
+      const max = constraints.max;
+
+      setErrors((prev) => ({
+        ...prev,
+        [key]:
+          newValue < min
+            ? `Must be ≥ ${min}`
+            : newValue > max
+              ? `Must be ≤ ${max}`
+              : "",
+      }));
+
+      clampedValue = Math.max(min, Math.min(max, newValue));
     }
 
-    setErrors((prev) => ({
-      ...prev,
-      [key]:
-        newValue < min
-          ? `Must be ≥ ${min}`
-          : newValue > max
-            ? `Must be ≤ ${max}`
-            : "",
-    }));
-
-    const clampedValue = Math.max(min, Math.min(max, newValue));
     onParamChange(key, clampedValue);
   };
 

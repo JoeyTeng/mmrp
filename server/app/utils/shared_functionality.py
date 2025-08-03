@@ -52,14 +52,14 @@ def write_yuv420_frame(frame: np.ndarray, path: Path) -> Path:
 
 # Decode YUV frame to numpy ndarray
 def read_yuv420_frame(path: Path, width: int, height: int) -> np.ndarray:
-    """Read a single YUV420p frame and convert back to BGR ndarray."""
-    frame_size = width * height * 3 // 2  # YUV420p = 1.5 bytes per pixel
-    with open(path, "rb") as f:
-        yuv = np.frombuffer(f.read(frame_size), dtype=np.uint8)
-
-    yuv = yuv.reshape((height * 3 // 2, width))
-    bgr = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR_I420)
-    return bgr
+    expected_size = width * height * 3 // 2
+    data = path.read_bytes()
+    if len(data) != expected_size:
+        raise ValueError(
+            f"YUV size mismatch: expected {expected_size}, got {len(data)}"
+        )
+    yuv = np.frombuffer(data, dtype=np.uint8).reshape((height * 3 // 2, width))
+    return cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR_I420)
 
 
 # Decode a video file to a specified output format such as YUV
