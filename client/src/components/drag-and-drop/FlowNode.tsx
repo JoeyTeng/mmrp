@@ -5,7 +5,6 @@ import { MoreVertOutlined as MenuIcon } from "@mui/icons-material";
 import { NodeData, NodePort, NodeType } from "./types";
 import { IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
-import { useCallback } from "react";
 
 type CustomNode = Node<NodeData>;
 
@@ -41,19 +40,12 @@ export default function FlowNode({
       .join("\n");
   }
 
-  const formatLabel = useCallback((label: string) => {
-    return label
-      .split("_")
-      .map((word) => word.charAt(0).toLocaleUpperCase() + word.slice(1))
-      .join(" ");
-  }, []);
-
   return (
     <div
       className={`w-40 bg-white rounded-lg overflow-hidden text-sm border ${selected ? "border-black-100" : "border-gray-300"}`}
     >
       <div className="pl-3 pr-1 py-1 font-semibold text-gray-800 flex justify-between items-center">
-        {formatLabel(label)}
+        {label}
         <IconButton
           onClick={(e) => {
             e.preventDefault();
@@ -71,7 +63,7 @@ export default function FlowNode({
         {visibleParams.map(([key, value]) => (
           <div key={key} className="flex justify-between gap-3">
             <span className="font-medium text-gray-500 truncate text-pretty break-keep flex-1">
-              {formatLabel(key)}
+              {key}
             </span>
             <span className="text-gray-600 max-w-[65%] truncate break-normal">
               {String(value)}

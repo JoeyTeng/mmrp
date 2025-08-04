@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useContext, useMemo, useCallback } from "react";
+import { useState, useContext, useMemo } from "react";
 import { Box, TextField, MenuItem, useTheme } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
 import {
@@ -38,10 +38,7 @@ export default function ParameterConfiguration({
   const paramKeys = Object.keys(node.data.params);
 
   const fuse = useMemo(() => {
-    return new Fuse(paramKeys, {
-      includeScore: true,
-      threshold: 0.5,
-    });
+    return new Fuse(paramKeys);
   }, [paramKeys]);
 
   const filteredParams = useMemo(() => {
@@ -99,7 +96,7 @@ export default function ParameterConfiguration({
                 select
                 fullWidth
                 size="small"
-                label={formatLabel(key)}
+                label={key}
                 value={value}
                 onChange={(e) => onParamChange(key, e.target.value)}
               >
@@ -135,7 +132,7 @@ export default function ParameterConfiguration({
                     htmlFor={key}
                     className={`text-xs font-medium transition-colors ${errors[key] ? "text-red-600" : "text-gray-500"}`}
                   >
-                    {formatLabel(key)}
+                    {key}
                   </label>
                 </NumberField.ScrubArea>
 
@@ -171,7 +168,7 @@ export default function ParameterConfiguration({
               <TextField
                 select
                 fullWidth
-                label={formatLabel(key)}
+                label={key}
                 size="small"
                 value={String(value)}
                 onChange={(e) => onParamChange(key, e.target.value === "true")}
@@ -190,7 +187,7 @@ export default function ParameterConfiguration({
             <ParameterTooltip description={description}>
               <TextField
                 fullWidth
-                label={formatLabel(key)}
+                label={key}
                 size="small"
                 value={String(value)}
                 onChange={(e) => onParamChange(key, e.target.value)}
@@ -201,13 +198,6 @@ export default function ParameterConfiguration({
         );
     }
   };
-
-  const formatLabel = useCallback((label: string) => {
-    return label
-      .split("_")
-      .map((word) => word.charAt(0).toLocaleUpperCase() + word.slice(1))
-      .join(" ");
-  }, []);
 
   return (
     <Box className="p-4 h-full overflow-y-auto">
