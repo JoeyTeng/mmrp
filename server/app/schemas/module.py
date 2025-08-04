@@ -25,7 +25,7 @@ class Position(BaseModel):
 #       Reference: https://docs.pydantic.dev/latest/concepts/models/#generic-models
 class ParameterConstraint(BaseModel):
     type: str = Field(..., description="Parameter type")
-    default: Any = Field(..., description="Default value for the parameter")
+    default: Any | None = None
     min: float | None = None
     max: float | None = None
     options: list[str] | None = None
@@ -76,6 +76,7 @@ class ParameterMetadata(BaseModel):
 
 class ModuleParameter(BaseModel):
     name: str = Field(..., description="Parameter name")
+    flag: str | None = None
     metadata: ParameterMetadata = Field(
         ..., description="Parameter Metadata for the parameter"
     )

@@ -1,11 +1,11 @@
 {
   "name": "name-of-module",
   "executable": "name-of-executable.exe",
-  "inputFormat": [
+  "input_formats": [
     {
       "type": "video",
       "formats": {
-        "pixelFormat": [
+        "pixel_format": [
           "bgr24",
           "rgb24",
           "gray8",
@@ -13,7 +13,7 @@
           "yuv420p 10bit",
           "yuv444p 8bit"
         ],
-        "colorSpace": [
+        "color_space": [
           "BT.601 Full",
           "BT.601 Limited",
           "BT.709 Full",
@@ -21,15 +21,15 @@
         ],
         "width": 0,
         "height": 0,
-        "frameRate": "29.97"
+        "frame_rate": "29.97"
       }
     }
   ],
-  "outputFormat": [
+  "output_formats": [
     {
       "type": "video",
       "formats": {
-        "pixelFormat": [
+        "pixel_format": [
           "bgr24",
           "rgb24",
           "gray8",
@@ -37,7 +37,7 @@
           "yuv420p 10bit",
           "yuv444p 8bit"
         ],
-        "colorSpace": [
+        "color_space": [
           "BT.601 Full",
           "BT.601 Limited",
           "BT.709 Full",
@@ -45,7 +45,7 @@
         ],
         "width": 0,
         "height": 0,
-        "frameRate": "29.97"
+        "frame_rate": "29.97"
       }
     }
   ],

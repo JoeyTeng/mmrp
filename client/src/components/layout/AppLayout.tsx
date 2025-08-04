@@ -2,24 +2,16 @@
 import { useState } from "react";
 import { Sidebar } from "../sidebar/Sidebar";
 import { Box } from "@mui/material";
-import {
-  getLeftSidebarItems,
-  RIGHT_SIDEBAR_ITEMS,
-} from "../sidebar/sidebar-config";
+import { RIGHT_SIDEBAR_ITEMS } from "../sidebar/sidebar-config";
 import { ModulesContext } from "@/contexts/ModulesContext";
 import { useModules } from "@/hooks/useModule";
-import { useVideoReload } from "@/contexts/videoReloadContext";
 import Loading from "./Loading";
-import UploadBinaryModal from "../modals/UploadBinaryModal";
-import { useDownloadUtils } from "../sidebar/util";
+import LeftSidebar from "../sidebar/LeftSidebar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [leftOpenPanelId, setLeftOpenPanelId] = useState<string | null>(null);
   const [rightOpenPanelId, setRightOpenPanelId] = useState<string | null>(null);
   const { modules, loading, reloadModules } = useModules();
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const { latestResponse, isProcessing } = useVideoReload();
-  const { handleDownload, downloadSize } = useDownloadUtils();
 
   if (loading) {
     return <Loading />;
@@ -28,18 +20,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ModulesContext value={modules}>
       <Box className="flex h-screen w-screen bg-gray-50">
-        <Sidebar
-          anchor="left"
-          items={getLeftSidebarItems(
-            setUploadOpen,
-            handleDownload,
-            downloadSize,
-            isProcessing,
-            latestResponse,
-          )}
-          openPanelId={leftOpenPanelId}
-          width={45}
-          onPanelToggle={setLeftOpenPanelId}
+        <LeftSidebar
+          paneId={leftOpenPanelId}
+          setPaneId={setLeftOpenPanelId}
+          reload={reloadModules}
         />
 
         <Box
@@ -58,12 +42,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           openPanelId={rightOpenPanelId}
           width={45}
           onPanelToggle={setRightOpenPanelId}
-        />
-
-        <UploadBinaryModal
-          open={uploadOpen}
-          onClose={() => setUploadOpen(false)}
-          onUploadSuccess={reloadModules}
         />
       </Box>
     </ModulesContext>

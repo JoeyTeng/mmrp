@@ -1,33 +1,26 @@
 from typing import Any
 from pathlib import Path
 import json
+from pydantic import ValidationError
+from app.schemas.module import ModuleData
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-MOCK_DATA_PATH = BASE_DIR / "db" / "mock_data.json"
 
 
 def convert_format(format_entry: dict[str, Any]) -> dict[str, Any]:
     formats = format_entry.get("formats", {})
-    result: dict[str, Any] = {}
+    allowed_keys = ["pixel_format", "color_space", "width", "height", "frame_rate"]
 
-    if "pixelFormat" in formats:
-        result["pixel_format"] = formats["pixelFormat"]
-    if "colorSpace" in formats:
-        result["color_space"] = formats["colorSpace"]
-    if "width" in formats:
-        result["width"] = formats["width"]
-    if "height" in formats:
-        result["height"] = formats["height"]
-    if "frameRate" in formats:
-        result["frame_rate"] = formats["frameRate"]
-
-    return result
+    return {key: formats[key] for key in allowed_keys if key in formats}
 
 
 def append_to_mock_data(config_data: Any) -> None:
     # Process input and output formats
-    input_formats = [convert_format(f) for f in config_data.get("inputFormat", [])]
-    output_formats = [convert_format(f) for f in config_data.get("outputFormat", [])]
+    input_formats = [convert_format(f) for f in config_data.get("input_formats", [])]
+    output_formats = [convert_format(f) for f in config_data.get("output_formats", [])]
+
+    name: str = config_data.get("name", "unnamed_module")
+    output_path = BASE_DIR / "db" / "json_data" / f"{name}.json"
 
     # Build new module
     new_module: dict[str, Any] = {
@@ -38,31 +31,37 @@ def append_to_mock_data(config_data: Any) -> None:
         "parameters": [],
     }
 
-    # Add parameters
-    for param in config_data.get("parameters", []):
-        param_entry = {
-            "name": param["name"],
-            "flag": param.get("flag"),
-            "type": param["type"],
-            "required": param.get("required", False),
-        }
-        if "default" in param:
-            param_entry["default"] = param["default"]
-        if "description" in param:
-            param_entry["description"] = param["description"]
-        if "options" in param:
-            param_entry["options"] = param["options"]
-        if "min" in param:
-            param_entry["min"] = param["min"]
-        if "max" in param:
-            param_entry["max"] = param["max"]
+    try:
+        enriched_data = ModuleData.model_validate(
+            {"parameters": config_data.get("parameters", [])}
+        )
 
-        new_module["parameters"].append(param_entry)
+        for parsed_param in enriched_data.parameters:
+            param_entry: dict[str, Any] = {
+                "name": parsed_param.name,
+                "flag": None,  # optionally pull from raw_param if you still need it
+                "type": parsed_param.metadata.type,
+                "required": parsed_param.metadata.constraints.required
+                if parsed_param.metadata.constraints
+                else False,
+            }
+            constraints = parsed_param.metadata.constraints
+            if constraints:
+                if constraints.default is not None:
+                    param_entry["default"] = constraints.default
+                if constraints.description:
+                    param_entry["description"] = constraints.description
+                if constraints.options:
+                    param_entry["options"] = constraints.options
+                if constraints.min is not None:
+                    param_entry["min"] = constraints.min
+                if constraints.max is not None:
+                    param_entry["max"] = constraints.max
 
-    with MOCK_DATA_PATH.open("r", encoding="utf-8") as f:
-        modules_data = json.load(f)
+            new_module["parameters"].append(param_entry)
 
-    modules_data["data"].append(new_module)
-    # Write back to file
-    with MOCK_DATA_PATH.open("w", encoding="utf-8") as f:
-        json.dump(modules_data, f, indent=2)
+    except ValidationError as e:
+        raise ValueError(f"Invalid parameter definition: {e}")
+
+    with output_path.open("w", encoding="utf-8") as f:
+        json.dump({"data": [new_module]}, f, indent=2)

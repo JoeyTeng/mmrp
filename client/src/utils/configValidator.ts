@@ -17,38 +17,44 @@ export async function validateConfigFile(config: File): Promise<boolean> {
   ) {
     return false;
   }
-  // Check the content of the config file
-  const text = await config.text();
-  const json = JSON.parse(text);
 
-  // Check required fields
-  const hasName = typeof json.name === "string";
-  const hasExecutable = typeof json.executable === "string";
-  const hasInputFormat = Array.isArray(json.inputFormat);
-  const hasOutputFormat = Array.isArray(json.outputFormat);
-  const hasParameters = Array.isArray(json.parameters);
+  try {
+    // Check the content of the config file
+    const text = await config.text();
+    const json = JSON.parse(text);
 
-  if (
-    !hasName ||
-    !hasExecutable ||
-    !hasInputFormat ||
-    !hasOutputFormat ||
-    !hasParameters
-  ) {
-    return false;
-  }
+    // Check required fields
+    const hasName = typeof json.name === "string";
+    const hasExecutable = typeof json.executable === "string";
+    const hasInputFormat = Array.isArray(json.input_formats);
+    const hasOutputFormat = Array.isArray(json.output_formats);
+    const hasParameters = Array.isArray(json.parameters);
 
-  // Check parameters keys
-  const requiredParamKeys = ["name", "flag", "type", "required"];
-
-  const hasValidParams = json.parameters.every((param: ConfigParameter) => {
-    if (typeof param !== "object" || !param) return false;
-    // Check required keys exist
-    for (const key of requiredParamKeys) {
-      if (!(key in param)) return false;
+    if (
+      !hasName ||
+      !hasExecutable ||
+      !hasInputFormat ||
+      !hasOutputFormat ||
+      !hasParameters
+    ) {
+      return false;
     }
-    return true;
-  });
 
-  return hasValidParams;
+    // Check parameters keys
+    const requiredParamKeys = ["name", "flag", "type", "required"];
+
+    const hasValidParams = json.parameters.every((param: ConfigParameter) => {
+      if (typeof param !== "object" || !param) return false;
+      // Check required keys exist
+      for (const key of requiredParamKeys) {
+        if (!(key in param)) return false;
+      }
+      return true;
+    });
+
+    return hasValidParams;
+  } catch (error) {
+    console.error("Failed to read or parse config file:", error);
+    throw new Error("Invalid or unreadable JSON in config file.");
+  }
 }

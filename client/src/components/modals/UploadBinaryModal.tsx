@@ -77,13 +77,12 @@ export default function UploadBinaryModal({
     setIsLoading(true);
     try {
       const res = await uploadBinaryToBackend(formData);
-      if (res === true) {
-        setIsLoading(false);
+      if (res) {
         onUploadSuccess();
         handleClose();
       }
       // Error in validation --> res == false
-      if (res === false) {
+      if (!res) {
         toast.error(
           "The config file does not follow the required structure. (See template)",
         );
@@ -98,6 +97,7 @@ export default function UploadBinaryModal({
       }
 
       toast.error(message);
+    } finally {
       setIsLoading(false);
     }
   };
