@@ -2,16 +2,16 @@ import { ReactNode } from "react";
 import { VideoMetricsProvider } from "./VideoMetricsContext";
 import { VideoReloadProvider } from "./videoReloadContext";
 import { WebSocketProvider } from "./WebSocketContext";
-import { SidebarProvider } from "./SideBarContext";
+import { ReactFlowProvider } from "@xyflow/react";
 
 const AppProviders = ({ children }: { children: ReactNode }) => (
-  <SidebarProvider>
+  <ReactFlowProvider>
     <VideoMetricsProvider>
       <VideoReloadProvider>
         <WebSocketProvider>{children}</WebSocketProvider>
       </VideoReloadProvider>
     </VideoMetricsProvider>
-  </SidebarProvider>
+  </ReactFlowProvider>
 );
 
 export default AppProviders;

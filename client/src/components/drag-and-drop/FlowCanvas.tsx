@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useCallback,
-  useContext,
-  useRef,
-  useMemo,
-  useEffect,
-} from "react";
+import React, { useCallback, useContext, useRef, useMemo } from "react";
 
 import {
   ReactFlow,
@@ -35,7 +29,6 @@ import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { ModulesContext } from "@/contexts/ModulesContext";
-import { useSidebar } from "@/contexts/SideBarContext";
 import { checkPipeline, getInitialNodeParamValue, makePorts } from "./util";
 import NodeContextMenu, {
   NodeContextMenuHandle,
@@ -54,15 +47,6 @@ export default function FlowCanvas({
 }: FlowCanvasProps) {
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
-
-  const { setFlowInstance } = useSidebar();
-  const reactFlowInstance = useReactFlow<Node<NodeData, NodeType>, Edge>();
-
-  useEffect(() => {
-    if (reactFlowInstance) {
-      setFlowInstance(reactFlowInstance);
-    }
-  }, [reactFlowInstance, setFlowInstance]);
 
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();

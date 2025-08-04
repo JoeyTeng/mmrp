@@ -9,11 +9,11 @@ import { SidebarItem } from "./types";
 import { useVideoReload } from "@/contexts/videoReloadContext";
 import { toast } from "react-toastify/unstyled";
 import { useMemo } from "react";
-import { useSidebar } from "@/contexts/SideBarContext";
+import { useSidebarActions } from "./util";
 
 export const useLeftSidebarItems = (): SidebarItem[] => {
   const { getLatestVideoInfo, latestResponse, isProcessing } = useVideoReload();
-  const { handleExportPipeline, handleImportPipeline } = useSidebar();
+  const { handleExportPipeline, handleImportPipeline } = useSidebarActions();
 
   const downloadSize = useMemo(() => {
     const leftVideoBytes = latestResponse?.left

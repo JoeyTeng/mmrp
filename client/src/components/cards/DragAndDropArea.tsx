@@ -7,7 +7,7 @@ import { NodeData } from "../drag-and-drop/types";
 import { NodeType } from "@/types/module";
 import ParameterConfigurationDrawer from "@/components/drag-and-drop/parameter-configuration/ParameterConfigurationDrawer";
 import { useState } from "react";
-import { ReactFlowProvider } from "@xyflow/react";
+import { Box } from "@mui/material";
 
 const initialNodes: Node<NodeData, NodeType>[] = [];
 const initialEdges: Edge[] = [];
@@ -19,7 +19,14 @@ export default function DragAndDropArea() {
   > | null>(null);
 
   return (
-    <ReactFlowProvider>
+    <Box
+      sx={{
+        display: "flex",
+        flex: 1,
+        height: "100%",
+        width: "100%",
+      }}
+    >
       <FlowCanvas
         defaultNodes={initialNodes}
         defaultEdges={initialEdges}
@@ -32,6 +39,6 @@ export default function DragAndDropArea() {
           clearEditingNode={() => setEditingNode(null)}
         />
       )}
-    </ReactFlowProvider>
+    </Box>
   );
 }
