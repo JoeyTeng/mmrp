@@ -7,6 +7,7 @@ import { useWebSocket } from "@/contexts/WebSocketContext";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
 import { Metrics } from "@/types/metrics";
 import { useFrames } from "@/contexts/FramesContext";
+import { useVideoReload } from "@/contexts/videoReloadContext";
 
 type Props = {
   view: ViewOptions;
@@ -39,6 +40,7 @@ const FrameStreamPlayer = ({
   const effectiveFrameCount =
     view === ViewOptions.Interleaving ? frames.length * 2 : frames.length;
   const [index, setIndex] = useState(0); // index [0, frames.length) in Side-by-side, [0, 2 * frames.length) in Interleaving frames
+  const { latestRequest } = useVideoReload();
 
   // Trigger onFirstFrame callback once first frame is received
   useEffect(() => {
@@ -50,40 +52,15 @@ const FrameStreamPlayer = ({
 
   // Establish WebSocket connection to receive video frame data
   useEffect(() => {
+    console.log("latestRequest", latestRequest);
+    if (!latestRequest || !("modules" in latestRequest)) return;
+
     const expectedFrames = 2;
     let frameBuffer: Blob[] = [];
     setMetrics([]);
     setFrames([]);
     setCurrentFrame(0);
     setIndex(0);
-    const pipelineRequest = {
-      modules: [
-        {
-          id: "1",
-          name: "source",
-          module_class: "video_source",
-          source: [],
-          parameters: [{ key: "path", value: "example-video.mp4" }],
-        },
-        {
-          id: "2",
-          name: "blur",
-          module_class: "blur",
-          source: ["1"],
-          parameters: [
-            { key: "kernel_size", value: 5 },
-            { key: "method", value: "gaussian" },
-          ],
-        },
-        {
-          id: "3",
-          name: "result",
-          module_class: "video_output",
-          source: ["2"],
-          parameters: [{ key: "video_player", value: "right" }],
-        },
-      ],
-    };
 
     createConnection(
       (data) => {
@@ -130,7 +107,7 @@ const FrameStreamPlayer = ({
       () => {
         setIsStreamActive(false);
       },
-      pipelineRequest,
+      latestRequest,
     );
 
     return () => {
@@ -139,6 +116,7 @@ const FrameStreamPlayer = ({
   }, [
     closeConnection,
     createConnection,
+    latestRequest,
     setCurrentFrame,
     setFrames,
     setMetrics,

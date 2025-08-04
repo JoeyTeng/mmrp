@@ -36,13 +36,20 @@ async def video_feed(websocket: WebSocket) -> None:
         print(data)
         request: PipelineRequest = PipelineRequest(**data)
 
-        # Resolve pipeline modules
         ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
-        # Check that the pipeline starts with a source module
-        if not ordered_modules or ordered_modules[0].name != "source":
-            raise ValueError("Pipeline must start with a source module")
-        if ordered_modules[-1].name != "result":
-            raise ValueError("Pipeline must end with a result module")
+        # Validate pipeline structure
+        if not ordered_modules:
+            raise ValueError("Pipeline is empty")
+
+        first_module_base = get_module_class(ordered_modules[0])
+        if first_module_base != ModuleName.VIDEO_SOURCE:
+            raise ValueError(
+                f"Pipeline must start with a {ModuleName.VIDEO_SOURCE} module"
+            )
+
+        last_module_base = get_module_class(ordered_modules[-1])
+        if last_module_base != ModuleName.RESULT:
+            raise ValueError(f"Pipeline must end with a {ModuleName.RESULT} module")
 
         # Registry lookup
         module_map: dict[str, tuple[ModuleBase, dict[str, Any]]] = {

@@ -7,12 +7,14 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import type { PipelineResponse } from "@/types/pipeline";
+import type { PipelineRequest, PipelineResponse } from "@/types/pipeline";
 import { useVideoMetrics } from "./VideoMetricsContext";
 
 type VideoReloadContextType = {
   triggerReload: (res: PipelineResponse) => void;
+  triggerWebSocketConnection: (req: PipelineRequest) => void;
   latestResponse: PipelineResponse | null;
+  latestRequest: PipelineRequest | null;
   isProcessing: boolean;
   setIsProcessing: (value: boolean) => void;
   isProcessingError: boolean;
@@ -44,6 +46,9 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
   const [latestResponse, setLatestResponse] = useState<PipelineResponse | null>(
     null,
   );
+  const [latestRequest, setLatestRequest] = useState<PipelineRequest | null>(
+    null,
+  );
   const [videoInfo, setVideoInfo] = useState<
     Record<"left" | "right", { url: string; size: number }>
   >({ left: { url: "", size: 0 }, right: { url: "", size: 0 } });
@@ -72,11 +77,17 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     setMetrics(res.metrics);
   };
 
+  const triggerWebSocketConnection = (req: PipelineRequest) => {
+    setLatestRequest(req);
+  };
+
   return (
     <VideoReloadContext
       value={{
         triggerReload,
+        triggerWebSocketConnection,
         latestResponse,
+        latestRequest,
         isProcessing,
         setIsProcessing,
         isProcessingError,

@@ -38,6 +38,7 @@ import CanvasContextMenu, {
 } from "./context-menu/CanvasContextMenu";
 import { useVideoReload } from "@/contexts/videoReloadContext";
 import { toast } from "react-toastify/unstyled";
+import { VideoType } from "../comparison-view/types";
 
 export default function FlowCanvas({
   defaultNodes,
@@ -49,8 +50,13 @@ export default function FlowCanvas({
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
 
-  const { triggerReload, setIsProcessing, setError, isProcessing } =
-    useVideoReload();
+  const {
+    triggerReload,
+    triggerWebSocketConnection,
+    setIsProcessing,
+    setError,
+    isProcessing,
+  } = useVideoReload();
   const { screenToFlowPosition, getNodes, getEdges, setNodes, setEdges } =
     useReactFlow();
   const selectNode = useCallback(
@@ -231,9 +237,16 @@ export default function FlowCanvas({
       try {
         toast.success("Pipeline valid, starting processing");
         setIsProcessing(true);
-        const res = await sendPipelineToBackend(pipeline);
-        setError(false);
-        triggerReload(res);
+        if (videoType == VideoType.Video) {
+          // Classic backend pipeline processing
+          const res = await sendPipelineToBackend(pipeline);
+          setError(false);
+          triggerReload(res); // Use response to load video
+        } else if (videoType == VideoType.Stream) {
+          // Stream mode - trigger WS connection using pipeline
+          setError(false);
+          triggerWebSocketConnection(pipeline); // send pipeline to context for FrameStreamPlayer
+        }
       } catch (err) {
         console.error("Error sending pipeline to backend", err);
         setError(true);
