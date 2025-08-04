@@ -85,11 +85,11 @@ export default function ParameterConfiguration({
                 value={value}
                 onChange={(e) => onParamChange(key, e.target.value)}
               >
-              {constraintsLookup.get(key).options.map((option: string) => (
-                <MenuItem key={`${key}-${option}`} value={String(option)}>
-                  {option}
-                </MenuItem>
-              ))}
+                {constraintsLookup.get(key).options.map((option: string) => (
+                  <MenuItem key={`${key}-${option}`} value={String(option)}>
+                    {option}
+                  </MenuItem>
+                ))}
               </TextField>
             </ParameterTooltip>
           </Box>
@@ -127,7 +127,7 @@ export default function ParameterConfiguration({
                     ${errors[key] ? "!border-red-600 !ring-red-600" : "border-gray-300"}
                     focus:outline-none focus:ring-1 focus:ring-blue-500
                   `}
-                      aria-label={description ?? undefined}
+                      aria-label={constraints.description ?? undefined}
                       style={{ ...theme.typography.body1 }}
                     />
                   </ParameterTooltip>
