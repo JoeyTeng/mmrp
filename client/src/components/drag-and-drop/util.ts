@@ -1,14 +1,13 @@
 /** Function that gets a single initial value for a param**/
 
 import { Edge, getOutgoers, Node } from "@xyflow/react";
+import { NodePort, NodeData } from "./types";
 import {
-  FormatDefinition,
-  ParameterDefinition,
-  ParamValueType,
-  NodePort,
   NodeType,
-  NodeData,
-} from "./types";
+  ParamValueType,
+  ParameterDefinition,
+  FormatDefinition,
+} from "@/types/module";
 import { toast } from "react-toastify/unstyled";
 
 export function getInitialNodeParamValue(
@@ -16,33 +15,46 @@ export function getInitialNodeParamValue(
 ): Record<string, ParamValueType> {
   return parameters.reduce(
     (initialParams, p) => {
+      const paramMetaData = p.metadata;
       let val: ParamValueType;
 
       // 1) pick explicit default if there is one
-      if (p.default != null || p.default != undefined) {
-        val = p.default as ParamValueType;
+      if (
+        paramMetaData.constraints.default != null &&
+        paramMetaData.constraints.default != undefined
+      ) {
+        val = paramMetaData.constraints.default as ParamValueType;
       }
       // 2) else pick the first constraints entry (if any)
-      else if (Array.isArray(p.constraints) && p.constraints.length > 0) {
-        val = p.constraints[0] as ParamValueType;
+      else if (
+        paramMetaData.constraints.options != undefined &&
+        paramMetaData.constraints.options.length > 0
+      ) {
+        val = paramMetaData.constraints.options[0] as ParamValueType;
       }
-      // 3) final fallback
+      // 3) else pick the min value (if any)
+      else if (
+        paramMetaData.constraints.min != null &&
+        paramMetaData.constraints.min != undefined
+      ) {
+        val = paramMetaData.constraints.min as ParamValueType;
+      }
+      // 4) final fallback
       else {
-        val = p.type === "bool" ? false : ""; // safety val for type int and float is empty string
+        val = paramMetaData.type === "bool" ? false : ""; // safety val for type int and float is empty string
       }
 
-      // 4) additional check if default is in [min,max] range
+      // 5) additional check to make sure default is in [min,max] range
       if (
-        Array.isArray(p.constraints) &&
-        p.constraints.length === 2 &&
-        (p.type === "int" || p.type === "float")
+        paramMetaData.constraints.min != null &&
+        paramMetaData.constraints.max != null &&
+        typeof val === "number"
       ) {
-        const [min, max] = p.constraints as [number, number];
-        if (typeof val !== "number") {
-          val = min;
-        } else {
-          val = Math.min(Math.max(val, min), max);
-        }
+        const [min, max] = [
+          paramMetaData.constraints.min,
+          paramMetaData.constraints.max,
+        ];
+        val = Math.min(Math.max(val, min), max);
       }
 
       initialParams[p.name] = val;

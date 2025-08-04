@@ -3,12 +3,9 @@
 import { useState, useContext, useMemo } from "react";
 import { Box, TextField, MenuItem } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
-import {
-  ModuleParamLookupType,
-  NodeParamValue,
-  ParameterConfigurationProps,
-} from "../types";
+import { NodeParamValue, ParameterConfigurationProps } from "../types";
 import { ModulesContext } from "@/contexts/ModulesContext";
+import { ParameterConstraints } from "@/types/module";
 import ParameterInfoToolTip from "./ParameterInfoToolTip";
 
 export default function ParameterConfiguration({
@@ -21,37 +18,26 @@ export default function ParameterConfiguration({
   const MIN_VALUE = 0;
   const MAX_VALUE = 100;
 
-  const paramLookup = useMemo(() => {
-    const foundModule = modules.find((item) => item.name === node?.data.label);
+  const constraintsLookup = useMemo(() => {
+    const foundModule = modules.find((item) => item.name === node?.data.name);
     return (
-      foundModule?.parameters.reduce((acc, param) => {
-        acc[param.name] = param;
+      foundModule?.data.parameters.reduce((acc, { name, metadata }) => {
+        acc.set(name, metadata.constraints);
         return acc;
-      }, {} as ModuleParamLookupType) ?? {}
+      }, new Map<string, ParameterConstraints>()) ?? new Map()
     );
-  }, [modules, node?.data.label]);
-
-  const getInputType = (key: string, value: NodeParamValue) => {
-    if (
-      typeof value === "string" &&
-      Array.isArray(paramLookup[key]?.constraints)
-    )
-      return "select";
-    if (typeof value === "string") return "string";
-    if (typeof value === "number") return "number";
-    if (typeof value === "boolean") return "boolean";
-    return "text";
-  };
+  }, [modules, node?.data.name]);
 
   const handleInputNumber = (key: string, rawValue: string) => {
     const newValue = Number(rawValue);
+    const constraints = constraintsLookup.get(key);
 
     let min = MIN_VALUE;
     let max = MAX_VALUE;
 
-    if (paramLookup[key]?.constraints?.length === 2) {
-      min = Number(paramLookup[key].constraints[0]);
-      max = Number(paramLookup[key].constraints[1]);
+    if (constraints.min !== undefined && constraints.max !== undefined) {
+      min = constraints.min;
+      max = constraints.max;
     }
 
     setErrors((prev) => ({
@@ -69,10 +55,9 @@ export default function ParameterConfiguration({
   };
 
   const renderParamInput = (key: string, value: NodeParamValue) => {
-    const { constraints = [], description = "" } = paramLookup[key] ?? {};
-    const inputType = getInputType(key, value);
+    const constraints = constraintsLookup.get(key);
 
-    switch (inputType) {
+    switch (constraints.type) {
       case "select":
         return (
           <Box
@@ -88,18 +73,17 @@ export default function ParameterConfiguration({
               onChange={(e) => onParamChange(key, e.target.value)}
               className="flex-1"
             >
-              {Array.isArray(constraints) &&
-                constraints.map((option) => (
-                  <MenuItem key={`${key}-${option}`} value={String(option)}>
-                    {option}
-                  </MenuItem>
-                ))}
+              {constraintsLookup.get(key).options.map((option: string) => (
+                <MenuItem key={`${key}-${option}`} value={String(option)}>
+                  {option}
+                </MenuItem>
+              ))}
             </TextField>
-            <ParameterInfoToolTip description={description} />
+            <ParameterInfoToolTip description={constraints.description} />
           </Box>
         );
 
-      case "number":
+      case "int":
         return (
           <Box
             key={key}
@@ -111,8 +95,6 @@ export default function ParameterConfiguration({
                 key={key}
                 id={key}
                 value={Number(value)}
-                min={Number(constraints?.[0] ?? MIN_VALUE)}
-                max={Number(constraints?.[1]) ?? MAX_VALUE}
                 className="flex-1"
               >
                 <NumberField.ScrubArea className="absolute -top-3.5 left-2 z-10 bg-white px-1">
@@ -135,7 +117,7 @@ export default function ParameterConfiguration({
                   />
                 </NumberField.Group>
               </NumberField.Root>
-              <ParameterInfoToolTip description={description} />
+              <ParameterInfoToolTip description={constraints.description} />
             </Box>
 
             {errors[key] && (
@@ -146,7 +128,7 @@ export default function ParameterConfiguration({
           </Box>
         );
 
-      case "boolean":
+      case "bool":
         return (
           <Box
             key={key}
@@ -164,7 +146,7 @@ export default function ParameterConfiguration({
               <MenuItem value="true">True</MenuItem>
               <MenuItem value="false">False</MenuItem>
             </TextField>
-            <ParameterInfoToolTip description={description} />
+            <ParameterInfoToolTip description={constraints.description} />
           </Box>
         );
 
@@ -182,7 +164,7 @@ export default function ParameterConfiguration({
               onChange={(e) => onParamChange(key, e.target.value)}
               className="flex-1"
             />
-            <ParameterInfoToolTip description={description} />
+            <ParameterInfoToolTip description={constraints.description} />
           </Box>
         );
     }

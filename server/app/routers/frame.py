@@ -1,18 +1,22 @@
+from typing import Any
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import cv2
 import asyncio
 import json
 import numpy as np
+from pydantic import ValidationError
 from app.utils.shared_functionality import as_context
 from app.utils.quality_metrics import compute_metrics
 from app.schemas.frame import FrameData
 from app.schemas.pipeline import PipelineModule, PipelineRequest
 from app.services.pipeline import (
     get_execution_order,
+    get_module_class,
     process_pipeline_frame,
-    validate_parameters,
 )
-from app.services.module import registry
+from app.modules.module import ModuleBase
+from app.modules.utils.enums import ModuleName
+from app.services.module_registry import ModuleRegistry
 
 router = APIRouter()
 
@@ -29,6 +33,7 @@ async def video_feed(websocket: WebSocket) -> None:
         # Receive pipeline request JSON
         init_msg: str = await websocket.receive_text()
         data = json.loads(init_msg)
+        print(data)
         request: PipelineRequest = PipelineRequest(**data)
 
         # Resolve pipeline modules
@@ -40,24 +45,33 @@ async def video_feed(websocket: WebSocket) -> None:
             raise ValueError("Pipeline must end with a result module")
 
         # Registry lookup
-        module_map = {
-            m.id: (registry[m.name](), {p.key: p.value for p in m.parameters})
+        module_map: dict[str, tuple[ModuleBase, dict[str, Any]]] = {
+            m.id: (
+                ModuleRegistry.get_by_spacename(get_module_class(m)),
+                {p.key: p.value for p in m.parameters},
+            )
             for m in ordered_modules
         }
 
         # Validate module parameters
         for mod in ordered_modules:
             mod_id = mod.id
-            mod_instance, params = module_map[mod_id]
-            # Get expected parameter definitions
-            param_defs = {p.name: p for p in mod_instance.get_parameters()}
-            # Validate each parameter
-            validate_parameters(params, param_defs, mod_instance)
+            mod_instance, _ = module_map[mod_id]
+            param_dict = {p.key: p.value for p in mod.parameters}
+            try:
+                validated = mod_instance.parameter_model(**param_dict)
+            except ValidationError as e:
+                raise ValueError(
+                    f"Parameter validation failed for module {mod.name}:\n{e}"
+                )
+            module_map[mod_id] = (mod_instance, validated.model_dump())
 
         # Get source and result module
         source_mod = ordered_modules[0]
         result_modules = [
-            module for module in ordered_modules if module.name == "result"
+            module
+            for module in ordered_modules
+            if get_module_class(module) == ModuleName.RESULT
         ]
 
         # Check and validate result modules
@@ -73,7 +87,9 @@ async def video_feed(websocket: WebSocket) -> None:
 
         # Get processing nodes (remove source and result modules)
         processing_nodes = [
-            m for m in ordered_modules if m.name not in {"source", "result"}
+            m
+            for m in ordered_modules
+            if m.module_class not in {ModuleName.VIDEO_SOURCE, ModuleName.RESULT}
         ]
 
         with module_map[source_mod.id][0].process(

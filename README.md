@@ -1,6 +1,6 @@
 # mmrp
 
-Multimedia Research Pipeline
+Cisco VIPER: VIsual Pipeline EditoR
 
 ## Contributors
 

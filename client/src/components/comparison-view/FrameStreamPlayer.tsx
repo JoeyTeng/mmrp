@@ -59,48 +59,27 @@ const FrameStreamPlayer = ({
     const pipelineRequest = {
       modules: [
         {
-          id: 1,
+          id: "1",
           name: "source",
+          module_class: "video_source",
           source: [],
           parameters: [{ key: "path", value: "example-video.mp4" }],
         },
         {
-          id: 2,
-          name: "colorspace",
-          source: [1],
-          parameters: [
-            { key: "input_colorspace", value: "RGB" },
-            { key: "output_colorspace", value: "YCrCb" },
-          ],
-        },
-        {
-          id: 3,
+          id: "2",
           name: "blur",
-          source: [2],
+          module_class: "blur",
+          source: ["1"],
           parameters: [
             { key: "kernel_size", value: 5 },
             { key: "method", value: "gaussian" },
           ],
         },
         {
-          id: 4,
+          id: "3",
           name: "result",
-          source: [3],
-          parameters: [{ key: "video_player", value: "left" }],
-        },
-        {
-          id: 1753191371256,
-          name: "blur",
-          source: [1],
-          parameters: [
-            { key: "kernel_size", value: 5 },
-            { key: "method", value: "gaussian" },
-          ],
-        },
-        {
-          id: 1753191375784,
-          name: "result",
-          source: [1753191371256],
+          module_class: "video_output",
+          source: ["2"],
           parameters: [{ key: "video_player", value: "right" }],
         },
       ],

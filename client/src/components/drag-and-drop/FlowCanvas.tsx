@@ -22,7 +22,8 @@ import {
 import type { Node, Edge } from "@xyflow/react";
 
 import FlowNode, { FlowNodeProps } from "@/components/drag-and-drop/FlowNode";
-import { FlowCanvasProps, NodeData, NodeType } from "./types";
+import { FlowCanvasProps, NodeData } from "./types";
+import { NodeType } from "@/types/module";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
@@ -151,9 +152,9 @@ export default function FlowCanvas({
       const nodeData = event.dataTransfer.getData("application/reactflow");
       if (!nodeData) return;
 
-      const { type: typeValueStr, label } = JSON.parse(nodeData);
-      const type = typeValueStr as NodeType;
-      const moduleDef = modules.find((m) => m.name === label)!;
+      const { id, name, moduleClass } = JSON.parse(nodeData);
+      const moduleDef = modules.find((m) => m.id === id)!;
+      const type = moduleDef.type as NodeType;
       if (!moduleDef) {
         console.error("Modules not yet loaded or cannot find module name");
         return;
@@ -164,16 +165,18 @@ export default function FlowCanvas({
         y: event.clientY,
       });
 
-      const defaultParams = getInitialNodeParamValue(moduleDef.parameters);
-      const inputPorts = makePorts(moduleDef.inputFormats, "input");
-      const outputPorts = makePorts(moduleDef.outputFormats, "output");
+      const defaultParams = getInitialNodeParamValue(moduleDef.data.parameters);
+      const inputPorts = makePorts(moduleDef.data.inputFormats, "input");
+      const outputPorts = makePorts(moduleDef.data.outputFormats, "output");
 
+      // Create Node for the Canvas
       const newNode: Node<NodeData, NodeType> = {
-        id: `${+new Date()}`,
+        id: crypto.randomUUID(),
         type,
         position,
         data: {
-          label: `${label}`,
+          name: `${name}`,
+          moduleClass: moduleClass,
           params: defaultParams,
           inputFormats: inputPorts,
           outputFormats: outputPorts,
@@ -223,7 +226,8 @@ export default function FlowCanvas({
     const edges: Edge[] = getEdges();
     if (checkPipeline(nodes, edges)) {
       const pipeline = dumpPipelineToJson(nodes, edges, videoType);
-      console.debug(JSON.stringify(pipeline, null, 2));
+      console.log(pipeline);
+      console.log(JSON.stringify(pipeline, null, 2));
       try {
         toast.success("Pipeline valid, starting processing");
         setIsProcessing(true);

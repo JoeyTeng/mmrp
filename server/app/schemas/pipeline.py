@@ -8,9 +8,10 @@ class PipelineParameter(BaseModel):
 
 
 class PipelineModule(BaseModel):
-    id: int
+    id: str
     name: str
-    source: list[int]  # list of preceding module(s)
+    module_class: str
+    source: list[str]  # list of preceding module(s)
     parameters: list[PipelineParameter]
 
 
