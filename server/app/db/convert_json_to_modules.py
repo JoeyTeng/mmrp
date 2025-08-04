@@ -63,10 +63,7 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
                 output_formats=output_formats_,
             )
 
-            try:
-                module_class = module_classes[module_class_]
-            except KeyError:
-                raise
+            module_class = module_classes[module_class_]
 
             module = module_class(
                 id=module_id,

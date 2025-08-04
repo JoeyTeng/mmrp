@@ -10,3 +10,7 @@ export function stringSanitizer(rawName: string): string {
 
   return cleaned;
 }
+
+export function isFrameworkHandledParameter(parameter: string): boolean {
+  return parameter === "input" || parameter === "output";
+}

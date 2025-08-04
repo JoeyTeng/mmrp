@@ -3,6 +3,7 @@ import typing
 import contextlib
 import cv2
 import numpy as np
+from app.utils.enums import VideoFormats
 
 
 # Get path of input video
@@ -58,22 +59,18 @@ def read_yuv420_frame(path: Path, width: int, height: int) -> np.ndarray:
         raise ValueError(
             f"YUV size mismatch: expected {expected_size}, got {len(data)}"
         )
+    # this is following BT. 601 Limited Range.
+    # Ref: https://docs.opencv.org/4.x/de/d25/imgproc_color_conversions.html#color_convert_rgb_yuv_42x
     yuv = np.frombuffer(data, dtype=np.uint8).reshape((height * 3 // 2, width))
     return cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR_I420)
 
 
 # Decode a video file to a specified output format such as YUV
-def decode_video(video_path: Path, input_colorspace: str, output_format: str = "yuv"):
+def decode_video(
+    video_path: Path, input_colorspace: VideoFormats, output_format: VideoFormats
+) -> Path:
     video = str(video_path)
-    output_path = str(video_path.parent / f"{video_path.stem}.{output_format}")
-
-    # Use this to map output format to OpenCV constants
-    # TODO: Add more formats if needed
-    match output_format:
-        case "yuv":
-            output: str = "YUV_I420"
-        case _:
-            output: str = "YUV_I420"
+    output_path = video_path.parent / f"{video_path.stem}.{output_format}"
 
     # Video capture setup
     cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
@@ -87,10 +84,10 @@ def decode_video(video_path: Path, input_colorspace: str, output_format: str = "
                 ret, frame = cap.read()
                 if not ret:
                     break
-                constant_name = f"COLOR_{input_colorspace}2{output}"
+                constant_name = f"COLOR_{input_colorspace}2{output_format}"
                 if not hasattr(cv2, constant_name):
                     raise ValueError(
-                        f"Unsupported conversion: {input_colorspace} to {output}"
+                        f"Unsupported conversion: {input_colorspace} to {output_format}"
                     )
                 color = getattr(cv2, constant_name)
                 output_frame = cv2.cvtColor(frame, color)

@@ -8,6 +8,7 @@ from app.utils.shared_functionality import (
     write_yuv420_frame,
     read_yuv420_frame,
 )
+from app.utils.enums import VideoFormats
 import platform
 import subprocess
 import json
@@ -39,7 +40,7 @@ class GenericBinaryModule(ModuleBase):
         video = BASE_DIR / "videos" / input_data
         if not video.exists():
             raise FileNotFoundError(f"Video file not found: {video}")
-        yuv = decode_video(video, "BGR", "yuv")
+        yuv = decode_video(video, VideoFormats.BGR, VideoFormats.YUV_I420)
 
         output_dir = BASE_DIR / "output"
         output_dir.mkdir(parents=True, exist_ok=True)

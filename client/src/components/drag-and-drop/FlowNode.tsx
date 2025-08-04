@@ -7,7 +7,10 @@ import { NodeData, NodePort } from "./types";
 import { NodeType } from "@/types/module";
 import { IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
-import { stringSanitizer } from "@/utils/sharedFunctionality";
+import {
+  isFrameworkHandledParameter,
+  stringSanitizer,
+} from "@/utils/sharedFunctionality";
 
 type CustomNode = Node<NodeData>;
 
@@ -58,7 +61,7 @@ export default function FlowNode({
       <div className="px-3 py-1 space-y-1">
         {/* by default show the first 4 params */}
         {Object.entries(params)
-          .filter(([key]) => key !== "input" && key !== "output") // filter out "input" and "output"; this is handled by source/result node
+          .filter(([key]) => !isFrameworkHandledParameter(key))
           .slice(0, MAX_VISIBLE)
           .map(([key, value]) => (
             <div key={key} className="flex justify-between">

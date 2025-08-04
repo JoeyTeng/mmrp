@@ -7,6 +7,7 @@ import { NodeParamValue, ParameterConfigurationProps } from "../types";
 import { ModulesContext } from "@/contexts/ModulesContext";
 import { ParameterConstraints } from "@/types/module";
 import ParameterInfoToolTip from "./ParameterInfoToolTip";
+import { isFrameworkHandledParameter } from "@/utils/sharedFunctionality";
 
 export default function ParameterConfiguration({
   node,
@@ -16,15 +17,15 @@ export default function ParameterConfiguration({
   const modules = useContext(ModulesContext);
 
   const constraintsLookup = useMemo(() => {
-    const foundModule = modules.find((item) => item.name === node?.data.name);
+    const foundModule = modules.find(
+      (item) => item.moduleClass === node?.data.moduleClass,
+    );
 
     return (
       foundModule?.data.parameters.reduce((acc, { name, metadata }) => {
-        const isInputOrOutput = name === "input" || name === "output";
         const isRequired = metadata.constraints?.required;
-
         // Skip if name is "input" or "output" and not required because this is handled by source/result node
-        if (isInputOrOutput && !isRequired) return acc;
+        if (isFrameworkHandledParameter(name) && !isRequired) return acc;
 
         acc.set(name, metadata.constraints);
         return acc;
@@ -59,6 +60,7 @@ export default function ParameterConfiguration({
 
   const renderParamInput = (key: string, value: NodeParamValue) => {
     const constraints = constraintsLookup.get(key);
+    // This is mainly to filter out framework-handled parameters like "input", "output"
     if (!constraints) {
       return null;
     }
