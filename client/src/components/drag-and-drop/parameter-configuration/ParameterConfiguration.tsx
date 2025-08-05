@@ -1,20 +1,25 @@
 "use client";
 
 import { useState, useContext, useMemo } from "react";
-import { Box, TextField, MenuItem } from "@mui/material";
+import { Box, TextField, MenuItem, useTheme } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
 import { NodeParamValue, ParameterConfigurationProps } from "../types";
 import { ModulesContext } from "@/contexts/ModulesContext";
+import Fuse from "fuse.js";
+import { ParameterTooltip } from "./ParameterTooltip";
 import { ParameterConstraints } from "@/types/module";
-import ParameterInfoToolTip from "./ParameterInfoToolTip";
 import { isFrameworkHandledParameter } from "@/utils/sharedFunctionality";
 
 export default function ParameterConfiguration({
   node,
   onParamChange,
+  searchQuery,
 }: ParameterConfigurationProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const modules = useContext(ModulesContext);
+  const theme = useTheme();
+
+  const INPUT_SPACING = "mb-8";
 
   const constraintsLookup = useMemo(() => {
     const foundModule = modules.find(
@@ -32,6 +37,17 @@ export default function ParameterConfiguration({
       }, new Map<string, ParameterConstraints>()) ?? new Map()
     );
   }, [modules, node?.data.name]);
+
+  const paramKeys = Object.keys(node.data.params);
+
+  const fuse = useMemo(() => {
+    return new Fuse(paramKeys);
+  }, [paramKeys]);
+
+  const filteredParams = useMemo(() => {
+    if (!searchQuery) return paramKeys;
+    return fuse.search(searchQuery).map((result) => result.item);
+  }, [fuse, paramKeys, searchQuery]);
 
   const handleInputNumber = (key: string, rawValue: string) => {
     const newValue = Number(rawValue);
@@ -68,26 +84,23 @@ export default function ParameterConfiguration({
     switch (constraints.type) {
       case "select":
         return (
-          <Box
-            key={key}
-            className="flex gap-1 mb-4 justify-between items-center"
-          >
-            <TextField
-              select
-              fullWidth
-              size="small"
-              label={key}
-              value={value}
-              onChange={(e) => onParamChange(key, e.target.value)}
-              className="flex-1"
-            >
-              {constraintsLookup.get(key).options.map((option: string) => (
-                <MenuItem key={`${key}-${option}`} value={String(option)}>
-                  {option}
-                </MenuItem>
-              ))}
-            </TextField>
-            <ParameterInfoToolTip description={constraints.description} />
+          <Box key={key} className={INPUT_SPACING}>
+            <ParameterTooltip description={constraints.description}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label={key}
+                value={value}
+                onChange={(e) => onParamChange(key, e.target.value)}
+              >
+                {constraintsLookup.get(key).options.map((option: string) => (
+                  <MenuItem key={`${key}-${option}`} value={String(option)}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </ParameterTooltip>
           </Box>
         );
 
@@ -95,9 +108,9 @@ export default function ParameterConfiguration({
         return (
           <Box
             key={key}
-            className={`relative ${errors[key] ? "text-red-600 !mb-8" : "text-gray-700"}`}
+            className={`relative ${errors[key] ? "text-red-600 !mb-6" : "text-gray-700"}`}
           >
-            <Box className="flex justify-center items-center mb-6 mt-2">
+            <Box className={INPUT_SPACING}>
               <NumberField.Root
                 inputMode="numeric"
                 key={key}
@@ -115,17 +128,20 @@ export default function ParameterConfiguration({
                 </NumberField.ScrubArea>
 
                 <NumberField.Group className="relative">
-                  <NumberField.Input
-                    onChange={(e) => handleInputNumber(key, e.target.value)}
-                    className={`
+                  <ParameterTooltip description={constraints.description}>
+                    <NumberField.Input
+                      onChange={(e) => handleInputNumber(key, e.target.value)}
+                      className={`
                     w-full p-2 h-10 border-1 border-b rounded-sm text-sm
                     ${errors[key] ? "!border-red-600 !ring-red-600" : "border-gray-300"}
                     focus:outline-none focus:ring-1 focus:ring-blue-500
                   `}
-                  />
+                      aria-label={constraints.description ?? undefined}
+                      style={{ ...theme.typography.body1 }}
+                    />
+                  </ParameterTooltip>
                 </NumberField.Group>
               </NumberField.Root>
-              <ParameterInfoToolTip description={constraints.description} />
             </Box>
 
             {errors[key] && (
@@ -138,41 +154,35 @@ export default function ParameterConfiguration({
 
       case "bool":
         return (
-          <Box
-            key={key}
-            className="flex gap-1 mb-4 justify-between items-center"
-          >
-            <TextField
-              select
-              fullWidth
-              label={key}
-              size="small"
-              value={String(value)}
-              onChange={(e) => onParamChange(key, e.target.value === "true")}
-              className="flex-1"
-            >
-              <MenuItem value="true">True</MenuItem>
-              <MenuItem value="false">False</MenuItem>
-            </TextField>
-            <ParameterInfoToolTip description={constraints.description} />
+          <Box key={key} className={INPUT_SPACING}>
+            <ParameterTooltip description={constraints.description}>
+              <TextField
+                select
+                fullWidth
+                label={key}
+                size="small"
+                value={String(value)}
+                onChange={(e) => onParamChange(key, e.target.value === "true")}
+              >
+                <MenuItem value="true">True</MenuItem>
+                <MenuItem value="false">False</MenuItem>
+              </TextField>
+            </ParameterTooltip>
           </Box>
         );
 
       default:
         return (
-          <Box
-            key={key}
-            className="flex gap-1 mb-4 justify-between items-center"
-          >
-            <TextField
-              fullWidth
-              label={key}
-              size="small"
-              value={String(value)}
-              onChange={(e) => onParamChange(key, e.target.value)}
-              className="flex-1"
-            />
-            <ParameterInfoToolTip description={constraints.description} />
+          <Box key={key} className={INPUT_SPACING}>
+            <ParameterTooltip description={constraints.description}>
+              <TextField
+                fullWidth
+                label={key}
+                size="small"
+                value={String(value)}
+                onChange={(e) => onParamChange(key, e.target.value)}
+              />
+            </ParameterTooltip>
           </Box>
         );
     }
@@ -180,8 +190,8 @@ export default function ParameterConfiguration({
 
   return (
     <Box className="p-4 h-full overflow-y-auto">
-      {Object.entries(node.data.params).map(([key, value]) =>
-        renderParamInput(key, value),
+      {filteredParams.map((key) =>
+        renderParamInput(key, node.data.params[key]),
       )}
     </Box>
   );
