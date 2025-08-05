@@ -21,7 +21,14 @@ export default function FlowNode({
   selected,
   onOpenMenu,
 }: FlowNodeProps) {
-  const MAX_VISIBLE = 4; //default no of params visible in node
+  const MAX_VISIBLE = 3; //default no of params visible in node
+
+  const paramEntries = Object.entries(params);
+
+  const visibleParams =
+    paramEntries.length > MAX_VISIBLE && MAX_VISIBLE > 0
+      ? paramEntries.slice(0, MAX_VISIBLE - 1)
+      : paramEntries.slice(0, MAX_VISIBLE);
 
   function tooltip(port: NodePort) {
     const { width, height, frameRate, pixelFormat, colorSpace } = port.formats;
@@ -55,19 +62,18 @@ export default function FlowNode({
       </div>
       <div className="border-t border-gray-300" />
       <div className="px-3 py-1 space-y-1">
-        {/* by default show the first 4 params */}
-        {Object.entries(params)
-          .slice(0, MAX_VISIBLE)
-          .map(([key, value]) => (
-            <div key={key} className="flex justify-between">
-              <span className="font-medium text-gray-500">{key}</span>
-              <span className="text-gray-600 max-w-[55%] truncate break-words">
-                {String(value)}
-              </span>
-            </div>
-          ))}
-        {Object.entries(params).length > MAX_VISIBLE && (
-          <div className="text-left text-gray-400">…</div>
+        {visibleParams.map(([key, value]) => (
+          <div key={key} className="flex justify-between gap-3">
+            <span className="font-medium text-gray-500 truncate text-pretty break-keep flex-1">
+              {key}
+            </span>
+            <span className="text-gray-600 max-w-[65%] truncate break-normal">
+              {String(value)}
+            </span>
+          </div>
+        ))}
+        {paramEntries.length > MAX_VISIBLE && (
+          <div className="text-left text-gray-400">{`+ ${paramEntries.length - visibleParams.length} more`}</div>
         )}
       </div>
       {type !== NodeType.InputNode
