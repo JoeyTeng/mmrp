@@ -6,7 +6,8 @@ import { AppDrawer } from "@/components/sidebar/AppDrawer";
 import { NodeData, ParameterConfigurationDrawerProps } from "../types";
 import { NodeType, ParamValueType } from "@/types/module";
 import ParameterConfiguration from "./ParameterConfiguration";
-import { Box, Button } from "@mui/material";
+import { Box, Button, Divider, InputAdornment, TextField } from "@mui/material";
+import { SearchOutlined } from "@mui/icons-material";
 
 export default function ParameterConfigurationDrawer({
   editingNode,
@@ -14,6 +15,7 @@ export default function ParameterConfigurationDrawer({
 }: ParameterConfigurationDrawerProps) {
   const [tempNode, setTempNode] =
     useState<Node<NodeData, NodeType>>(editingNode);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     setTempNode(editingNode);
@@ -59,11 +61,33 @@ export default function ParameterConfigurationDrawer({
       width={400}
       anchor="right"
     >
-      <Box display="flex" flexDirection="column" height="100%">
+      <Box display="flex" flexDirection="column" height="100%" width="100%">
+        <Box m={2}>
+          <TextField
+            autoFocus
+            fullWidth
+            size="small"
+            label="Search"
+            variant="outlined"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <SearchOutlined />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </Box>
+        <Divider variant="fullWidth" className="my-2 mx-4" aria-hidden="true" />
         <Box flex={1} overflow="auto">
           <ParameterConfiguration
             node={tempNode}
             onParamChange={handleParamChange}
+            searchQuery={searchQuery.trim()}
           />
         </Box>
         <Box
