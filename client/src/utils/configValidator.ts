@@ -1,3 +1,5 @@
+import { camelizeKeys } from "./camelize";
+
 type ConfigParameter = {
   name: string;
   flag: string;
@@ -19,6 +21,7 @@ export async function validateConfigFile(config: File): Promise<boolean> {
   let json;
   try {
     json = JSON.parse(text);
+    json = camelizeKeys(json);
   } catch (error) {
     console.error("Failed to read or parse config file:", error);
     throw new Error("Invalid or unreadable JSON in config file.");
@@ -27,8 +30,8 @@ export async function validateConfigFile(config: File): Promise<boolean> {
   // Check required fields
   const hasName = typeof json.name === "string";
   const hasExecutable = typeof json.executable === "string";
-  const hasInputFormat = Array.isArray(json.input_formats);
-  const hasOutputFormat = Array.isArray(json.output_formats);
+  const hasInputFormat = Array.isArray(json.inputFormats);
+  const hasOutputFormat = Array.isArray(json.outputFormats);
   const hasParameters = Array.isArray(json.parameters);
 
   if (
