@@ -1,6 +1,6 @@
 /** Function that gets a single initial value for a param**/
 
-import { Edge, getOutgoers, Node } from "@xyflow/react";
+import { Edge, Node } from "@xyflow/react";
 import { NodePort, NodeData } from "./types";
 import {
   NodeType,
@@ -92,44 +92,26 @@ export function checkPipeline(
   }
 
   //  Find the results
-  const results: Node[] = nodes.filter((n) => n.type === NodeType.OutputNode);
+  const results = nodes.filter((n) => n.type === NodeType.OutputNode);
   if (results.length > 2 || results.length == 0) {
-    toast.error("Only one or two result nodes are allowed.");
+    toast.error("The pipeline needs only one or two result nodes.");
     return false;
   }
-
   // only one source exists
   const source = sources[0];
 
-  //  DFS from source
-  const visited = new Set<string>();
-  const dfs = (n: Node) => {
-    if (visited.has(n.id)) return;
-    visited.add(n.id);
-    getOutgoers(n, nodes, edges).forEach(dfs);
-  };
-  dfs(source);
-
-  // validate result nodes
-  const specified_player = new Set<string>();
-
-  for (const result of results) {
-    // check if source is directly connected to result
-    const directConn = edges.some(
-      (e) => e.source === source.id && e.target === result.id,
-    );
-    if (directConn) {
+  for (const r of results) {
+    if (edges.some((e) => e.source === source.id && e.target === r.id)) {
       toast.error(
         "Source cannot connect directly to Result. Add at least one processing module in between.",
       );
       return false;
     }
-    // Check that result was reached
-    if (!visited.has(result.id)) {
-      toast.error("Result node is not reachable from source node.");
-      return false;
-    }
-    // check that the specified video player is okay
+  }
+
+  // Player assignment rules
+  const specified_player = new Set<string>();
+  for (const result of results) {
     const params = result.data.params as { video_player: string; path: string };
     if (results.length == 1) {
       // if there is only one result node, it must be displayed on the right
@@ -148,11 +130,49 @@ export function checkPipeline(
     }
   }
 
-  // All nodes should be part of the chain
-  const orphan = nodes.find((n) => !visited.has(n.id));
-  if (orphan) {
-    toast.error("Orphaned node detected.");
-    return false;
+  const outMap = new Map<string, string[]>();
+  const inMap = new Map<string, string[]>();
+  nodes.forEach((n) => {
+    outMap.set(n.id, []);
+    inMap.set(n.id, []);
+  });
+  edges.forEach((e) => {
+    outMap.get(e.source)!.push(e.target);
+    inMap.get(e.target)!.push(e.source);
+  });
+
+  // Forward DFS from source
+  const reachableFromSource = new Set<string>();
+  function dfsFwd(nodeId: string) {
+    if (reachableFromSource.has(nodeId)) return;
+    reachableFromSource.add(nodeId);
+    outMap.get(nodeId)!.forEach(dfsFwd);
+  }
+  dfsFwd(source.id);
+
+  // Backward DFS from each result
+  const reachableToResult = new Set<string>();
+  function dfsBwd(nodeId: string) {
+    if (reachableToResult.has(nodeId)) return;
+    reachableToResult.add(nodeId);
+    inMap.get(nodeId)!.forEach(dfsBwd);
+  }
+  results.forEach((r) => dfsBwd(r.id));
+
+  // Intersection check: every node must be in both sets
+  for (const n of nodes) {
+    if (!reachableFromSource.has(n.id)) {
+      toast.error(
+        `Node “${n.data.name}” is not reachable from the video source node.`,
+      );
+      return false;
+    }
+    if (!reachableToResult.has(n.id)) {
+      toast.error(
+        `Node “${n.data.name}” does not lead to any output. Every branch must terminate in a video output node.`,
+      );
+      return false;
+    }
   }
 
   return true;
