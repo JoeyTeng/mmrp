@@ -3,7 +3,8 @@ import {
   FilterAltOutlined,
   UploadFileOutlined,
   AppsOutlined,
-  SaveOutlined,
+  CloudDownloadOutlined,
+  CloudUploadOutlined,
   DownloadOutlined,
 } from "@mui/icons-material";
 import { SidebarItem } from "./types";
@@ -14,16 +15,12 @@ import { PipelineResponse } from "@/types/pipeline";
 export const getLeftSidebarItems = (
   setUploadOpen: (open: boolean) => void,
   handleDownload: () => void,
+  handleImportPipeline: () => void,
+  handleExportPipeline: () => void,
   downloadSize: string,
   isProcessing: boolean,
   latestResponse: PipelineResponse | null,
 ): SidebarItem[] => [
-  {
-    id: "save",
-    title: "Save",
-    icon: <SaveOutlined />,
-    action: () => console.log("Save clicked"),
-  },
   {
     id: "download",
     title: downloadSize ? `Download Video (${downloadSize})` : "Download Video",
@@ -31,6 +28,20 @@ export const getLeftSidebarItems = (
     disabled: isProcessing || !!!latestResponse,
     action: handleDownload,
   },
+  // Pipeline Operations Section
+  {
+    id: "pipeline-import",
+    title: "Import Pipeline",
+    icon: <CloudUploadOutlined />,
+    action: handleImportPipeline,
+  },
+  {
+    id: "pipeline-export",
+    title: "Export Pipeline",
+    icon: <CloudDownloadOutlined />,
+    action: handleExportPipeline,
+  },
+  // Modules
   {
     id: "modules",
     title: "Modules",

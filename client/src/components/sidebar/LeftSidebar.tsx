@@ -2,6 +2,7 @@
 
 import { useVideoReload } from "@/contexts/videoReloadContext";
 import { useDownloadUtils } from "../sidebar/util";
+import { usePipelineExport } from "../sidebar/util";
 import { getLeftSidebarItems } from "./sidebar-config";
 import { Sidebar } from "./Sidebar";
 import { Dispatch, SetStateAction, useState } from "react";
@@ -19,6 +20,7 @@ export default function LeftSidebar({
 }) {
   const { latestResponse, isProcessing } = useVideoReload();
   const { handleDownload, downloadSize } = useDownloadUtils();
+  const { handleImportPipeline, handleExportPipeline } = usePipelineExport();
   const [uploadOpen, setUploadOpen] = useState(false);
 
   return (
@@ -28,6 +30,8 @@ export default function LeftSidebar({
         items={getLeftSidebarItems(
           setUploadOpen,
           handleDownload,
+          handleImportPipeline,
+          handleExportPipeline,
           downloadSize,
           isProcessing,
           latestResponse,
