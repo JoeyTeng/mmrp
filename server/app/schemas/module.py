@@ -4,8 +4,8 @@ from app.modules.utils.enums import Color, ColorSpace, FrameRate, PixelFormat
 
 
 class ModuleFormat(BaseModel):
-    pixel_format: list[PixelFormat] | None = None
-    color_space: list[ColorSpace] | None = None
+    pixel_format: list[PixelFormat] = Field(default_factory=list[PixelFormat])
+    color_space: list[ColorSpace] = Field(default_factory=list[ColorSpace])
     color: Color | None = None
     width: int | None = Field(default=None, ge=32, le=3840, description="Output width")
     height: int | None = Field(
@@ -28,7 +28,7 @@ class ParameterConstraint(BaseModel):
     default: Any | None = None
     min: float | None = None
     max: float | None = None
-    options: list[str | int] | None = None
+    options: list[str] | None = None
     required: bool = True
     description: str | None = None
 
@@ -39,7 +39,7 @@ class ParameterConstraint(BaseModel):
         param_type = values.get("type", "str")
         if "default" not in values:
             values["default"] = cls._get_type_default(param_type)
-        if "options" in values:
+        if "options" in values and values.get("options") is not None:
             values["type"] = "select"
         return values
 

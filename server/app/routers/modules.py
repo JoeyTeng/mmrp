@@ -72,10 +72,13 @@ async def upload_module(
         config_content: bytes = await config.read()
         text: str = config_content.decode("utf-8")
         data = json.loads(text)
-        module_name: str = data.get("name", "unknown_module")
-        module_dir: Path = BINARIES_DIR / module_name
+        # Remove file extension in case the user put it into the executable field
+        executable_name: str = Path(data.get("executable", "unknown_module")).stem
+        module_dir: Path = BINARIES_DIR / executable_name
         if module_dir.exists() and module_dir.is_dir():
-            raise FileExistsError(f"Module {module_name} already exists.")
+            raise FileExistsError(
+                f"Module with executable {executable_name} already exists."
+            )
         module_dir.mkdir(parents=True, exist_ok=True)
 
         # Then, save each file in the appropriate OS subdirectory

@@ -1,6 +1,6 @@
 {
-  "name": "name-of-module",
-  "executable": "name-of-executable.exe",
+  "name": "Display Name of Module",
+  "executable": "name-of-executable",
   "input_formats": [
     {
       "type": "video",
@@ -77,7 +77,7 @@
     {
       "name": "select_paramter_name",
       "flag": "--flag_name",
-      "type": "type",
+      "type": "str",
       "options": ["option1", "option2"],
       "required": false,
       "default": false,

@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 def convert_format(format_entry: dict[str, Any]) -> dict[str, Any]:
     formats = format_entry.get("formats", {})
-    allowed_keys = ["pixel_format", "color_space", "width", "height", "frame_rate"]
+    allowed_keys = ("pixel_format", "color_space", "width", "height", "frame_rate")
 
     return {key: formats[key] for key in allowed_keys if key in formats}
 
@@ -19,12 +19,15 @@ def append_to_mock_data(config_data: Any) -> None:
     input_formats = [convert_format(f) for f in config_data.get("input_formats", [])]
     output_formats = [convert_format(f) for f in config_data.get("output_formats", [])]
 
-    name: str = config_data.get("name", "unnamed_module")
-    output_path = BASE_DIR / "db" / "json_data" / f"{name}.json"
+    name: str = config_data.get("name", "Unnamed Module")
+    # Remove file extension in case the user defined
+    executable_name: str = Path(config_data.get("executable", "unnamed-module")).stem
+    output_path = BASE_DIR / "db" / "json_data" / f"{executable_name}.json"
 
     # Build new module
     new_module: dict[str, Any] = {
-        "name": config_data.get("name", "unnamed_module"),
+        "name": name,
+        "executable_path": executable_name,
         "type": "processNode",
         "input_formats": input_formats,
         "output_formats": output_formats,
@@ -50,16 +53,7 @@ def append_to_mock_data(config_data: Any) -> None:
             }
             constraints = parsed_param.metadata.constraints
             if constraints:
-                if constraints.default is not None:
-                    param_entry["default"] = constraints.default
-                if constraints.description:
-                    param_entry["description"] = constraints.description
-                if constraints.options:
-                    param_entry["options"] = constraints.options
-                if constraints.min is not None:
-                    param_entry["min"] = constraints.min
-                if constraints.max is not None:
-                    param_entry["max"] = constraints.max
+                param_entry.update(constraints.model_dump(exclude_none=True))
 
             new_module["parameters"].append(param_entry)
 

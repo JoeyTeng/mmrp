@@ -25,6 +25,7 @@ class ModuleBase(BaseModel, ABC):
     )
 
     parameter_model: Any = Field(..., exclude=True)
+    executable_path: str | None = Field()
     model_config = ConfigDict(extra="forbid", validate_assignment=True, frozen=False)
 
     def __init__(self, **data: Any) -> None:

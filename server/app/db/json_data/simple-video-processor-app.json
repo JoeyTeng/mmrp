@@ -1,7 +1,8 @@
 {
   "data": [
     {
-      "name": "simple-video-processor-app",
+      "name": "Simple Video Processor App",
+      "executable_path": "simple-video-processor-app",
       "type": "processNode",
       "input_formats": [
         {
@@ -54,12 +55,12 @@
           "type": "select",
           "required": true,
           "default": 1,
-          "description": "Identity mode: 0",
           "options": [
-            0,
-            1,
-            2
-          ]
+            "0",
+            "1",
+            "2"
+          ],
+          "description": "Identity mode: 0"
         },
         {
           "name": "operator",

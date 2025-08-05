@@ -28,10 +28,10 @@ def get_all_mock_modules() -> list[ModuleBase]:
         with json_file.open("r", encoding="utf-8") as f:
             try:
                 json_data: dict[str, Any] = json.load(f)
-                modules = json_to_modules(json_data)
-                all_modules.extend(modules)
-            except Exception as e:
+            except json.JSONDecodeError as e:
                 raise ValueError(f"Error parsing JSON: {str(e)}")
+            modules = json_to_modules(json_data)
+            all_modules.extend(modules)
 
     return all_modules
 
@@ -66,6 +66,7 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
                 input_formats=input_formats_,
                 output_formats=output_formats_,
             )
+            exectuable_path_ = module_data.get("executable_path", None)
 
             try:
                 module_class = module_classes[module_class_]
@@ -79,6 +80,7 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
                 type=type_,
                 position=position_,
                 data=data_,
+                executable_path=exectuable_path_,
             )
 
             ModuleRegistry.register(module)
