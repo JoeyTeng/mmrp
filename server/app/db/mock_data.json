@@ -242,8 +242,6 @@
           "color_space": [
             "BT.709 Full"
           ],
-          "width": 1280,
-          "height": 720,
           "frame_rate": "29.97"
         }
       ],
@@ -275,7 +273,12 @@
           "type": "int",
           "required": true,
           "default": 1,
-          "description": "Identity mode: 0"
+          "description": "Identity mode: 0",
+          "options": [
+            0,
+            1,
+            2
+          ]
         },
         {
           "name": "operator",

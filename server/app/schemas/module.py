@@ -28,7 +28,7 @@ class ParameterConstraint(BaseModel):
     default: Any = Field(..., description="Default value for the parameter")
     min: float | None = None
     max: float | None = None
-    options: list[str] | None = None
+    options: list[str | int] | None = None
     required: bool = True
     description: str | None = None
 
