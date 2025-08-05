@@ -2,8 +2,20 @@ from pathlib import Path
 import typing
 import contextlib
 import cv2
+import re
 import numpy as np
 from app.utils.enums import VideoFormats
+
+
+def string_sanitizer(raw_name: str) -> str:
+    cleaned = re.sub(
+        r"[^a-zA-Z0-9]+", " ", raw_name
+    )  # Replace all non-alphanumeric characters with space
+    cleaned = re.sub(
+        r"\s+", " ", cleaned
+    )  # Replace multiple spaces with a single space
+    cleaned = cleaned.strip()  # Strip leading/trailing whitespace
+    return cleaned.title()  # Capitalize each word
 
 
 # Get path of input video

@@ -7,10 +7,7 @@ import { NodeData, NodePort } from "./types";
 import { NodeType } from "@/types/module";
 import { IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
-import {
-  isFrameworkHandledParameter,
-  stringSanitizer,
-} from "@/utils/sharedFunctionality";
+import { isFrameworkHandledParameter } from "@/utils/sharedFunctionality";
 
 type CustomNode = Node<NodeData>;
 
@@ -55,7 +52,7 @@ export default function FlowNode({
       className={`w-40 bg-white rounded-lg overflow-hidden text-sm border ${selected ? "border-black-100" : "border-gray-300"}`}
     >
       <div className="pl-3 pr-1 py-1 font-semibold text-gray-800 flex justify-between items-center">
-        {stringSanitizer(name)}
+        {name}
         <IconButton
           onClick={(e) => {
             e.preventDefault();

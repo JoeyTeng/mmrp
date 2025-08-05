@@ -13,6 +13,7 @@ from app.modules.utils.enums import ModuleName
 from app.schemas.module import ModuleData, Position
 from app.modules.module import ModuleBase
 from app.services.module_registry import ModuleRegistry
+from app.utils.shared_functionality import string_sanitizer
 
 
 def get_json_path() -> Path:
@@ -38,19 +39,15 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
         ModuleName.BLUR: BlurModule,
         ModuleName.RESIZE: ResizeModule,
         ModuleName.RESULT: VideoOutput,
-        ModuleName.BINARY: GenericBinaryModule,
     }
 
     modules: list[ModuleBase] = []
 
     for module_data in json_data.get("data", []):
+        "Simple Video Processor"
         try:
             module_class_ = module_data["name"]
-            if module_class_ not in module_classes:
-                module_class_ = ModuleName.BINARY
-            name_ = module_data[
-                "name"
-            ]  # In the registry, the name should be the raw name
+            name_ = string_sanitizer(module_class_)
             type_ = module_data["type"]
             parameters_ = module_data.get("parameters", [])
             input_formats_ = module_data.get("input_formats", [])
@@ -62,8 +59,11 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
                 input_formats=input_formats_,
                 output_formats=output_formats_,
             )
-
-            module_class = module_classes[module_class_]
+            exectuable_path_ = module_data.get("executable_path", None)
+            try:
+                module_class = module_classes[module_class_]
+            except KeyError:
+                module_class = GenericBinaryModule
 
             module = module_class(
                 id=module_id,
@@ -72,6 +72,7 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
                 type=type_,
                 position=position_,
                 data=data_,
+                executable_path=exectuable_path_,
             )
 
             ModuleRegistry.register(module)

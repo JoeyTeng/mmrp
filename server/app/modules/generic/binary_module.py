@@ -83,7 +83,9 @@ class GenericBinaryModule(ModuleBase):
     def execute_binary(
         self, parameters: dict[str, Any], input: Path, output: Path
     ) -> Any:
-        binary_name: str = self.name
+        if self.executable_path is None:
+            raise FileNotFoundError("Executable path is not defined")
+        binary_name: str = self.executable_path
         base_dir = Path(__file__).resolve().parents[3]
         binary_dir = base_dir / "binaries" / binary_name
 
