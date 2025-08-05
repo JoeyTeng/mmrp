@@ -1,0 +1,32 @@
+import { Box, Divider } from "@mui/material";
+import ModuleItem from "./ModuleItem";
+import { Module } from "@/types/module";
+
+type ModuleItemGroupProps = {
+  title: string;
+  modules: Module[];
+};
+
+const ModuleItemGroup = ({ title, modules }: ModuleItemGroupProps) => {
+  return (
+    <Box>
+      <Box className="font-bold">
+        {title}
+        <Divider className="mb-4" />
+      </Box>
+      <Box>
+        {modules.map((module) => (
+          <ModuleItem
+            key={module.id}
+            id={module.id}
+            name={module.name}
+            moduleClass={module.moduleClass}
+            parameters={module.data.parameters}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
+export default ModuleItemGroup;
