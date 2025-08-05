@@ -44,7 +44,6 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
     modules: list[ModuleBase] = []
 
     for module_data in json_data.get("data", []):
-        "Simple Video Processor"
         try:
             module_class_ = module_data["name"]
             name_ = string_sanitizer(module_class_)
@@ -60,10 +59,8 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
                 output_formats=output_formats_,
             )
             exectuable_path_ = module_data.get("executable_path", None)
-            try:
-                module_class = module_classes[module_class_]
-            except KeyError:
-                module_class = GenericBinaryModule
+
+            module_class = module_classes.get(module_class_, GenericBinaryModule)
 
             module = module_class(
                 id=module_id,

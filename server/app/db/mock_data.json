@@ -274,7 +274,7 @@
           "type": "int",
           "required": true,
           "default": 1,
-          "description": "Identity mode: 0",
+          "description": "identity (0), pixel-wise arithmetics (1), scaling (2, unsupported)",
           "options": [
             0,
             1,
