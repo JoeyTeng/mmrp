@@ -8,17 +8,28 @@ import { VideoType, ViewOptions } from "@/components/comparison-view/types";
 import { useVideoReload } from "@/contexts/videoReloadContext";
 import { useState } from "react";
 
-interface Props {
-  videoType: VideoType;
-  setVideoType: React.Dispatch<React.SetStateAction<VideoType>>;
-}
-
-const VideoComparisonView = ({ videoType, setVideoType }: Props) => {
+const VideoComparisonView = () => {
   const [view, setView] = useState(ViewOptions.SideBySide);
-  const { isProcessing } = useVideoReload();
+  const {
+    isProcessing,
+    setVideoType,
+    handleTypeChanged,
+    videoType,
+    isPipelineRun,
+  } = useVideoReload();
 
   const handleStreamCheckboxToggle = (checked: boolean) => {
     setVideoType(checked ? VideoType.Stream : VideoType.Video);
+    handleTypeChanged();
+  };
+
+  const getVideoType = () => {
+    if (
+      (videoType == VideoType.Stream && isPipelineRun) ||
+      (videoType == VideoType.Video && !isPipelineRun)
+    )
+      return VideoType.Stream;
+    return VideoType.Video;
   };
 
   return (
@@ -56,10 +67,10 @@ const VideoComparisonView = ({ videoType, setVideoType }: Props) => {
         </Box>
         <Box className="flex-1 flex overflow-hidden">
           {view === ViewOptions.SideBySide && (
-            <SideBySide key={`${view}-${videoType}`} type={videoType} />
+            <SideBySide key={`${view}`} type={getVideoType()} />
           )}
           {view === ViewOptions.Interleaving && (
-            <InterleavingFrames key={`${view}-${videoType}`} type={videoType} />
+            <InterleavingFrames key={`${view}`} type={getVideoType()} />
           )}
         </Box>
       </Box>

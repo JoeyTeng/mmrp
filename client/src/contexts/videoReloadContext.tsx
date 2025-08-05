@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { PipelineRequest, PipelineResponse } from "@/types/pipeline";
 import { useVideoMetrics } from "./VideoMetricsContext";
+import { VideoType } from "@/components/comparison-view/types";
 
 type VideoReloadContextType = {
   triggerReload: (res: PipelineResponse) => void;
@@ -28,6 +29,12 @@ type VideoReloadContextType = {
     url: string,
     size?: number,
   ) => void;
+  videoType: VideoType;
+  setVideoType: (videoType: VideoType) => void;
+  isTypeChanged: boolean;
+  handleTypeChanged: () => void;
+  isPipelineRun: boolean;
+  handlePipelineRun: () => void;
 };
 
 const VideoReloadContext = createContext<VideoReloadContextType | undefined>(
@@ -70,6 +77,9 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     },
     [],
   );
+  const [videoType, setVideoType] = useState(VideoType.Video);
+  const [isTypeChanged, setIsTypeChanged] = useState(false);
+  const [isPipelineRun, setIsPipelineRun] = useState(true);
 
   const triggerReload = (res: PipelineResponse) => {
     setLatestResponse(res);
@@ -79,6 +89,16 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
 
   const triggerWebSocketConnection = (req: PipelineRequest) => {
     setLatestRequest(req);
+  };
+
+  const handleTypeChanged = () => {
+    setIsPipelineRun(false);
+    setIsTypeChanged(true);
+  };
+
+  const handlePipelineRun = () => {
+    setIsPipelineRun(true);
+    setIsTypeChanged(false);
   };
 
   return (
@@ -94,6 +114,12 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
         setError,
         getLatestVideoInfo,
         setLatestVideoInfo,
+        videoType,
+        setVideoType,
+        isTypeChanged,
+        handleTypeChanged,
+        isPipelineRun,
+        handlePipelineRun,
       }}
     >
       {children}

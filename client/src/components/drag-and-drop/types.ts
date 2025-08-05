@@ -1,6 +1,5 @@
 import type { Node, Edge } from "@xyflow/react";
 import { ParamValueType, NodeType, FormatDefinition } from "@/types/module";
-import { VideoType } from "../comparison-view/types";
 
 export type NodeParamValue = ParamValueType | string[];
 
@@ -32,7 +31,6 @@ export type FlowCanvasProps = {
   defaultEdges: Edge[];
   editingNode: Node<NodeData, NodeType> | null;
   onEditNode: (node: Node<NodeData, NodeType>) => void;
-  videoType: VideoType;
 };
 
 export interface ParameterConfigurationDrawerProps {

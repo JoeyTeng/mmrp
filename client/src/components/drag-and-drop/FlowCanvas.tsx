@@ -45,7 +45,6 @@ export default function FlowCanvas({
   defaultEdges,
   editingNode,
   onEditNode,
-  videoType,
 }: FlowCanvasProps) {
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
@@ -56,6 +55,8 @@ export default function FlowCanvas({
     setIsProcessing,
     setError,
     isProcessing,
+    videoType,
+    handlePipelineRun,
   } = useVideoReload();
   const { screenToFlowPosition, getNodes, getEdges, setNodes, setEdges } =
     useReactFlow();
@@ -237,6 +238,7 @@ export default function FlowCanvas({
       try {
         toast.success("Pipeline valid, starting processing");
         setIsProcessing(true);
+        handlePipelineRun();
         if (videoType == VideoType.Video) {
           // Classic backend pipeline processing
           const res = await sendPipelineToBackend(pipeline);
