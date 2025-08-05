@@ -1,22 +1,16 @@
-from typing import Any
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import cv2
 import asyncio
 import json
 import numpy as np
-from pydantic import ValidationError
 from app.utils.shared_functionality import as_context
 from app.utils.quality_metrics import compute_metrics
 from app.schemas.frame import FrameData
-from app.schemas.pipeline import PipelineModule, PipelineRequest
+from app.schemas.pipeline import PipelineRequest
 from app.services.pipeline import (
-    get_execution_order,
-    get_module_class,
+    prepare_pipeline,
     process_pipeline_frame,
 )
-from app.modules.module import ModuleBase
-from app.modules.utils.enums import ModuleName
-from app.services.module_registry import ModuleRegistry
 
 router = APIRouter()
 
@@ -28,7 +22,6 @@ async def video_feed(websocket: WebSocket) -> None:
     await websocket.accept()
     print("WebSocket connection accepted")
 
-    # Wait for client to specify filenames
     try:
         # Receive pipeline request JSON
         init_msg: str = await websocket.receive_text()
@@ -36,68 +29,9 @@ async def video_feed(websocket: WebSocket) -> None:
         print(data)
         request: PipelineRequest = PipelineRequest(**data)
 
-        ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
-        # Validate pipeline structure
-        if not ordered_modules:
-            raise ValueError("Pipeline is empty")
-
-        first_module_base = get_module_class(ordered_modules[0])
-        if first_module_base != ModuleName.VIDEO_SOURCE:
-            raise ValueError(
-                f"Pipeline must start with a {ModuleName.VIDEO_SOURCE} module"
-            )
-
-        last_module_base = get_module_class(ordered_modules[-1])
-        if last_module_base != ModuleName.RESULT:
-            raise ValueError(f"Pipeline must end with a {ModuleName.RESULT} module")
-
-        # Registry lookup
-        module_map: dict[str, tuple[ModuleBase, dict[str, Any]]] = {
-            m.id: (
-                ModuleRegistry.get_by_spacename(get_module_class(m)),
-                {p.key: p.value for p in m.parameters},
-            )
-            for m in ordered_modules
-        }
-
-        # Validate module parameters
-        for mod in ordered_modules:
-            mod_id = mod.id
-            mod_instance, _ = module_map[mod_id]
-            param_dict = {p.key: p.value for p in mod.parameters}
-            try:
-                validated = mod_instance.parameter_model(**param_dict)
-            except ValidationError as e:
-                raise ValueError(
-                    f"Parameter validation failed for module {mod.name}:\n{e}"
-                )
-            module_map[mod_id] = (mod_instance, validated.model_dump())
-
-        # Get source and result module
-        source_mod = ordered_modules[0]
-        result_modules = [
-            module
-            for module in ordered_modules
-            if get_module_class(module) == ModuleName.RESULT
-        ]
-
-        # Check and validate result modules
-        if not result_modules:
-            raise ValueError("Pipeline must end with at least one result module")
-        if len(result_modules) > 2:
-            raise ValueError("A maximum of two processed results is supported")
-        for result_mod in result_modules:
-            if not result_mod.source:
-                raise ValueError("Output source cannot be empty")
-            if source_mod.id in result_mod.source:
-                raise ValueError("Pipeline must have at least one processing node")
-
-        # Get processing nodes (remove source and result modules)
-        processing_nodes = [
-            m
-            for m in ordered_modules
-            if m.module_class not in {ModuleName.VIDEO_SOURCE, ModuleName.RESULT}
-        ]
+        (_, module_map, source_mod, result_modules, processing_nodes) = (
+            prepare_pipeline(request)
+        )
 
         with module_map[source_mod.id][0].process(
             None, module_map[source_mod.id][1]

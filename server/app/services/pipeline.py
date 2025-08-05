@@ -79,8 +79,16 @@ def get_execution_order(modules: list[PipelineModule]) -> list[PipelineModule]:
     return execution_order
 
 
-# Handle the pipeline request and process the video
-def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
+# Validate and set up the pipeline
+def prepare_pipeline(
+    request: PipelineRequest,
+) -> tuple[
+    list[PipelineModule],
+    dict[str, tuple[ModuleBase, dict[str, Any]]],
+    PipelineModule,
+    list[PipelineModule],
+    list[PipelineModule],
+]:
     ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
     # Validate pipeline structure
     if not ordered_modules:
@@ -105,7 +113,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     # Validate module parameters
     for mod in ordered_modules:
         mod_id = mod.id
-        mod_instance, params = module_map[mod_id]
+        mod_instance, _ = module_map[mod_id]
         param_dict = {p.key: p.value for p in mod.parameters}
         try:
             validated = mod_instance.parameter_model(**param_dict)
@@ -138,6 +146,15 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         for m in ordered_modules
         if m.module_class not in {ModuleName.VIDEO_SOURCE, ModuleName.RESULT}
     ]
+
+    return ordered_modules, module_map, source_mod, result_modules, processing_nodes
+
+
+# Handle the pipeline request and process the video
+def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
+    (_, module_map, source_mod, result_modules, processing_nodes) = prepare_pipeline(
+        request
+    )
 
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
         source_file,
