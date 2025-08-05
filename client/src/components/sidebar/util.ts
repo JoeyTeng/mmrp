@@ -89,6 +89,6 @@ export const useSidebarActions = () => {
       }
     };
     input.click();
-  }, [getNodes, getEdges]);
+  }, [getNodes, getEdges, deleteElements, setEdges, setNodes]);
   return { handleExportPipeline, handleImportPipeline };
 };
