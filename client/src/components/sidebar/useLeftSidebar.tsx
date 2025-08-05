@@ -1,17 +1,19 @@
 import {
-  SaveOutlined,
   CloudUploadOutlined,
   AppsOutlined,
   DownloadOutlined,
+  CloudDownloadOutlined,
 } from "@mui/icons-material";
 import Modules from "../drag-and-drop/Modules";
 import { SidebarItem } from "./types";
 import { useVideoReload } from "@/contexts/videoReloadContext";
 import { toast } from "react-toastify/unstyled";
 import { useMemo } from "react";
+import { useSidebarActions } from "./util";
 
 export const useLeftSidebarItems = (): SidebarItem[] => {
   const { getLatestVideoInfo, latestResponse, isProcessing } = useVideoReload();
+  const { handleExportPipeline, handleImportPipeline } = useSidebarActions();
 
   const downloadSize = useMemo(() => {
     const leftVideoBytes = latestResponse?.left
@@ -71,12 +73,7 @@ export const useLeftSidebarItems = (): SidebarItem[] => {
   };
 
   return [
-    {
-      id: "save",
-      title: "Save",
-      icon: <SaveOutlined />,
-      action: () => console.log("Save clicked"),
-    },
+    // Video Operations Section
     {
       id: "download",
       title: downloadSize
@@ -86,12 +83,20 @@ export const useLeftSidebarItems = (): SidebarItem[] => {
       disabled: isProcessing || !!!latestResponse,
       action: handleDownload,
     },
+    // Pipeline Operations Section
     {
-      id: "upload",
-      title: "Upload",
+      id: "pipeline-import",
+      title: "Import Pipeline",
       icon: <CloudUploadOutlined />,
-      action: () => console.log("Upload clicked"),
+      action: handleImportPipeline,
     },
+    {
+      id: "pipeline-export",
+      title: "Export Pipeline",
+      icon: <CloudDownloadOutlined />,
+      action: handleExportPipeline,
+    },
+    // Modules
     {
       id: "modules",
       title: "Modules",
