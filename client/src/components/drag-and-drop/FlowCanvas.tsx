@@ -29,7 +29,7 @@ import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { ModulesContext } from "@/contexts/ModulesContext";
-import { checkPipeline, getInitialNodeParamValue, makePorts } from "./util";
+import { checkPipeline } from "./util";
 import NodeContextMenu, {
   NodeContextMenuHandle,
 } from "./context-menu/NodeContextMenu";
@@ -149,24 +149,20 @@ export default function FlowCanvas({
       event.preventDefault();
 
       const nodeData = event.dataTransfer.getData("application/reactflow");
+
       if (!nodeData) return;
 
-      const { id, name, moduleClass } = JSON.parse(nodeData);
-      const moduleDef = modules.find((m) => m.id === id)!;
-      const type = moduleDef.type as NodeType;
-      if (!moduleDef) {
-        console.error("Modules not yet loaded or cannot find module name");
-        return;
-      }
+      const {
+        name,
+        type,
+        moduleClass,
+        data: moduleData,
+      } = JSON.parse(nodeData);
 
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
-
-      const defaultParams = getInitialNodeParamValue(moduleDef.data.parameters);
-      const inputPorts = makePorts(moduleDef.data.inputFormats, "input");
-      const outputPorts = makePorts(moduleDef.data.outputFormats, "output");
 
       // Create Node for the Canvas
       const newNode: Node<NodeData, NodeType> = {
@@ -174,11 +170,9 @@ export default function FlowCanvas({
         type,
         position,
         data: {
-          name: `${name}`,
-          moduleClass: moduleClass,
-          params: defaultParams,
-          inputFormats: inputPorts,
-          outputFormats: outputPorts,
+          name,
+          moduleClass,
+          ...moduleData,
         },
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
@@ -186,7 +180,7 @@ export default function FlowCanvas({
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [screenToFlowPosition, setNodes, modules],
+    [screenToFlowPosition, setNodes],
   );
 
   const isValidConnection: IsValidConnection<Edge> = useCallback(

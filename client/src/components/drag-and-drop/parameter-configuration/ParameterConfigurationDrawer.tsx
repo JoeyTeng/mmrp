@@ -38,17 +38,22 @@ export default function ParameterConfigurationDrawer({
   };
 
   const handleParamChange = useCallback(
-    (key: string, value: ParamValueType) => {
-      setTempNode((prev) => ({
-        ...prev,
-        data: {
-          ...prev.data,
-          params: {
-            ...prev.data.params,
-            [key]: value,
+    (paramName: string, value: ParamValueType) => {
+      setTempNode((prev) => {
+        const updatedParameters = prev.data.parameters.map((param) =>
+          param.name === paramName
+            ? { ...param, metadata: { ...param.metadata, value } }
+            : param,
+        );
+
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            parameters: updatedParameters,
           },
-        },
-      }));
+        };
+      });
     },
     [],
   );

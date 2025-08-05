@@ -29,8 +29,24 @@ describe("dumpPipelineToJson", () => {
     expect(mod.source).toEqual(["2", "3"]);
   });
   it("serializes node.data.params into a parameters array", () => {
-    const params = { kernel_size: 5, method: "gaussian" };
-    const node = makeNode("42", { name: "testNode", params });
+    const parameters = [
+      {
+        metadata: {
+          type: "str",
+          value: "gaussian",
+          constraints: {
+            default: "gaussian",
+            type: "select",
+            min: 1,
+            max: 31,
+            required: true,
+          },
+        },
+        name: "kernel_size",
+      },
+    ];
+    // { kernel_size: 5, method: "gaussian" }
+    const node = makeNode("42", { name: "testNode", parameters });
 
     const { modules } = dumpPipelineToJson([node], []);
     expect(modules).toHaveLength(1);

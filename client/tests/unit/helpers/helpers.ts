@@ -15,7 +15,7 @@ export function makeNode(
     data: {
       name: "",
       moduleClass: "",
-      params: {},
+      parameters: [],
       inputFormats: [],
       outputFormats: [],
       ...data,

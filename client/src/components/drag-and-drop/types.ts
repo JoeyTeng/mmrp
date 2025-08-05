@@ -3,18 +3,34 @@ import { ParamValueType, NodeType, FormatDefinition } from "@/types/module";
 
 export type NodeParamValue = ParamValueType | string[];
 
-export interface NodePort {
-  id: string;
-  formats: FormatDefinition;
-}
-
 export type NodeData = {
   name: string;
   moduleClass: string;
-  params: Record<string, ParamValueType>; // constraint to ensure there's only one value
-  inputFormats: NodePort[];
-  outputFormats: NodePort[];
+  parameters: ModuleParameter[]; // constraint to ensure there's only one value
+  inputFormats: FormatDefinition[];
+  outputFormats: FormatDefinition[];
 };
+
+export interface ModuleParameter {
+  name: string;
+  metadata: ParameterMetadata;
+}
+
+export interface ParameterMetadata {
+  value: ParamValueType;
+  type: string;
+  constraints: ParameterConstraint;
+}
+
+export interface ParameterConstraint {
+  type: string;
+  default: ParamValueType;
+  min?: number;
+  max?: number;
+  options?: string[];
+  required: boolean;
+  description?: string;
+}
 
 export type ContextMenuItem<ActionType extends string> = {
   id: ActionType;

@@ -3,9 +3,9 @@
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { MoreVertOutlined as MenuIcon } from "@mui/icons-material";
 
-import { NodeData, NodePort } from "./types";
-import { NodeType } from "@/types/module";
-import { IconButton } from "@mui/material";
+import { NodeData } from "./types";
+import { FormatDefinition, NodeType } from "@/types/module";
+import { Box, IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
 
 type CustomNode = Node<NodeData>;
@@ -17,21 +17,20 @@ export interface FlowNodeProps extends NodeProps<CustomNode> {
 export default function FlowNode({
   id,
   type,
-  data: { name, params, inputFormats = [], outputFormats = [] },
+  data,
   selected,
   onOpenMenu,
 }: FlowNodeProps) {
   const MAX_VISIBLE = 3; //default no of params visible in node
-
-  const paramEntries = Object.entries(params);
+  const { name, parameters, inputFormats, outputFormats } = data;
 
   const visibleParams =
-    paramEntries.length > MAX_VISIBLE && MAX_VISIBLE > 0
-      ? paramEntries.slice(0, MAX_VISIBLE - 1)
-      : paramEntries.slice(0, MAX_VISIBLE);
+    parameters.length > MAX_VISIBLE && MAX_VISIBLE > 0
+      ? parameters.slice(0, MAX_VISIBLE - 1)
+      : parameters.slice(0, MAX_VISIBLE);
 
-  function tooltip(port: NodePort) {
-    const { width, height, frameRate, pixelFormat, colorSpace } = port.formats;
+  function tooltip(format: FormatDefinition) {
+    const { width, height, frameRate, pixelFormat, colorSpace } = format;
     return [
       width && height && `Resolution: ${width}×${height}`,
       frameRate && `Frame rate: ${frameRate}fps`,
@@ -43,10 +42,10 @@ export default function FlowNode({
   }
 
   return (
-    <div
+    <Box
       className={`w-40 bg-white rounded-lg overflow-hidden text-sm border ${selected ? "border-black-100" : "border-gray-300"}`}
     >
-      <div className="pl-3 pr-1 py-1 font-semibold text-gray-800 flex justify-between items-center">
+      <Box className="pl-3 pr-1 py-1 font-semibold text-gray-800 flex justify-between items-center">
         {name}
         <IconButton
           onClick={(e) => {
@@ -59,34 +58,33 @@ export default function FlowNode({
         >
           <MenuIcon />
         </IconButton>
-      </div>
+      </Box>
       <div className="border-t border-gray-300" />
-      <div className="px-3 py-1 space-y-1">
-        {visibleParams.map(([key, value]) => (
-          <div key={key} className="flex justify-between gap-3">
+      <Box className="px-3 py-1 space-y-1">
+        {parameters.slice(0, MAX_VISIBLE).map(({ name, metadata }) => (
+          <div key={name} className="flex justify-between gap-3">
             <span className="font-medium text-gray-500 truncate text-pretty break-keep flex-1">
-              {key}
+              {name}
             </span>
             <span className="text-gray-600 max-w-[65%] truncate break-normal">
-              {String(value)}
+              {String(metadata.value)}
             </span>
           </div>
         ))}
-        {paramEntries.length > MAX_VISIBLE && (
-          <div className="text-left text-gray-400">{`+ ${paramEntries.length - visibleParams.length} more`}</div>
+        {parameters.length > MAX_VISIBLE && (
+          <div className="text-left text-gray-400">{`+ ${parameters.length - visibleParams.length} more`}</div>
         )}
-      </div>
+      </Box>
       {type !== NodeType.InputNode
         ? inputFormats.map((port, index) => (
             <Tooltip
-              key={port.id}
+              key={`input-${index}`}
               title={
                 <span style={{ whiteSpace: "pre-line" }}>{tooltip(port)}</span>
               }
             >
               <Handle
-                key={port.id}
-                id={port.id}
+                key={`input-${index}-handle`}
                 type="target"
                 position={Position.Left}
                 style={{
@@ -96,18 +94,16 @@ export default function FlowNode({
             </Tooltip>
           ))
         : null}
-
       {type !== NodeType.OutputNode
         ? outputFormats.map((port, index) => (
             <Tooltip
-              key={port.id}
+              key={`output-${index}`}
               title={
                 <span style={{ whiteSpace: "pre-line" }}>{tooltip(port)}</span>
               }
             >
               <Handle
-                key={port.id}
-                id={port.id}
+                key={`output-${index}-handle`}
                 type="source"
                 position={Position.Right}
                 style={{
@@ -117,6 +113,6 @@ export default function FlowNode({
             </Tooltip>
           ))
         : null}
-    </div>
+    </Box>
   );
 }

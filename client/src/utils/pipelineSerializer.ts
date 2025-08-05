@@ -22,12 +22,12 @@ export function dumpPipelineToJson(
     const id = node.id;
     const upstreamIds = (sourceMap.get(node.id) || []).map((srcId) => srcId);
 
-    const parameters: PipelineParameter[] = Object.entries(
-      node.data.params,
-    ).map(([key, value]) => ({
-      key,
-      value: value,
-    }));
+    const parameters: PipelineParameter[] = node.data.parameters.map(
+      ({ name, metadata }) => ({
+        key: name,
+        value: metadata.value,
+      }),
+    );
 
     return {
       id: id,
