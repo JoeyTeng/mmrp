@@ -28,7 +28,7 @@
       "parameters": [
         {
           "name": "input",
-          "flag": null,
+          "flag": "-i",
           "type": "str",
           "required": false,
           "default": "",
@@ -36,21 +36,21 @@
         },
         {
           "name": "width",
-          "flag": null,
+          "flag": "-w",
           "type": "int",
           "required": true,
           "default": 1280
         },
         {
           "name": "height",
-          "flag": null,
+          "flag": "-h",
           "type": "int",
           "required": true,
           "default": 720
         },
         {
           "name": "mode",
-          "flag": null,
+          "flag": "-m",
           "type": "select",
           "required": true,
           "default": 1,
@@ -63,35 +63,35 @@
         },
         {
           "name": "operator",
-          "flag": null,
+          "flag": "--operator",
           "type": "int",
           "required": false,
           "default": 0
         },
         {
           "name": "y",
-          "flag": null,
+          "flag": "--y",
           "type": "int",
           "required": true,
           "default": 0
         },
         {
           "name": "u",
-          "flag": null,
+          "flag": "--u",
           "type": "int",
           "required": false,
           "default": 0
         },
         {
           "name": "v",
-          "flag": null,
+          "flag": "--v",
           "type": "int",
           "required": false,
           "default": 0
         },
         {
           "name": "output",
-          "flag": null,
+          "flag": "-o",
           "type": "str",
           "required": false,
           "default": "",
@@ -99,7 +99,7 @@
         },
         {
           "name": "verbose",
-          "flag": null,
+          "flag": "--verbose",
           "type": "bool",
           "required": false,
           "default": false

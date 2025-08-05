@@ -32,14 +32,17 @@ def append_to_mock_data(config_data: Any) -> None:
     }
 
     try:
-        enriched_data = ModuleData.model_validate(
-            {"parameters": config_data.get("parameters", [])}
-        )
+        raw_params: list[dict[str, Any]] = config_data.get("parameters", [])
+        enriched_data = ModuleData.model_validate({"parameters": raw_params})
 
         for parsed_param in enriched_data.parameters:
+            raw_param: dict[str, Any] = next(
+                (p for p in raw_params if p.get("name") == parsed_param.name),
+                {},  # type: ignore
+            )
             param_entry: dict[str, Any] = {
                 "name": parsed_param.name,
-                "flag": None,  # optionally pull from raw_param if you still need it
+                "flag": raw_param.get("flag"),
                 "type": parsed_param.metadata.type,
                 "required": parsed_param.metadata.constraints.required
                 if parsed_param.metadata.constraints
