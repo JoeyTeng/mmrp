@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { VideoMetricsProvider } from "./VideoMetricsContext";
-import { VideoReloadProvider } from "./videoReloadContext";
+import { VideoReloadProvider } from "./VideoReloadContext";
 import { WebSocketProvider } from "./WebSocketContext";
 
 const AppProviders = ({ children }: { children: ReactNode }) => (

@@ -6,7 +6,7 @@ import {
 } from "@mui/icons-material";
 import Modules from "../drag-and-drop/Modules";
 import { SidebarItem } from "./types";
-import { useVideoReload } from "@/contexts/videoReloadContext";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
 import { useMemo } from "react";
 
