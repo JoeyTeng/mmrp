@@ -73,6 +73,15 @@
       "required": false,
       "default": false,
       "description": "optional description"
+    },
+    {
+      "name": "select_paramter_name",
+      "flag": "--flag_name",
+      "type": "type",
+      "options": ["option1", "option2"],
+      "required": false,
+      "default": false,
+      "description": "optional description"
     }
   ]
 }

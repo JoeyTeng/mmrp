@@ -28,7 +28,7 @@ class ParameterConstraint(BaseModel):
     default: Any | None = None
     min: float | None = None
     max: float | None = None
-    options: list[str] | None = None
+    options: list[str | int] | None = None
     required: bool = True
     description: str | None = None
 
@@ -76,10 +76,13 @@ class ParameterMetadata(BaseModel):
 
 class ModuleParameter(BaseModel):
     name: str = Field(..., description="Parameter name")
-    flag: str | None = None
     metadata: ParameterMetadata = Field(
         ..., description="Parameter Metadata for the parameter"
     )
+
+    # Allow these extra fields for binary upload defined in the config
+    flag: str | None = None  # Command-line flag
+    options: list[str | int] | None = None  # Options for select parameters
 
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
