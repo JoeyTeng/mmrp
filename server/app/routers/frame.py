@@ -27,6 +27,7 @@ async def video_feed(websocket: WebSocket) -> None:
         data = json.loads(init_msg)
         request: PipelineRequest = PipelineRequest(**data)
 
+        # Prepare ordered modules, module mapping, and processing nodes
         (_, module_map, source_mod, result_modules, processing_nodes) = (
             prepare_pipeline(request)
         )
@@ -40,8 +41,11 @@ async def video_feed(websocket: WebSocket) -> None:
         ):
             for frame in frame_iter:
                 frame_cache = {source_mod.id: frame}
+
+                # Run the frame through all processing nodes in sequence
                 process_pipeline_frame(frame_cache, processing_nodes, module_map)
 
+                # Map processed frames to left/right view
                 left_frame, right_frame = map_frames(
                     frame_cache=frame_cache,
                     result_modules=result_modules,
@@ -53,7 +57,10 @@ async def video_feed(websocket: WebSocket) -> None:
                     print("Warning: Missing left or right frame in mapping")
                     continue
 
+                # Encode frames into bytes and determine MIME type
                 encoded_blobs, mime = encode_frames([left_frame, right_frame])
+
+                # Compute quality metrics
                 metrics = compute_frame_metrics(left_frame, right_frame)
 
                 # Send metadata per frame pair

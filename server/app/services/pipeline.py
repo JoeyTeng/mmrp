@@ -152,6 +152,7 @@ def prepare_pipeline(
 
 # Handle the pipeline request and process the video
 def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
+    # Prepare ordered modules, module mapping, and processing nodes
     (_, module_map, source_mod, result_modules, processing_nodes) = prepare_pipeline(
         request
     )

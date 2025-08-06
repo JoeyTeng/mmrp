@@ -7,6 +7,7 @@ from app.modules.module import ModuleBase
 from app.schemas.metrics import Metrics
 
 
+# Map pipeline output frames to left/right video player sides
 def map_frames(
     frame_cache: dict[str, np.ndarray],
     result_modules: list[PipelineModule],
@@ -35,6 +36,7 @@ def map_frames(
     return left_frame, right_frame
 
 
+# Encode frames into binary blobs with WebP (or PNG fallback)
 def encode_frames(frames: list[np.ndarray]) -> tuple[list[bytes], str]:
     encoded_blobs: list[bytes] = []
     mime = "image/webp"
@@ -52,8 +54,8 @@ def encode_frames(frames: list[np.ndarray]) -> tuple[list[bytes], str]:
     return encoded_blobs, mime
 
 
+# Validate frame shapes and compute quality metrics
 def compute_frame_metrics(left_frame: np.ndarray, right_frame: np.ndarray) -> Metrics:
-    # Validate frame shapes and compute quality metrics
     if left_frame.shape != right_frame.shape:
         raise ValueError("Result frames must be the same size for metric comparison")
     return compute_metrics(left_frame, right_frame)
