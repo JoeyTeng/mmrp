@@ -156,34 +156,51 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         request
     )
 
+    metrics: list[Metrics] = []
+
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
         source_file,
         fps,
         frame_iter,
     ):
-        # Frame storage of original frames
-        original_frames: list[np.ndarray] = []
-        # Frame storage per result module
-        result_frames: dict[str, list[np.ndarray]] = {
-            mod.id: [] for mod in result_modules
-        }
-
         # Run frames through whole pipeline and return the frames that need to be written
         def base_pipeline_iterator() -> Iterator[tuple[str, np.ndarray]]:
             frame_cache: dict[str, np.ndarray] = {}
             for frame in frame_iter:
-                original_frames.append(frame.copy())
+                original_frame = frame.copy()
                 frame_cache.clear()
                 frame_cache[source_mod.id] = frame
                 # Process frames and save them to a frame cache
                 process_pipeline_frame(frame_cache, processing_nodes, module_map)
+
+                # Compute quality metrics
+                if len(result_modules) in (1, 2):
+                    if len(result_modules) == 1:
+                        processed_frame = frame_cache[result_modules[0].source[0]]
+                        if original_frame.shape != processed_frame.shape:
+                            raise ValueError(
+                                "Original and processed frames must match in size"
+                            )
+                        metrics.append(compute_metrics(original_frame, processed_frame))
+                    else:
+                        f1 = frame_cache[result_modules[0].source[0]]
+                        f2 = frame_cache[result_modules[1].source[0]]
+                        if f1.shape != f2.shape:
+                            raise ValueError(
+                                "Result frames must be the same size for metric comparison"
+                            )
+                        metrics.append(compute_metrics(f1, f2))
+
                 for result_mod in result_modules:
                     for sid in result_mod.source:
                         # Yield the result module and the corresponding frames to be written
                         yield (result_mod.id, frame_cache[sid])
 
-        for mod_id, frame in base_pipeline_iterator():
-            result_frames[mod_id].append(frame)
+        # Create separate iterators for each result module
+        output_iters = {
+            mod.id: (frame for mid, frame in base_pipeline_iterator() if mid == mod.id)
+            for mod in result_modules
+        }
 
         outputs: list[dict[str, str]] = []
 
@@ -201,33 +218,12 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             params["fps"] = fps
 
             # Pass only the frames for the specific result module
-            def frame_iter_result() -> Iterator[np.ndarray]:
-                yield from result_frames[result_mod.id]
-
-            mod_instance.process(frame_iter_result(), params)
+            mod_instance.process(output_iters[result_mod.id], params)
 
             # Return the video player side and video file name
             outputs.append({"video_player": params["video_player"], "path": filename})
 
         output_map = {entry["video_player"]: entry["path"] for entry in outputs}
-
-        # Frame-by-frame metrics
-        metrics: list[Metrics] = []
-        if len(result_modules) in (1, 2):
-            if len(result_modules) == 1:
-                frames1 = original_frames
-                frames2 = result_frames[result_modules[0].id]
-                error_msg = "Original and processed frames must match in size"
-            else:
-                frames1 = result_frames[result_modules[0].id]
-                frames2 = result_frames[result_modules[1].id]
-                error_msg = "Result frames must be the same size for metric comparison"
-
-            for frame1, frame2 in zip(frames1, frames2):
-                if frame1.shape != frame2.shape:
-                    raise ValueError(error_msg)
-                m = compute_metrics(frame1, frame2)
-                metrics.append(m)
 
         response = PipelineResponse(
             left=output_map.get("left", ""),

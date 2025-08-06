@@ -232,9 +232,8 @@ export default function FlowCanvas({
     >[];
     const edges: Edge[] = getEdges();
     if (checkPipeline(nodes, edges)) {
-      const pipeline = dumpPipelineToJson(nodes, edges, videoType);
-      console.log(pipeline);
-      console.log(JSON.stringify(pipeline, null, 2));
+      const pipeline = dumpPipelineToJson(nodes, edges);
+      console.debug(JSON.stringify(pipeline, null, 2));
       try {
         toast.success("Pipeline valid, starting processing");
         setIsProcessing(true);
@@ -247,7 +246,7 @@ export default function FlowCanvas({
         } else if (videoType == VideoType.Stream) {
           // Stream mode - trigger WS connection using pipeline
           setError(false);
-          triggerWebSocketConnection(pipeline); // send pipeline to context for FrameStreamPlayer
+          triggerWebSocketConnection(pipeline); // Send pipeline to context for FrameStreamPlayer
         }
       } catch (err) {
         console.error("Error sending pipeline to backend", err);

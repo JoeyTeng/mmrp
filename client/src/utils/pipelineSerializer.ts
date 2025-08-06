@@ -5,14 +5,11 @@ import {
   PipelineRequest,
 } from "@/types/pipeline";
 import { NodeData } from "@/components/drag-and-drop/types";
-import { VideoType } from "@/components/comparison-view/types";
 
 export function dumpPipelineToJson(
   nodes: Node<NodeData>[],
   edges: Edge[],
-  videoType: VideoType,
 ): PipelineRequest {
-  console.log(videoType);
   const sourceMap = new Map<string, string[]>();
   edges.forEach((edge) => {
     if (!sourceMap.has(edge.target)) {
