@@ -1,9 +1,10 @@
-export function isFrameworkHandledParameter(parameter: string): boolean {
-  return parameter === "input" || parameter === "output";
-}
 import crypto from "crypto";
 import stringify from "json-stable-stringify";
 import type { PipelineData, ProtectedExport } from "./types";
+
+export function isFrameworkHandledParameter(parameter: string): boolean {
+  return parameter === "input" || parameter === "output";
+}
 
 export const generateHash = (data: object): string => {
   const stringified = stringify(data) as string;

@@ -36,7 +36,7 @@ export default function ParameterConfiguration({
         return acc;
       }, new Map<string, ParameterConstraints>()) ?? new Map()
     );
-  }, [modules, node?.data.name]);
+  }, [modules, node?.data.moduleClass]);
 
   const paramKeys = Object.keys(node.data.params);
 

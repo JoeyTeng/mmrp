@@ -4,15 +4,12 @@ from app.modules.utils.enums import Color, ColorSpace, FrameRate, PixelFormat
 
 
 class ModuleFormat(BaseModel):
-    pixel_format: list[PixelFormat] | None = None
-    color_space: list[ColorSpace] | None = None
+    pixel_format: list[PixelFormat] = Field(default_factory=list[PixelFormat])
+    color_space: list[ColorSpace] = Field(default_factory=list[ColorSpace])
     color: Color | None = None
     width: int | None = Field(default=None, ge=32, le=3840, description="Output width")
     height: int | None = Field(
         default=None, ge=32, le=2160, description="Output height"
-    )
-    frame_rate: FrameRate | None = Field(
-        default=None, description="Frame rate of the video format"
     )
     frame_rate: FrameRate | None = Field(
         default=None, description="Frame rate of the video format"
@@ -31,7 +28,7 @@ class ParameterConstraint(BaseModel):
     default: Any | None = None
     min: float | None = None
     max: float | None = None
-    options: list[str | int] | None = None
+    options: list[str] | None = None
     required: bool = True
     description: str | None = None
 
@@ -73,10 +70,6 @@ class ParameterMetadata(BaseModel):
     constraints: ParameterConstraint | None = Field(
         None, description="Constraints for the parameter"
     )
-
-    # Allow these extra fields for binary upload defined in the config
-    flag: str | None = None  # Command-line flag
-    options: list[str | int] | None = None  # Options for select parameters
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
 

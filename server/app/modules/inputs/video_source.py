@@ -23,7 +23,7 @@ class VideoSource(ModuleBase):
     def get_output_formats(self) -> list[ModuleFormat]:
         # We support .mp4 imports (decoded by OpenCV as BGR24)
         # Width/height/fps will be resolved at runtime by the pipeline runner
-        return self.data.input_formats or []
+        return self.data.output_formats or []
 
     @override
     def process_frame(self, frame: Any, parameters: dict[str, Any]) -> Any:
