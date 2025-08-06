@@ -16,16 +16,24 @@ from app.services.module_registry import ModuleRegistry
 from app.utils.shared_functionality import string_sanitizer
 
 
-def get_json_path() -> Path:
-    return Path(__file__).parent / "mock_data.json"
+def get_json_folder() -> Path:
+    return Path(__file__).parent / "json_data"
 
 
-def get_all_mock_modules(file_path: Path | None = None) -> list[ModuleBase]:
-    path = file_path if file_path is not None else get_json_path()
+def get_all_mock_modules() -> list[ModuleBase]:
+    json_folder = get_json_folder()
+    all_modules: list[ModuleBase] = []
 
-    with open(path) as f:
-        json_data: dict[str, Any] = json.load(f)
-    return json_to_modules(json_data)
+    for json_file in json_folder.glob("*.json"):
+        with json_file.open("r", encoding="utf-8") as f:
+            try:
+                json_data: dict[str, Any] = json.load(f)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Error parsing JSON: {str(e)}")
+            modules = json_to_modules(json_data)
+            all_modules.extend(modules)
+
+    return all_modules
 
 
 def generate_module_uuid() -> str:
@@ -49,9 +57,16 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
             name_ = string_sanitizer(module_class_)
             type_ = module_data["type"]
             parameters_ = module_data.get("parameters", [])
+            input_formats_ = module_data.get("input_formats", [])
+            output_formats_ = module_data.get("output_formats", [])
             module_id = generate_module_uuid()
             position_ = Position(x=0.0, y=0.0)
-            data_ = ModuleData(parameters=parameters_)
+            data_ = ModuleData(
+                parameters=parameters_,
+                input_formats=input_formats_,
+                output_formats=output_formats_,
+            )
+            exectuable_path_ = module_data.get("executable_path", None)
 
             try:
                 module_class = module_classes[module_class_]
@@ -65,6 +80,7 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
                 type=type_,
                 position=position_,
                 data=data_,
+                executable_path=exectuable_path_,
             )
 
             ModuleRegistry.register(module)

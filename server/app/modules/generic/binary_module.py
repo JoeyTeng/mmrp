@@ -13,11 +13,11 @@ class GenericBinaryModule(ModuleBase):
 
     @override
     def get_input_formats(self) -> list[ModuleFormat]:
-        return []
+        return self.data.input_formats or []
 
     @override
     def get_output_formats(self) -> list[ModuleFormat]:
-        return []
+        return self.data.output_formats or []
 
     @override
     def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:

@@ -25,15 +25,11 @@ class ModuleBase(BaseModel, ABC):
     )
 
     parameter_model: Any = Field(..., exclude=True)
+    executable_path: str | None = Field()
     model_config = ConfigDict(extra="forbid", validate_assignment=True, frozen=False)
 
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
-        self._enrich_data()
-
-    def _enrich_data(self) -> None:
-        self.data.input_formats = self.get_input_formats()
-        self.data.output_formats = self.get_output_formats()
 
     @abstractmethod
     def get_parameters(self) -> list[ModuleParameter]:
