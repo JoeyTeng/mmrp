@@ -1,5 +1,3 @@
-"use client";
-
 import DragAndDropArea from "@/components/cards/DragAndDropArea";
 import AppLayout from "@/components/layout/AppLayout";
 import { Box } from "@mui/material";

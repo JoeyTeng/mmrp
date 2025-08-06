@@ -52,7 +52,6 @@ const FrameStreamPlayer = ({
 
   // Establish WebSocket connection to receive video frame data
   useEffect(() => {
-    console.log("latestRequest", latestRequest);
     if (!latestRequest || !("modules" in latestRequest)) return;
 
     const expectedFrames = 2;
