@@ -14,6 +14,9 @@ class ModuleFormat(BaseModel):
     frame_rate: FrameRate | None = Field(
         default=None, description="Frame rate of the video format"
     )
+    frame_rate: FrameRate | None = Field(
+        default=None, description="Frame rate of the video format"
+    )
 
 
 class Position(BaseModel):
@@ -25,7 +28,7 @@ class Position(BaseModel):
 #       Reference: https://docs.pydantic.dev/latest/concepts/models/#generic-models
 class ParameterConstraint(BaseModel):
     type: str = Field(..., description="Parameter type")
-    default: Any = Field(..., description="Default value for the parameter")
+    default: Any | None = None
     min: float | None = None
     max: float | None = None
     options: list[str | int] | None = None
@@ -39,7 +42,7 @@ class ParameterConstraint(BaseModel):
         param_type = values.get("type", "str")
         if "default" not in values:
             values["default"] = cls._get_type_default(param_type)
-        if "options" in values:
+        if "options" in values and values.get("options") is not None:
             values["type"] = "select"
         return values
 
@@ -71,6 +74,9 @@ class ParameterMetadata(BaseModel):
         None, description="Constraints for the parameter"
     )
 
+    # Allow these extra fields for binary upload defined in the config
+    flag: str | None = None  # Command-line flag
+    options: list[str | int] | None = None  # Options for select parameters
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
 
@@ -79,6 +85,10 @@ class ModuleParameter(BaseModel):
     metadata: ParameterMetadata = Field(
         ..., description="Parameter Metadata for the parameter"
     )
+
+    # Allow these extra fields for binary upload defined in the config
+    flag: str | None = None  # Command-line flag
+    options: list[str | int] | None = None  # Options for select parameters
 
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 

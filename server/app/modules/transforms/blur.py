@@ -20,7 +20,7 @@ class BlurModule(ModuleBase):
 
     @override
     def get_output_formats(self) -> list[ModuleFormat]:
-        return self.get_input_formats()
+        return self.data.output_formats or []
 
     @override
     def process_frame(

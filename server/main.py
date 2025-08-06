@@ -4,10 +4,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 import shutil
 import uvicorn
-from app.routers import pipeline, video, frame, binaries
-from app.services.binaries import download_gist_files
-from app.routers import modules
+from app.routers import pipeline, video, modules, frame, binaries
 from app.db.convert_json_to_modules import get_all_mock_modules
+from app.services.binaries import download_gist_files
 
 
 @asynccontextmanager

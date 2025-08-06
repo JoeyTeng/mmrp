@@ -1,0 +1,113 @@
+{
+  "data": [
+    {
+      "name": "Simple Video Processor App",
+      "executable_path": "simple-video-processor-app",
+      "type": "processNode",
+      "input_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ],
+          "frame_rate": "29.97"
+        }
+      ],
+      "output_formats": [
+        {
+          "pixel_format": [
+            "bgr24"
+          ],
+          "color_space": [
+            "BT.709 Full"
+          ],
+          "frame_rate": "29.97"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "input",
+          "flag": "-i",
+          "type": "str",
+          "required": false,
+          "default": "",
+          "description": "Input is taken from previous node"
+        },
+        {
+          "name": "width",
+          "flag": "-w",
+          "type": "int",
+          "required": true,
+          "default": 1280,
+          "description": "Width of the video"
+        },
+        {
+          "name": "height",
+          "flag": "-h",
+          "type": "int",
+          "required": true,
+          "default": 720,
+          "description": "Height of the video"
+        },
+        {
+          "name": "mode",
+          "flag": "-m",
+          "type": "select",
+          "required": true,
+          "default": 1,
+          "options": [
+            "0",
+            "1",
+            "2"
+          ],
+          "description": "identity (0), pixel-wise arithmetics (1), scaling (2, unsupported)"
+        },
+        {
+          "name": "operator",
+          "flag": "--operator",
+          "type": "int",
+          "required": false,
+          "default": 0
+        },
+        {
+          "name": "y",
+          "flag": "--y",
+          "type": "int",
+          "required": true,
+          "default": 0
+        },
+        {
+          "name": "u",
+          "flag": "--u",
+          "type": "int",
+          "required": false,
+          "default": 0
+        },
+        {
+          "name": "v",
+          "flag": "--v",
+          "type": "int",
+          "required": false,
+          "default": 0
+        },
+        {
+          "name": "output",
+          "flag": "-o",
+          "type": "str",
+          "required": false,
+          "default": "",
+          "description": "Output is written in Result node and displayed in the specified video player"
+        },
+        {
+          "name": "verbose",
+          "flag": "--verbose",
+          "type": "bool",
+          "required": false,
+          "default": false
+        }
+      ]
+    }
+  ]
+}

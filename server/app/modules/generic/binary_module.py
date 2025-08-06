@@ -28,6 +28,7 @@ class GenericBinaryModule(ModuleBase):
     @override
     def get_input_formats(self) -> list[ModuleFormat]:
         return self.data.input_formats or []
+        return self.data.input_formats or []
 
     @override
     def get_output_formats(self) -> list[ModuleFormat]:

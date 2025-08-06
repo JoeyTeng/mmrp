@@ -9,13 +9,18 @@ export function useModules() {
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadModules = () => {
+    setLoading(true);
     apiClient
       .get<Module[]>("/modules/") // TODO: Validate response schema
       .then((res) => setModules(camelizeKeys(res.data) as Module[]))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadModules();
   }, []);
 
-  return { modules, loading };
+  return { modules, loading, reloadModules: loadModules };
 }
