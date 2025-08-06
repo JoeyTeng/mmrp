@@ -9,7 +9,7 @@ type ModuleItemProps = {
 
 export default function ModuleItem({ id, name, moduleClass }: ModuleItemProps) {
   const onDragStart = (event: React.DragEvent) => {
-    const nodeData = JSON.stringify({ id, name, moduleClass });
+    const nodeData = JSON.stringify({ id, moduleClass });
     event.dataTransfer.setData("application/reactflow", nodeData);
     event.dataTransfer.effectAllowed = "copy";
   };

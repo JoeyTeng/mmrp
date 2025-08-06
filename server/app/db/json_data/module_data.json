@@ -122,7 +122,7 @@
           "options": [
             "gaussian",
             "median",
-            "average"
+            "bilateral"
           ],
           "description": "Blur algorithm type"
         }
@@ -169,7 +169,7 @@
           "name": "height",
           "flag": null,
           "type": "int",
-          "default": 480,
+          "default": 360,
           "min": 32,
           "max": 2160,
           "required": true,

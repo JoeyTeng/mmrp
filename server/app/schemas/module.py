@@ -70,7 +70,6 @@ class ParameterMetadata(BaseModel):
     constraints: ParameterConstraint | None = Field(
         None, description="Constraints for the parameter"
     )
-
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
 

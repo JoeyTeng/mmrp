@@ -40,14 +40,16 @@
           "flag": "-w",
           "type": "int",
           "required": true,
-          "default": 1280
+          "default": 1280,
+          "description": "Width of the video"
         },
         {
           "name": "height",
           "flag": "-h",
           "type": "int",
           "required": true,
-          "default": 720
+          "default": 720,
+          "description": "Height of the video"
         },
         {
           "name": "mode",
@@ -60,7 +62,7 @@
             "1",
             "2"
           ],
-          "description": "Identity mode: 0"
+          "description": "identity (0), pixel-wise arithmetics (1), scaling (2, unsupported)"
         },
         {
           "name": "operator",
