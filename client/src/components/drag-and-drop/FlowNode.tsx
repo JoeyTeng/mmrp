@@ -7,6 +7,7 @@ import { NodeData, NodePort } from "./types";
 import { NodeType } from "@/types/module";
 import { IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
+import { isFrameworkHandledParameter } from "@/utils/sharedFunctionality";
 
 type CustomNode = Node<NodeData>;
 
@@ -25,10 +26,13 @@ export default function FlowNode({
 
   const paramEntries = Object.entries(params);
 
-  const visibleParams =
+  const visibleEntriesCount =
     paramEntries.length > MAX_VISIBLE && MAX_VISIBLE > 0
-      ? paramEntries.slice(0, MAX_VISIBLE - 1)
-      : paramEntries.slice(0, MAX_VISIBLE);
+      ? MAX_VISIBLE - 1
+      : MAX_VISIBLE;
+  const visibleParams = paramEntries
+    .filter(([key]) => !isFrameworkHandledParameter(key))
+    .slice(0, visibleEntriesCount);
 
   function tooltip(port: NodePort) {
     const { width, height, frameRate, pixelFormat, colorSpace } = port.formats;

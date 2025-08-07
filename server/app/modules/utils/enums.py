@@ -7,6 +7,7 @@ class ModuleName(StrEnum):
     BLUR = "blur"
     RESIZE = "resize"
     RESULT = "video_output"
+    BINARY = "binary"
 
 
 class ModuleType(StrEnum):
@@ -42,7 +43,7 @@ class ColorSpace(StrEnum):
 
 
 class Color(StrEnum):
-    YCbCr = "YCbCr"
+    YCrCb = "YCrCb"
     HSV = "HSV"
     LAB = "Lab"
     RGB = "RGB"

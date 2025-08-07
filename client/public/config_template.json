@@ -1,0 +1,87 @@
+{
+  "name": "Display Name of Module",
+  "executable": "name-of-executable",
+  "input_formats": [
+    {
+      "type": "video",
+      "formats": {
+        "pixel_format": [
+          "bgr24",
+          "rgb24",
+          "gray8",
+          "yuv420p 8bit",
+          "yuv420p 10bit",
+          "yuv444p 8bit"
+        ],
+        "color_space": [
+          "BT.601 Full",
+          "BT.601 Limited",
+          "BT.709 Full",
+          "BT.709 Limited"
+        ],
+        "width": 0,
+        "height": 0,
+        "frame_rate": "29.97"
+      }
+    }
+  ],
+  "output_formats": [
+    {
+      "type": "video",
+      "formats": {
+        "pixel_format": [
+          "bgr24",
+          "rgb24",
+          "gray8",
+          "yuv420p 8bit",
+          "yuv420p 10bit",
+          "yuv444p 8bit"
+        ],
+        "color_space": [
+          "BT.601 Full",
+          "BT.601 Limited",
+          "BT.709 Full",
+          "BT.709 Limited"
+        ],
+        "width": 0,
+        "height": 0,
+        "frame_rate": "29.97"
+      }
+    }
+  ],
+  "parameters": [
+    {
+      "name": "str_parameter_name",
+      "flag": "-i",
+      "type": "str",
+      "required": true,
+      "default": "optional default value",
+      "description": "optional description"
+    },
+    {
+      "name": "int_parameter_name",
+      "flag": "--operator",
+      "type": "int",
+      "required": true,
+      "default": 0,
+      "description": "optional description"
+    },
+    {
+      "name": "boolean_paramter_name",
+      "flag": "--flag_name",
+      "type": "bool",
+      "required": false,
+      "default": false,
+      "description": "optional description"
+    },
+    {
+      "name": "select_paramter_name",
+      "flag": "--flag_name",
+      "type": "str",
+      "options": ["option1", "option2"],
+      "required": false,
+      "default": false,
+      "description": "optional description"
+    }
+  ]
+}

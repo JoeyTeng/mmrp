@@ -6,14 +6,12 @@ import { RIGHT_SIDEBAR_ITEMS } from "../sidebar/sidebar-config";
 import { ModulesContext } from "@/contexts/ModulesContext";
 import { useModules } from "@/hooks/useModule";
 import Loading from "./Loading";
-import { useLeftSidebarItems } from "../sidebar/useLeftSidebar";
+import LeftSidebar from "../sidebar/LeftSidebar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [leftOpenPanelId, setLeftOpenPanelId] = useState<string | null>(null);
   const [rightOpenPanelId, setRightOpenPanelId] = useState<string | null>(null);
-  const { modules, loading } = useModules();
-
-  const leftSidebarItems = useLeftSidebarItems();
+  const { modules, loading, reloadModules } = useModules();
 
   if (loading) {
     return <Loading />;
@@ -22,12 +20,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ModulesContext value={modules}>
       <Box className="flex h-screen w-screen bg-gray-50">
-        <Sidebar
-          anchor="left"
-          items={leftSidebarItems}
-          openPanelId={leftOpenPanelId}
-          width={45}
-          onPanelToggle={setLeftOpenPanelId}
+        <LeftSidebar
+          paneId={leftOpenPanelId}
+          setPaneId={setLeftOpenPanelId}
+          reload={reloadModules}
         />
 
         <Box

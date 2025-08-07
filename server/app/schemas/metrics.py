@@ -2,5 +2,6 @@ from pydantic import BaseModel
 
 
 class Metrics(BaseModel):
-    psnr: float
-    ssim: float
+    message: str | None
+    psnr: float | None
+    ssim: float | None

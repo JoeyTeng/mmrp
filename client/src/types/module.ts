@@ -1,5 +1,17 @@
 export type ParamValueType = string | number | boolean;
 export type ParamConstraintsType = "str" | "int" | "select" | "bool";
+export type FrameRate =
+  | "23.976"
+  | "24"
+  | "25"
+  | "29.97"
+  | "30"
+  | "48"
+  | "50"
+  | "59.94"
+  | "60"
+  | "120"
+  | "240";
 
 export interface Module {
   id: string;
@@ -41,11 +53,11 @@ export interface ParameterConstraints {
 }
 
 export interface FormatDefinition {
-  pixelFormat?: string;
-  colorSpace?: string;
+  pixelFormat?: string[];
+  colorSpace?: string[];
   width?: number;
   height?: number;
-  frameRate?: number; //fps
+  frameRate?: FrameRate; //fps
 }
 
 export enum NodeType {
