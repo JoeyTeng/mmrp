@@ -1,7 +1,7 @@
 "use client";
 import { Box } from "@mui/material";
 
-export type ModuleItemProps = {
+type ModuleItemProps = {
   id: string;
   name: string;
   moduleClass: string;
