@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useContext, useRef, useMemo } from "react";
+import React, { useCallback, useRef, useMemo } from "react";
 
 import {
   ReactFlow,
@@ -28,7 +28,7 @@ import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { ModulesContext } from "@/contexts/ModulesContext";
+import { useModulesContext } from "@/contexts/ModulesContext";
 import { checkPipeline, getInitialNodeParamValue, makePorts } from "./util";
 import NodeContextMenu, {
   NodeContextMenuHandle,
@@ -142,7 +142,7 @@ export default function FlowCanvas({
     event.dataTransfer.dropEffect = "copy";
   }, []);
 
-  const modules = useContext(ModulesContext);
+  const modules = useModulesContext();
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {

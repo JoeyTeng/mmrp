@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useContext, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Box, TextField, MenuItem, useTheme } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
 import { NodeParamValue, ParameterConfigurationProps } from "../types";
-import { ModulesContext } from "@/contexts/ModulesContext";
+import { useModulesContext } from "@/contexts/ModulesContext";
 import Fuse from "fuse.js";
 import { ParameterTooltip } from "./ParameterTooltip";
 import { ParameterConstraints } from "@/types/module";
@@ -16,7 +16,7 @@ export default function ParameterConfiguration({
   searchQuery,
 }: ParameterConfigurationProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const modules = useContext(ModulesContext);
+  const modules = useModulesContext();
   const theme = useTheme();
 
   const INPUT_SPACING = "mb-8";

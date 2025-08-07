@@ -15,8 +15,6 @@ export default function ModuleItem({
   moduleClass,
   parameters,
 }: ModuleItemProps) {
-  console.log(parameters);
-
   const onDragStart = (event: React.DragEvent) => {
     const nodeData = JSON.stringify({ id, moduleClass });
     event.dataTransfer.setData("application/reactflow", nodeData);
