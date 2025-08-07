@@ -16,7 +16,7 @@ export default function ParameterConfiguration({
   searchQuery,
 }: ParameterConfigurationProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const modules = useModulesContext();
+  const { modules } = useModulesContext();
   const theme = useTheme();
 
   const INPUT_SPACING = "mb-8";

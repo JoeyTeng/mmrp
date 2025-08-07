@@ -10,7 +10,7 @@ export default function Modules() {
   const [searchQuery, setSearchQuery] = useState("");
   const searchQueryTrimmed = searchQuery.trim();
 
-  const modules = useModulesContext();
+  const { modules } = useModulesContext();
   const modulesSorted = useMemo(() => {
     return [...modules.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [modules]);

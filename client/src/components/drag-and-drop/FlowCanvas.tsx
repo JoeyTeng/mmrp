@@ -142,7 +142,7 @@ export default function FlowCanvas({
     event.dataTransfer.dropEffect = "copy";
   }, []);
 
-  const modules = useModulesContext();
+  const { modules } = useModulesContext();
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
