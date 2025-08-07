@@ -3,19 +3,19 @@
 import FlowCanvas from "@/components/drag-and-drop/FlowCanvas";
 import { type Node, type Edge } from "@xyflow/react";
 
-import { NodeData } from "../drag-and-drop/types";
-import { NodeType } from "@/types/module";
+import { ModuleType } from "@/types/module";
+import { ModuleData } from "@/types/module";
 import ParameterConfigurationDrawer from "@/components/drag-and-drop/parameter-configuration/ParameterConfigurationDrawer";
 import { useState } from "react";
 import { Box } from "@mui/material";
 
-const initialNodes: Node<NodeData, NodeType>[] = [];
+const initialNodes: Node<ModuleData, ModuleType>[] = [];
 const initialEdges: Edge[] = [];
 
 export default function DragAndDropArea() {
   const [editingNode, setEditingNode] = useState<Node<
-    NodeData,
-    NodeType
+    ModuleData,
+    ModuleType
   > | null>(null);
 
   return (

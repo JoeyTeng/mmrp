@@ -1,12 +1,11 @@
 /** Function that gets a single initial value for a param**/
 
 import { Edge, Node } from "@xyflow/react";
-import { ModuleParameter, NodeData } from "./types";
-import { NodeType } from "@/types/module";
+import { ModuleData, ModuleParameter, ModuleType } from "@/types/module";
 import { toast } from "react-toastify/unstyled";
 
 export function checkPipeline(
-  nodes: Node<NodeData, NodeType>[],
+  nodes: Node<ModuleData, ModuleType>[],
   edges: Edge[],
 ): boolean {
   // no nodes, empty canvas
@@ -16,14 +15,14 @@ export function checkPipeline(
   }
 
   //  Find the one source
-  const sources: Node[] = nodes.filter((n) => n.type === NodeType.InputNode);
+  const sources: Node[] = nodes.filter((n) => n.type === ModuleType.InputNode);
   if (sources.length !== 1) {
     toast.error("Exactly one connected source node required.");
     return false;
   }
 
   //  Find the results
-  const results = nodes.filter((n) => n.type === NodeType.OutputNode);
+  const results = nodes.filter((n) => n.type === ModuleType.OutputNode);
   if (results.length > 2 || results.length == 0) {
     toast.error("The pipeline needs only one or two result nodes.");
     return false;

@@ -1,11 +1,12 @@
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { makeNode } from "../helpers/helpers";
 import type { Edge } from "@xyflow/react";
+import { ModuleParameter } from "@/types/module";
 
 describe("dumpPipelineToJson", () => {
   it("correctly records one incoming edge per node", () => {
-    const nodeA = makeNode("1", { name: "A" });
-    const nodeB = makeNode("2", { name: "B" });
+    const nodeA = makeNode("1", "A");
+    const nodeB = makeNode("2", "B");
     const edges: Edge[] = [{ id: "e1", source: "1", target: "2" }];
 
     const { modules } = dumpPipelineToJson([nodeA, nodeB], edges);
@@ -18,7 +19,7 @@ describe("dumpPipelineToJson", () => {
 
   // impossible test case for MVP but maybe applicable for future, used here to cover branches
   it("initializes the source array on first seeing a target node", () => {
-    const target = makeNode("1", { name: "Target" });
+    const target = makeNode("1", "Target", []);
     const edges: Edge[] = [
       { id: "e1", source: "2", target: "1" }, // first hit: creates the array
       { id: "e2", source: "3", target: "1" }, // second hit: reuses it
@@ -29,24 +30,40 @@ describe("dumpPipelineToJson", () => {
     expect(mod.source).toEqual(["2", "3"]);
   });
   it("serializes node.data.params into a parameters array", () => {
-    const parameters = [
+    const parameters: ModuleParameter[] = [
       {
+        name: "kernel_size",
         metadata: {
-          type: "str",
-          value: "gaussian",
+          value: 5,
+          type: "int",
           constraints: {
-            default: "gaussian",
-            type: "select",
+            type: "int",
+            default: 5,
             min: 1,
             max: 31,
             required: true,
+            description: "Kernel size (must be odd)",
           },
         },
-        name: "kernel_size",
+      },
+      {
+        name: "method",
+        metadata: {
+          value: "gaussian",
+          type: "select",
+          constraints: {
+            type: "select",
+            default: "gaussian",
+            options: ["gaussian", "median", "average"],
+            required: true,
+            description: "Blur algorithm type",
+          },
+        },
       },
     ];
+
     // { kernel_size: 5, method: "gaussian" }
-    const node = makeNode("42", { name: "testNode", parameters });
+    const node = makeNode("42", "testNode", parameters);
 
     const { modules } = dumpPipelineToJson([node], []);
     expect(modules).toHaveLength(1);

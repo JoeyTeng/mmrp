@@ -3,9 +3,10 @@
 import { useState, useMemo } from "react";
 import { Box, TextField, MenuItem, useTheme } from "@mui/material";
 import { NumberField } from "@base-ui-components/react/number-field";
-import { ModuleParameter, ParameterConfigurationProps } from "../types";
+import { ParameterConfigurationProps } from "../types";
 import Fuse from "fuse.js";
 import { ParameterTooltip } from "./ParameterTooltip";
+import { ModuleParameter } from "@/types/module";
 
 export default function ParameterConfiguration({
   node,
@@ -17,20 +18,15 @@ export default function ParameterConfiguration({
 
   const INPUT_SPACING = "mb-8";
 
-  const { data } = node;
-  const { parameters } = data;
-
-  const paramNames = useMemo(
-    () => parameters.map((param) => param.name),
-    [parameters],
-  );
+  const { parameters } = node.data;
 
   const fuse = useMemo(() => {
+    const paramNames = parameters.map((param) => param.name);
     return new Fuse(paramNames);
-  }, [paramNames]);
+  }, [parameters]);
 
   const filteredParams = useMemo(() => {
-    if (!searchQuery.trim()) return parameters;
+    if (!searchQuery) return parameters;
 
     const foundNames = fuse.search(searchQuery).map((result) => result.item);
     return parameters.filter((param) => foundNames.includes(param.name));

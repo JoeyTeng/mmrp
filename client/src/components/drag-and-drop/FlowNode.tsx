@@ -3,12 +3,11 @@
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { MoreVertOutlined as MenuIcon } from "@mui/icons-material";
 
-import { NodeData } from "./types";
-import { FormatDefinition, NodeType } from "@/types/module";
+import { FormatDefinition, ModuleData, ModuleType } from "@/types/module";
 import { Box, IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
 
-type CustomNode = Node<NodeData>;
+type CustomNode = Node<ModuleData>;
 
 export interface FlowNodeProps extends NodeProps<CustomNode> {
   onOpenMenu?: (e: React.MouseEvent, nodeId: string) => void;
@@ -75,7 +74,7 @@ export default function FlowNode({
           <div className="text-left text-gray-400">{`+ ${parameters.length - visibleParams.length} more`}</div>
         )}
       </Box>
-      {type !== NodeType.InputNode
+      {type !== ModuleType.InputNode
         ? inputFormats.map((port, index) => (
             <Tooltip
               key={`input-${index}`}
@@ -94,7 +93,7 @@ export default function FlowNode({
             </Tooltip>
           ))
         : null}
-      {type !== NodeType.OutputNode
+      {type !== ModuleType.OutputNode
         ? outputFormats.map((port, index) => (
             <Tooltip
               key={`output-${index}`}

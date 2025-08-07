@@ -7,12 +7,10 @@ type ModuleItemProps = {
 
 export default function ModuleItem({ module }: ModuleItemProps) {
   const onDragStart = (event: React.DragEvent) => {
-    const nodeData = JSON.stringify({ ...module });
+    const nodeData = JSON.stringify(module);
     event.dataTransfer.setData("application/reactflow", nodeData);
     event.dataTransfer.effectAllowed = "copy";
   };
-
-  const { name } = module;
 
   return (
     <Box
@@ -20,7 +18,7 @@ export default function ModuleItem({ module }: ModuleItemProps) {
       onDragStart={onDragStart}
       className="p-2 mb-1 border border-gray-300 bg-gray-50 rounded cursor-grab"
     >
-      {name}
+      {module.data.name}
     </Box>
   );
 }

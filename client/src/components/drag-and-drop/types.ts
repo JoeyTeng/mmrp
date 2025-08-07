@@ -1,36 +1,7 @@
 import type { Node, Edge } from "@xyflow/react";
-import { ParamValueType, NodeType, FormatDefinition } from "@/types/module";
+import { ParamValueType, ModuleType, ModuleData } from "@/types/module";
 
 export type NodeParamValue = ParamValueType | string[];
-
-export type NodeData = {
-  name: string;
-  moduleClass: string;
-  parameters: ModuleParameter[]; // constraint to ensure there's only one value
-  inputFormats: FormatDefinition[];
-  outputFormats: FormatDefinition[];
-};
-
-export interface ModuleParameter {
-  name: string;
-  metadata: ParameterMetadata;
-}
-
-export interface ParameterMetadata {
-  value: ParamValueType;
-  type: string;
-  constraints: ParameterConstraint;
-}
-
-export interface ParameterConstraint {
-  type: string;
-  default: ParamValueType;
-  min?: number;
-  max?: number;
-  options?: string[];
-  required: boolean;
-  description?: string;
-}
 
 export type ContextMenuItem<ActionType extends string> = {
   id: ActionType;
@@ -43,19 +14,19 @@ export type ContextMenuItem<ActionType extends string> = {
 };
 
 export type FlowCanvasProps = {
-  defaultNodes: Node<NodeData, NodeType>[];
+  defaultNodes: Node<ModuleData, ModuleType>[];
   defaultEdges: Edge[];
-  editingNode: Node<NodeData, NodeType> | null;
-  onEditNode: (node: Node<NodeData, NodeType>) => void;
+  editingNode: Node<ModuleData, ModuleType> | null;
+  onEditNode: (node: Node<ModuleData, ModuleType>) => void;
 };
 
 export interface ParameterConfigurationDrawerProps {
-  editingNode: Node<NodeData, NodeType>;
+  editingNode: Node<ModuleData, ModuleType>;
   clearEditingNode: () => void;
 }
 
 export type ParameterConfigurationProps = {
-  node: Node<NodeData, NodeType>;
+  node: Node<ModuleData, ModuleType>;
   onParamChange: (key: string, value: ParamValueType) => void;
   searchQuery: string;
 };

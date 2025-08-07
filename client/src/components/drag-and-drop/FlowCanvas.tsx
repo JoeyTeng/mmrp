@@ -22,8 +22,8 @@ import {
 import type { Node, Edge } from "@xyflow/react";
 
 import FlowNode, { FlowNodeProps } from "@/components/drag-and-drop/FlowNode";
-import { FlowCanvasProps, NodeData } from "./types";
-import { NodeType } from "@/types/module";
+import { FlowCanvasProps } from "./types";
+import { ModuleData, ModuleType } from "@/types/module";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
@@ -108,9 +108,9 @@ export default function FlowCanvas({
 
   const nodeTypes = useMemo(
     () => ({
-      [NodeType.InputNode]: FlowNodeWithMenu,
-      [NodeType.ProcessNode]: FlowNodeWithMenu,
-      [NodeType.OutputNode]: FlowNodeWithMenu,
+      [ModuleType.InputNode]: FlowNodeWithMenu,
+      [ModuleType.ProcessNode]: FlowNodeWithMenu,
+      [ModuleType.OutputNode]: FlowNodeWithMenu,
     }),
     [FlowNodeWithMenu],
   );
@@ -152,12 +152,7 @@ export default function FlowCanvas({
 
       if (!nodeData) return;
 
-      const {
-        name,
-        type,
-        moduleClass,
-        data: moduleData,
-      } = JSON.parse(nodeData);
+      const { type, data: moduleData } = JSON.parse(nodeData);
 
       const position = screenToFlowPosition({
         x: event.clientX,
@@ -165,13 +160,11 @@ export default function FlowCanvas({
       });
 
       // Create Node for the Canvas
-      const newNode: Node<NodeData, NodeType> = {
+      const newNode: Node<ModuleData, ModuleType> = {
         id: crypto.randomUUID(),
         type,
         position,
         data: {
-          name,
-          moduleClass,
           ...moduleData,
         },
         sourcePosition: Position.Right,
@@ -212,9 +205,9 @@ export default function FlowCanvas({
   );
 
   const onRun = async () => {
-    const nodes: Node<NodeData, NodeType>[] = getNodes() as Node<
-      NodeData,
-      NodeType
+    const nodes: Node<ModuleData, ModuleType>[] = getNodes() as Node<
+      ModuleData,
+      ModuleType
     >[];
     const edges: Edge[] = getEdges();
     if (checkPipeline(nodes, edges)) {
@@ -236,7 +229,7 @@ export default function FlowCanvas({
   };
 
   const onNodeDoubleClickHandler = useCallback(
-    (event: React.MouseEvent, node: Node<NodeData, NodeType>) => {
+    (event: React.MouseEvent, node: Node<ModuleData, ModuleType>) => {
       event.preventDefault();
       event.stopPropagation();
       onEditNode(node);

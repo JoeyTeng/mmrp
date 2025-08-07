@@ -4,10 +4,10 @@ import {
   PipelineParameter,
   PipelineRequest,
 } from "@/types/pipeline";
-import { NodeData } from "@/components/drag-and-drop/types";
+import { ModuleData } from "@/types/module";
 
 export function dumpPipelineToJson(
-  nodes: Node<NodeData>[],
+  nodes: Node<ModuleData>[],
   edges: Edge[],
 ): PipelineRequest {
   const sourceMap = new Map<string, string[]>();
