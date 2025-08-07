@@ -10,7 +10,7 @@ type ModuleItemGroupProps = {
 const ModuleItemGroup = ({ title, modules }: ModuleItemGroupProps) => {
   return (
     <Box>
-      <Box className="font-bold">
+      <Box className="font-light text-sm text-gray-500 sticky top-0 z-10 bg-white">
         {title}
         <Divider className="mb-4" />
       </Box>

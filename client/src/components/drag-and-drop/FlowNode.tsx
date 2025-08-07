@@ -48,7 +48,7 @@ export default function FlowNode({
 
   return (
     <div
-      className={`w-40 bg-white rounded-lg overflow-hidden text-sm border ${selected ? "border-black-100" : "border-gray-300"}`}
+      className={`w-40 bg-white rounded-lg overflow-hidden text-sm border shadow-sm ${selected ? "border-black-100" : "border-gray-300"}`}
     >
       <div className="pl-3 pr-1 py-1 font-semibold text-gray-800 flex justify-between items-center">
         {name}
