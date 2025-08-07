@@ -27,6 +27,7 @@ def compute_ssim(img1: np.ndarray, img2: np.ndarray) -> float:
 #       For YUV_I420 input, expect a tuple of 3 np.ndarrays (Y, U, V), and compute metrics only on the Y plane.
 def compute_metrics(img1: np.ndarray, img2: np.ndarray) -> Metrics:
     return Metrics(
+        message=None,
         psnr=float(compute_psnr(img1, img2)),
         ssim=float(compute_ssim(img1, img2)),
     )

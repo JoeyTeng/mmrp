@@ -1,4 +1,5 @@
 export type Metrics = {
-  psnr: number;
-  ssim: number;
+  message?: string;
+  psnr?: number;
+  ssim?: number;
 };
