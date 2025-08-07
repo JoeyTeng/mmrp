@@ -3,8 +3,7 @@
 import FlowCanvas from "@/components/drag-and-drop/FlowCanvas";
 import { type Node, type Edge } from "@xyflow/react";
 
-import { ModuleType } from "@/types/module";
-import { ModuleData } from "@/types/module";
+import { ModuleData, ModuleType } from "@/types/module";
 import ParameterConfigurationDrawer from "@/components/drag-and-drop/parameter-configuration/ParameterConfigurationDrawer";
 import { useState } from "react";
 import { Box } from "@mui/material";
