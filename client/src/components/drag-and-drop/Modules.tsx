@@ -12,7 +12,7 @@ export default function Modules() {
 
   const { modules } = useModulesContext();
   const modulesSorted = useMemo(() => {
-    return [...modules.values()].sort((a, b) => a.name.localeCompare(b.name));
+    return [...modules].sort((a, b) => a.name.localeCompare(b.name));
   }, [modules]);
 
   type GroupType = Record<
@@ -52,7 +52,7 @@ export default function Modules() {
         };
       } else {
         accumulator[key].modules.push(currentValue.item);
-        accumulator[key].minScore = Math.max(
+        accumulator[key].minScore = Math.min(
           accumulator[key].minScore,
           currentValue.score ?? 1,
         );
