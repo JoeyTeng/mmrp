@@ -57,5 +57,6 @@ def encode_frames(frames: list[np.ndarray]) -> tuple[list[bytes], str]:
 # Validate frame shapes and compute quality metrics
 def compute_frame_metrics(left_frame: np.ndarray, right_frame: np.ndarray) -> Metrics:
     if left_frame.shape != right_frame.shape:
-        raise ValueError("Result frames must be the same size for metric comparison")
+        error_msg = "Frames must match in size for metric comparison"
+        return Metrics(message=error_msg, psnr=None, ssim=None)
     return compute_metrics(left_frame, right_frame)
