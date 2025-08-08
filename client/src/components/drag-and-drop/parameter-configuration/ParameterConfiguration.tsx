@@ -8,6 +8,7 @@ import { ModulesContext } from "@/contexts/ModulesContext";
 import Fuse from "fuse.js";
 import { ParameterTooltip } from "./ParameterTooltip";
 import { ParameterConstraints } from "@/types/module";
+import { isFrameworkHandledParameter } from "@/utils/sharedFunctionality";
 
 export default function ParameterConfiguration({
   node,
@@ -18,19 +19,24 @@ export default function ParameterConfiguration({
   const modules = useContext(ModulesContext);
   const theme = useTheme();
 
-  const MIN_VALUE = 0;
-  const MAX_VALUE = 100;
   const INPUT_SPACING = "mb-8";
 
   const constraintsLookup = useMemo(() => {
-    const foundModule = modules.find((item) => item.name === node?.data.name);
+    const foundModule = modules.find(
+      (item) => item.moduleClass === node?.data.moduleClass,
+    );
+
     return (
       foundModule?.data.parameters.reduce((acc, { name, metadata }) => {
+        const isRequired = metadata.constraints?.required;
+        // Skip if name is "input" or "output" and not required because this is handled by source/result node
+        if (isFrameworkHandledParameter(name) && !isRequired) return acc;
+
         acc.set(name, metadata.constraints);
         return acc;
       }, new Map<string, ParameterConstraints>()) ?? new Map()
     );
-  }, [modules, node?.data.name]);
+  }, [modules, node?.data.moduleClass]);
 
   const paramKeys = Object.keys(node.data.params);
 
@@ -47,30 +53,33 @@ export default function ParameterConfiguration({
     const newValue = Number(rawValue);
     const constraints = constraintsLookup.get(key);
 
-    let min = MIN_VALUE;
-    let max = MAX_VALUE;
-
+    let clampedValue: number = newValue;
     if (constraints.min !== undefined && constraints.max !== undefined) {
-      min = constraints.min;
-      max = constraints.max;
+      const min = constraints.min;
+      const max = constraints.max;
+
+      setErrors((prev) => ({
+        ...prev,
+        [key]:
+          newValue < min
+            ? `Must be ≥ ${min}`
+            : newValue > max
+              ? `Must be ≤ ${max}`
+              : "",
+      }));
+
+      clampedValue = Math.max(min, Math.min(max, newValue));
     }
 
-    setErrors((prev) => ({
-      ...prev,
-      [key]:
-        newValue < min
-          ? `Must be ≥ ${min}`
-          : newValue > max
-            ? `Must be ≤ ${max}`
-            : "",
-    }));
-
-    const clampedValue = Math.max(min, Math.min(max, newValue));
     onParamChange(key, clampedValue);
   };
 
   const renderParamInput = (key: string, value: NodeParamValue) => {
     const constraints = constraintsLookup.get(key);
+    // This is mainly to filter out framework-handled parameters like "input", "output"
+    if (!constraints) {
+      return null;
+    }
 
     switch (constraints.type) {
       case "select":

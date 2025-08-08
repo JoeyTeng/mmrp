@@ -159,11 +159,11 @@ export default function FlowCanvas({
       const nodeData = event.dataTransfer.getData("application/reactflow");
       if (!nodeData) return;
 
-      const { id, name, moduleClass } = JSON.parse(nodeData);
+      const { id, moduleClass } = JSON.parse(nodeData);
       const moduleDef = modules.find((m) => m.id === id)!;
       const type = moduleDef.type as NodeType;
       if (!moduleDef) {
-        console.error("Modules not yet loaded or cannot find module name");
+        console.error("Modules not yet loaded or cannot find module");
         return;
       }
 
@@ -182,7 +182,7 @@ export default function FlowCanvas({
         type,
         position,
         data: {
-          name: `${name}`,
+          name: `${moduleDef.name}`,
           moduleClass: moduleClass,
           params: defaultParams,
           inputFormats: inputPorts,

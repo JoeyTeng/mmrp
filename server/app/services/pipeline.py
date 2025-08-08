@@ -179,16 +179,18 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                     if len(result_modules) == 1:
                         processed_frame = frame_cache[result_modules[0].source[0]]
                         if original_frame.shape != processed_frame.shape:
-                            raise ValueError(
-                                "Original and processed frames must match in size"
+                            error_msg = "Original and processed frames must match in size for metric comparison"
+                            metrics.append(
+                                Metrics(message=error_msg, psnr=None, ssim=None)
                             )
                         metrics.append(compute_metrics(original_frame, processed_frame))
                     else:
                         f1 = frame_cache[result_modules[0].source[0]]
                         f2 = frame_cache[result_modules[1].source[0]]
                         if f1.shape != f2.shape:
-                            raise ValueError(
-                                "Result frames must be the same size for metric comparison"
+                            error_msg = "Result frames must be the same size for metric comparison"
+                            metrics.append(
+                                Metrics(message=error_msg, psnr=None, ssim=None)
                             )
                         metrics.append(compute_metrics(f1, f2))
 
