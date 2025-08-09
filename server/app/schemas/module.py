@@ -107,6 +107,10 @@ class ModuleData(BaseModel):
 
         enriched_parameters: list[ModuleParameter] = []
         for param_ in parameters_:
+            # TODO - Find a better logic to handle this
+            #       in a better way.
+            if param_["name"].lower() in {"input", "output"}:
+                continue
             # Validate and enrich parameter constraints
             constraint_ = ParameterConstraint.model_validate(param_)
 
