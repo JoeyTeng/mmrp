@@ -40,7 +40,7 @@ const InterleavingFrames = ({ type }: Props) => {
         url = videoInfo.url;
       } catch (e) {
         setError(
-          "Failed to load video. Please try again. " +
+          "Failed to load video: " +
             (e instanceof Error ? e.message : "Unknown error"),
         );
       } finally {
