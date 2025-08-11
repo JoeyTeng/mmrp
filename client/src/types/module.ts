@@ -46,7 +46,7 @@ export interface ParameterConstraints {
   type: ParamConstraintsType;
   default: ParamValueType;
   required: boolean;
-  description: string | null;
+  description?: string;
   min?: number;
   max?: number;
   options?: ParamValueType[];
