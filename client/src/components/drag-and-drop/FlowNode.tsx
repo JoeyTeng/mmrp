@@ -60,7 +60,7 @@ export default function FlowNode({
       </Box>
       <div className="border-t border-gray-300" />
       <Box className="px-3 py-1 space-y-1">
-        {parameters.slice(0, MAX_VISIBLE).map(({ name, metadata }) => (
+        {visibleParams.map(({ name, metadata }) => (
           <div key={name} className="flex justify-between gap-3">
             <span className="font-medium text-gray-500 truncate text-pretty break-keep flex-1">
               {name}
