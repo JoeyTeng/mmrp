@@ -1,6 +1,17 @@
 import crypto from "crypto";
 import stringify from "json-stable-stringify";
 import type { PipelineData, ProtectedExport } from "./types";
+import { AxiosError } from "axios";
+
+export function handleError(error: unknown): string {
+  let message = "An unexpected error occurred.";
+  if ((error as AxiosError).isAxiosError) {
+    const axiosError = error as AxiosError<{ detail?: string }>;
+    message =
+      axiosError.response?.data?.detail || axiosError.message || message;
+  }
+  return message;
+}
 
 export function isFrameworkHandledParameter(parameter: string): boolean {
   return parameter === "input" || parameter === "output";

@@ -8,7 +8,7 @@ import SingleFileRow from "./SingleFileRow";
 import DualFileRow from "./DualFileRow";
 import { uploadBinaryToBackend } from "@/services/binaryService";
 import { GenericModal } from "./GenericModal";
-import { AxiosError } from "axios";
+import { handleError } from "@/utils/sharedFunctionality";
 
 export default function UploadBinaryModal({
   open,
@@ -88,15 +88,7 @@ export default function UploadBinaryModal({
         );
       }
     } catch (error) {
-      let message = "An unexpected error occurred.";
-
-      if ((error as AxiosError).isAxiosError) {
-        const axiosError = error as AxiosError<{ detail?: string }>;
-        message =
-          axiosError.response?.data?.detail || axiosError.message || message;
-      }
-
-      toast.error(message);
+      toast.error(handleError(error));
     } finally {
       setIsLoading(false);
     }
