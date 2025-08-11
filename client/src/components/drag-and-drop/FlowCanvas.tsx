@@ -29,7 +29,12 @@ import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { ModulesContext } from "@/contexts/ModulesContext";
-import { checkPipeline, getInitialNodeParamValue, makePorts } from "./util";
+import {
+  checkPipeline,
+  getInitialNodeParamValue,
+  makePorts,
+  mapBackendToFrontend,
+} from "./util";
 import NodeContextMenu, {
   NodeContextMenuHandle,
 } from "./context-menu/NodeContextMenu";
@@ -38,13 +43,26 @@ import CanvasContextMenu, {
 } from "./context-menu/CanvasContextMenu";
 import { useVideoReload } from "@/contexts/videoReloadContext";
 import { toast } from "react-toastify/unstyled";
+import { ExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
 
 export default function FlowCanvas({
-  defaultNodes,
-  defaultEdges,
   editingNode,
   onEditNode,
 }: FlowCanvasProps) {
+  const examplePipelines = useContext(ExamplePipelinesContext);
+
+  const { initialNodes, initialEdges } = useMemo(() => {
+    if (examplePipelines.length === 0) {
+      return { initialNodes: [], initialEdges: [] };
+    }
+
+    const first = examplePipelines[0];
+    console.log("Processing first pipeline:", first);
+
+    const { nodes, edges } = mapBackendToFrontend(first);
+    return { initialNodes: nodes, initialEdges: edges };
+  }, [examplePipelines]);
+
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
 
@@ -256,68 +274,71 @@ export default function FlowCanvas({
   }, []);
 
   if (!modules) return null;
+  if (!examplePipelines) return null;
 
   return (
     <Box
       className="w-full h-full relative bg-white rounded-lg border border-gray-300"
       onContextMenu={(e) => e.preventDefault()}
     >
-      <Box className="w-full h-full">
-        <ReactFlow
-          nodeTypes={nodeTypes}
-          deleteKeyCode={editingNode != null ? [] : ["Delete", "Backspace"]}
-          defaultNodes={defaultNodes}
-          defaultEdges={defaultEdges}
-          isValidConnection={isValidConnection}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          onNodeDoubleClick={onNodeDoubleClickHandler}
-          onNodeContextMenu={onNodeContextMenu}
-          onPaneContextMenu={onPaneContextMenu}
-          onNodesDelete={closeContextMenus}
-          onEdgesDelete={closeContextMenus}
-          fitViewOptions={{
-            padding: 1,
-          }}
-          defaultEdgeOptions={{
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              width: 20,
-              height: 20,
-            },
-            interactionWidth: 20,
-          }}
-          fitView
-          proOptions={{ hideAttribution: true }}
-          reconnectRadius={50}
-          panOnScroll
-          panOnScrollSpeed={1}
-          selectionOnDrag
-          panOnDrag={[1, 2]}
-          selectionMode={SelectionMode.Partial}
-        >
-          <Controls>
-            <ControlButton
-              onClick={() => canvasContextMenuRef.current?.clearAll()}
-            >
-              <DeleteIcon className="fill-red-700" sx={{ scale: 1.2 }} />
-            </ControlButton>
-          </Controls>
-          <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-          <Panel position="bottom-right">
-            <Button
-              variant="contained"
-              className={
-                isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
-              }
-              onClick={onRun}
-              loading={isProcessing}
-            >
-              Run
-            </Button>
-          </Panel>
-        </ReactFlow>
-      </Box>
+      {(initialNodes.length > 0 || initialEdges.length > 0) && (
+        <Box className="w-full h-full">
+          <ReactFlow
+            nodeTypes={nodeTypes}
+            deleteKeyCode={editingNode != null ? [] : ["Delete", "Backspace"]}
+            defaultNodes={initialNodes}
+            defaultEdges={initialEdges}
+            isValidConnection={isValidConnection}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            onNodeDoubleClick={onNodeDoubleClickHandler}
+            onNodeContextMenu={onNodeContextMenu}
+            onPaneContextMenu={onPaneContextMenu}
+            onNodesDelete={closeContextMenus}
+            onEdgesDelete={closeContextMenus}
+            fitViewOptions={{
+              padding: 1,
+            }}
+            defaultEdgeOptions={{
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                width: 20,
+                height: 20,
+              },
+              interactionWidth: 20,
+            }}
+            fitView
+            proOptions={{ hideAttribution: true }}
+            reconnectRadius={50}
+            panOnScroll
+            panOnScrollSpeed={1}
+            selectionOnDrag
+            panOnDrag={[1, 2]}
+            selectionMode={SelectionMode.Partial}
+          >
+            <Controls>
+              <ControlButton
+                onClick={() => canvasContextMenuRef.current?.clearAll()}
+              >
+                <DeleteIcon className="fill-red-700" sx={{ scale: 1.2 }} />
+              </ControlButton>
+            </Controls>
+            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+            <Panel position="bottom-right">
+              <Button
+                variant="contained"
+                className={
+                  isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
+                }
+                onClick={onRun}
+                loading={isProcessing}
+              >
+                Run
+              </Button>
+            </Panel>
+          </ReactFlow>
+        </Box>
+      )}
       <NodeContextMenu ref={nodeContextMenuRef} onEditNode={onEditNode} />
       <CanvasContextMenu ref={canvasContextMenuRef} onRun={onRun} />
     </Box>

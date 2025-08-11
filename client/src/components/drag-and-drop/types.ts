@@ -1,4 +1,4 @@
-import type { Node, Edge } from "@xyflow/react";
+import type { Node } from "@xyflow/react";
 import { ParamValueType, NodeType, FormatDefinition } from "@/types/module";
 
 export type NodeParamValue = ParamValueType | string[];
@@ -27,8 +27,6 @@ export type ContextMenuItem<ActionType extends string> = {
 };
 
 export type FlowCanvasProps = {
-  defaultNodes: Node<NodeData, NodeType>[];
-  defaultEdges: Edge[];
   editingNode: Node<NodeData, NodeType> | null;
   onEditNode: (node: Node<NodeData, NodeType>) => void;
 };

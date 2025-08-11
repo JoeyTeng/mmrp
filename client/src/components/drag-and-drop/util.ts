@@ -9,6 +9,7 @@ import {
   FormatDefinition,
 } from "@/types/module";
 import { toast } from "react-toastify/unstyled";
+import { ExamplePipeline } from "@/types/pipeline";
 
 export function getInitialNodeParamValue(
   parameters: ParameterDefinition[],
@@ -176,4 +177,45 @@ export function checkPipeline(
   }
 
   return true;
+}
+
+// will be deleted after frontend and backend schemas are unified
+
+export function mapBackendToFrontend(p: ExamplePipeline): {
+  nodes: Node<NodeData, NodeType>[];
+  edges: Edge[];
+} {
+  const nodes = p.nodes.map((mod) => ({
+    id: mod.id,
+    type: mod.type as NodeType,
+    position: mod.position,
+    data: {
+      name: mod.name,
+      moduleClass: mod.moduleClass,
+      params: Object.fromEntries(
+        (mod.data.parameters ?? []).map((param) => [
+          param.name,
+          param.metadata.value,
+        ]),
+      ),
+      inputFormats: (mod.data.inputFormats ?? []).map((format, i) => ({
+        id: `in-${i}`,
+        formats: format,
+      })),
+      outputFormats: (mod.data.outputFormats ?? []).map((format, i) => ({
+        id: `out-${i}`,
+        formats: format,
+      })),
+    },
+  }));
+
+  const edges = p.edges.map((e) => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    sourceHandle: e.sourceHandle ?? "out-0",
+    targetHandle: e.targetHandle ?? "in-0",
+  }));
+
+  return { nodes, edges };
 }

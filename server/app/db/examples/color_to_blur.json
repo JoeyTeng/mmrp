@@ -1,0 +1,223 @@
+{
+  "name": "Color to Blur pipeline",
+  "nodes": [
+   {
+      "id": "n1",
+      "module_class": "video_source",
+      "name": "Video Source",
+      "type": "inputNode",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "data": {
+        "parameters": [
+          {
+            "name": "path",
+            "metadata": {
+              "value": "example-video.mp4",
+              "type": "str",
+              "constraints": {
+                "type": "str",
+                "default": "example-video.mp4",
+                "required": true,
+                "description": "Input file path"
+              }
+            }
+          }
+        ],
+        "input_formats": [],
+        "output_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "n2",
+      "module_class": "color",
+      "name": "Color",
+      "type": "processNode",
+      "position": {
+        "x": 200,
+        "y": 100
+      },
+      "data": {
+        "parameters": [
+          {
+            "name": "input_colorspace",
+            "metadata": {
+              "value": "RGB",
+              "type": "select",
+              "constraints": {
+                "type": "select",
+                "default": "RGB",
+                "options": [
+                  "YCbCr",
+                  "HSV",
+                  "Lab",
+                  "RGB"
+                ],
+                "required": true,
+                "description": "Input color space"
+              }
+            }
+          },
+          {
+            "name": "output_colorspace",
+            "metadata": {
+              "value": "Lab",
+              "type": "select",
+              "constraints": {
+                "type": "select",
+                "default": "RGB",
+                "options": [
+                  "YCbCr",
+                  "HSV",
+                  "Lab",
+                  "RGB"
+                ],
+                "required": true,
+                "description": "Output color space"
+              }
+            }
+          }
+        ],
+        "input_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ],
+        "output_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "n3",
+      "module_class": "blur",
+      "name": "Blur",
+      "type": "processNode",
+      "position": {
+        "x": 400,
+        "y": 100
+      },
+      "data": {
+        "parameters": [
+          {
+            "name": "kernel_size",
+            "metadata": {
+              "value": 5,
+              "type": "int",
+              "constraints": {
+                "type": "int",
+                "default": 5,
+                "min": 1,
+                "max": 31,
+                "required": true,
+                "description": "Kernel size (must be odd)"
+              }
+            }
+          },
+          {
+            "name": "method",
+            "metadata": {
+              "value": "gaussian",
+              "type": "select",
+              "constraints": {
+                "type": "select",
+                "default": "gaussian",
+                "options": [
+                  "gaussian",
+                  "median",
+                  "average"
+                ],
+                "required": true,
+                "description": "Blur algorithm type"
+              }
+            }
+          }
+        ],
+        "input_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ],
+        "output_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "n4",
+      "module_class": "video_output",
+      "name": "Video Output",
+      "type": "outputNode",
+      "position": {
+        "x": 600,
+        "y": 100
+      },
+      "data": {
+        "parameters": [
+          {
+            "name": "video_player",
+            "metadata": {
+              "value": "right",
+              "type": "select",
+              "constraints": {
+                "type": "select",
+                "default": "right",
+                "options": [
+                  "left",
+                  "right"
+                ],
+                "required": true,
+                "description": "Output Video Player"
+              }
+            }
+          }
+        ],
+        "input_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ],
+        "output_formats": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "out-0",
+      "targetHandle": "in-0"
+    },
+    {
+      "id": "e2",
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "out-0",
+      "targetHandle": "in-0"
+    },
+    {
+      "id": "e3",
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "out-0",
+      "targetHandle": "in-0"
+    }
+  ]
+}

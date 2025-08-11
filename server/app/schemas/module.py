@@ -102,6 +102,8 @@ class ModuleData(BaseModel):
     @model_validator(mode="before")
     def parse_raw_parameters(cls, values: dict[str, Any]) -> dict[str, Any]:
         parameters_ = values.get("parameters", [])
+        if isinstance(parameters_[0], dict) and "metadata" in parameters_[0]:
+            return values
 
         enriched_parameters: list[ModuleParameter] = []
         for param_ in parameters_:
