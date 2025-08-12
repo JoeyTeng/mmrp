@@ -57,7 +57,7 @@ export interface FormatDefinition {
   colorSpace?: string[];
   width?: number;
   height?: number;
-  frameRate?: FrameRate;
+  frameRate?: FrameRate; //fps
 }
 
 export enum ModuleType {
