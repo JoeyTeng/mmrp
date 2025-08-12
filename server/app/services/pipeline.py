@@ -183,7 +183,10 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                             metrics.append(
                                 Metrics(message=error_msg, psnr=None, ssim=None)
                             )
-                        metrics.append(compute_metrics(original_frame, processed_frame))
+                        else:
+                            metrics.append(
+                                compute_metrics(original_frame, processed_frame)
+                            )
                     else:
                         f1 = frame_cache[result_modules[0].source[0]]
                         f2 = frame_cache[result_modules[1].source[0]]
@@ -192,7 +195,8 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                             metrics.append(
                                 Metrics(message=error_msg, psnr=None, ssim=None)
                             )
-                        metrics.append(compute_metrics(f1, f2))
+                        else:
+                            metrics.append(compute_metrics(f1, f2))
 
                 for result_mod in result_modules:
                     for sid in result_mod.source:
