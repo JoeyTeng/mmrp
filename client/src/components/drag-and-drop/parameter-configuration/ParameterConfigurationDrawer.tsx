@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
 import { AppDrawer } from "@/components/sidebar/AppDrawer";
-import { NodeData, ParameterConfigurationDrawerProps } from "../types";
-import { NodeType, ParamValueType } from "@/types/module";
+import { ParameterConfigurationDrawerProps } from "../types";
+import { ModuleData, ModuleType, ParamValueType } from "@/types/module";
 import ParameterConfiguration from "./ParameterConfiguration";
 import { Box, Button, Divider, InputAdornment, TextField } from "@mui/material";
 import { SearchOutlined } from "@mui/icons-material";
@@ -14,7 +14,7 @@ export default function ParameterConfigurationDrawer({
   clearEditingNode,
 }: ParameterConfigurationDrawerProps) {
   const [tempNode, setTempNode] =
-    useState<Node<NodeData, NodeType>>(editingNode);
+    useState<Node<ModuleData, ModuleType>>(editingNode);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function ParameterConfigurationDrawer({
   const { setNodes } = useReactFlow();
 
   const handleConfirm = useCallback(
-    (updatedNode: Node<NodeData, NodeType>) => {
+    (updatedNode: Node<ModuleData, ModuleType>) => {
       setNodes((nodes) =>
         nodes.map((n) => (n.id === updatedNode.id ? updatedNode : n)),
       );
@@ -38,17 +38,22 @@ export default function ParameterConfigurationDrawer({
   };
 
   const handleParamChange = useCallback(
-    (key: string, value: ParamValueType) => {
-      setTempNode((prev) => ({
-        ...prev,
-        data: {
-          ...prev.data,
-          params: {
-            ...prev.data.params,
-            [key]: value,
+    (paramName: string, value: ParamValueType) => {
+      setTempNode((prev) => {
+        const updatedParameters = prev.data.parameters.map((param) =>
+          param.name === paramName
+            ? { ...param, metadata: { ...param.metadata, value } }
+            : param,
+        );
+
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            parameters: updatedParameters,
           },
-        },
-      }));
+        };
+      });
     },
     [],
   );

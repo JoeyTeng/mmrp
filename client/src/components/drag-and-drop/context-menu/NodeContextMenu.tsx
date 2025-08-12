@@ -3,8 +3,7 @@ import { NODE_CONTEXT_MENU, NodeAction } from "./NodeContextMenuConfig";
 import ContextMenu from "./ContextMenu";
 import { useNodeActions } from "./useNodeActions";
 import { Node } from "@xyflow/react";
-import { NodeData } from "../types";
-import { NodeType } from "@/types/module";
+import { ModuleData, ModuleType } from "@/types/module";
 
 type MenuPayload = {
   position: { x: number; y: number };
@@ -18,7 +17,7 @@ export type NodeContextMenuHandle = {
 
 interface NodeContextMenuProps {
   ref: React.RefObject<NodeContextMenuHandle | null>;
-  onEditNode: (node: Node<NodeData, NodeType>) => void;
+  onEditNode: (node: Node<ModuleData, ModuleType>) => void;
 }
 
 const NodeContextMenu = ({ ref, onEditNode }: NodeContextMenuProps) => {

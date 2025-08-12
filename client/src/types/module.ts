@@ -15,9 +15,7 @@ export type FrameRate =
 
 export interface Module {
   id: string;
-  moduleClass: string;
-  name: string;
-  type: NodeType;
+  type: ModuleType;
   position: {
     x: number;
     y: number;
@@ -25,31 +23,33 @@ export interface Module {
   data: ModuleData;
 }
 
-export interface ModuleData {
-  parameters: ParameterDefinition[];
+export type ModuleData = {
+  name: string;
+  moduleClass: string;
+  parameters: ModuleParameter[];
   inputFormats: FormatDefinition[];
   outputFormats: FormatDefinition[];
-}
+};
 
-export interface ParameterDefinition {
+export interface ModuleParameter {
   name: string;
-  metadata: ParameterData;
+  metadata: ParameterMetadata;
 }
 
-export interface ParameterData {
+export interface ParameterMetadata {
   value: ParamValueType;
   type: ParamConstraintsType;
-  constraints: ParameterConstraints;
+  constraints: ParameterConstraint;
 }
 
-export interface ParameterConstraints {
+export interface ParameterConstraint {
   type: ParamConstraintsType;
   default: ParamValueType;
-  required: boolean;
-  description: string;
   min?: number;
   max?: number;
-  options?: ParamValueType[];
+  options?: string[];
+  required: boolean;
+  description: string;
 }
 
 export interface FormatDefinition {
@@ -60,7 +60,7 @@ export interface FormatDefinition {
   frameRate?: FrameRate; //fps
 }
 
-export enum NodeType {
+export enum ModuleType {
   InputNode = "inputNode",
   ProcessNode = "processNode",
   OutputNode = "outputNode",
