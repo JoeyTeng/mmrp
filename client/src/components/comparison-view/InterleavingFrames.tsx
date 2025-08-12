@@ -7,6 +7,7 @@ import UnifiedPlayer from "./UnifiedPlayer";
 import { PlayerHandle } from "./VideoPlayer";
 import { VideoType, ViewOptions } from "./types";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
+import { useVideoReload } from "@/contexts/videoReloadContext";
 
 type Props = {
   type: VideoType;
@@ -19,6 +20,7 @@ const InterleavingFrames = ({ type }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const { latestResponse, setLatestVideoInfo } = useVideoReload();
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
   useEffect(() => {
@@ -29,28 +31,50 @@ const InterleavingFrames = ({ type }: Props) => {
       return () => {};
     }
 
-    let url: string = videoRef.current?.src || "";
-
-    const initializeVideos = async () => {
+    const loadInitialVideo = async () => {
       try {
         setIsLoading(true);
         setError("");
-
         const videoInfo = await loadVideo("example-video.mp4", false, videoRef);
-        url = videoInfo.url;
+        setLatestVideoInfo("interleaved", videoInfo.url, videoInfo.size);
       } catch (e) {
-        setError("Failed to load video. Please try again. " + e);
+        setError("Failed to load videos. Please try again. " + e);
       } finally {
         setIsLoading(false);
       }
     };
 
-    initializeVideos();
+    loadInitialVideo();
+  }, [setCurrentFrame, setLatestVideoInfo, setMetrics, type]);
 
-    return () => {
-      URL.revokeObjectURL(url);
+  // When reload is triggered, load processed video(s)
+  useEffect(() => {
+    if (type === VideoType.Stream) {
+      return;
+    }
+
+    const loadOutputVideos = async () => {
+      try {
+        setIsLoading(true);
+        if (latestResponse!.interleaved !== "") {
+          const videoInfo = await loadVideo(
+            latestResponse!.interleaved,
+            true,
+            videoRef,
+          );
+          setLatestVideoInfo("interleaved", videoInfo.url, videoInfo.size);
+        }
+      } catch (e) {
+        setError("Failed to load output video: " + e);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [setCurrentFrame, setMetrics, type]);
+
+    if (latestResponse != null) {
+      loadOutputVideos();
+    }
+  }, [latestResponse, setLatestVideoInfo, type]);
 
   return (
     <Box

@@ -20,12 +20,12 @@ type VideoReloadContextType = {
   setIsProcessing: (value: boolean) => void;
   isProcessingError: boolean;
   setError: (value: boolean) => void;
-  getLatestVideoInfo: (video: "left" | "right") => {
+  getLatestVideoInfo: (video: "left" | "right" | "interleaved") => {
     url: string;
     size: number;
   };
   setLatestVideoInfo: (
-    video: "left" | "right",
+    video: "left" | "right" | "interleaved",
     url: string,
     size?: number,
   ) => void;
@@ -57,16 +57,20 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     null,
   );
   const [videoInfo, setVideoInfo] = useState<
-    Record<"left" | "right", { url: string; size: number }>
-  >({ left: { url: "", size: 0 }, right: { url: "", size: 0 } });
+    Record<"left" | "right" | "interleaved", { url: string; size: number }>
+  >({
+    left: { url: "", size: 0 },
+    right: { url: "", size: 0 },
+    interleaved: { url: "", size: 0 },
+  });
 
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
-  const getLatestVideoInfo = (video: "right" | "left") => {
+  const getLatestVideoInfo = (video: "right" | "left" | "interleaved") => {
     return videoInfo[video];
   };
   const setLatestVideoInfo = useCallback(
-    (video: "left" | "right", url: string, size?: number) => {
+    (video: "left" | "right" | "interleaved", url: string, size?: number) => {
       setVideoInfo((prev) => {
         const oldUrl = prev[video].url;
         if (oldUrl && oldUrl !== url) {

@@ -22,4 +22,5 @@ class PipelineRequest(BaseModel):
 class PipelineResponse(BaseModel):
     left: str
     right: str
+    interleaved: str
     metrics: list[Metrics]

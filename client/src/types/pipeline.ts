@@ -20,5 +20,6 @@ export type PipelineRequest = {
 export type PipelineResponse = {
   left: string;
   right: string;
+  interleaved: string;
   metrics: Metrics[];
 };

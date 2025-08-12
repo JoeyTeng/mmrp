@@ -174,6 +174,10 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                 # Process frames and save them to a frame cache
                 process_pipeline_frame(frame_cache, processing_nodes, module_map)
 
+                # Yield original frame for interleaving if only one result
+                if len(result_modules) == 1:
+                    yield "original", original_frame
+
                 # Compute quality metrics
                 if len(result_modules) in (1, 2):
                     if len(result_modules) == 1:
@@ -197,16 +201,41 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                 for result_mod in result_modules:
                     for sid in result_mod.source:
                         # Yield the result module and the corresponding frames to be written
-                        yield (result_mod.id, frame_cache[sid])
+                        yield result_mod.id, frame_cache[sid]
 
-        # Create separate iterators for each result module
+        # Buffer frames by id for original and result modules
+        buffered_frames: dict[str, list[np.ndarray]] = {"original": []}
+        for mod in result_modules:
+            buffered_frames[mod.id] = []
+
+        for mid, frame in base_pipeline_iterator():
+            if mid in buffered_frames:
+                buffered_frames[mid].append(frame)
+
+        # Create iterators from buffered frames
         output_iters = {
-            mod.id: (frame for mid, frame in base_pipeline_iterator() if mid == mod.id)
+            mod.id: (frame for frame in buffered_frames[mod.id])
             for mod in result_modules
         }
+        if len(result_modules) == 1:
+            output_iters["original"] = (frame for frame in buffered_frames["original"])
+
+        # Interleaved iterator yields frames alternately from two sources
+        def interleaved_iterator() -> Iterator[np.ndarray]:
+            if len(result_modules) == 2:
+                left_frames = buffered_frames[result_modules[0].id]
+                right_frames = buffered_frames[result_modules[1].id]
+            else:
+                left_frames = buffered_frames["original"]
+                right_frames = buffered_frames[result_modules[0].id]
+
+            for l_frame, r_frame in zip(left_frames, right_frames):
+                yield l_frame
+                yield r_frame
 
         outputs: list[dict[str, str]] = []
 
+        # Write standard result videos
         for result_mod in result_modules:
             mod_instance, params = module_map[result_mod.id]
 
@@ -226,11 +255,24 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             # Return the video player side and video file name
             outputs.append({"video_player": params["video_player"], "path": filename})
 
+        # Write interleaved video output
+        interleaved_mod = ModuleRegistry.get_by_spacename(ModuleName.RESULT)
+        interleaved_params: dict[str, Any] = {
+            "path": f"{source_file}-interleaved.webm",
+            "fps": fps,
+            "video_player": "interleaved",
+        }
+        interleaved_mod.process(interleaved_iterator(), interleaved_params)
+        outputs.append(
+            {"video_player": "interleaved", "path": interleaved_params["path"]}
+        )
+
         output_map = {entry["video_player"]: entry["path"] for entry in outputs}
 
         response = PipelineResponse(
             left=output_map.get("left", ""),
             right=output_map.get("right", ""),
             metrics=metrics,
+            interleaved=output_map.get("interleaved", ""),
         )
         return response
