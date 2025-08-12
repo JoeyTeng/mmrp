@@ -62,8 +62,8 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
             module_id = generate_module_uuid()
             position_ = Position(x=0.0, y=0.0)
             data_ = ModuleData(
-                module_class=module_class_,
                 name=name_,
+                module_class=module_class_,
                 parameters=parameters_,
                 input_formats=input_formats_,
                 output_formats=output_formats_,

@@ -87,8 +87,8 @@ class ModuleParameter(BaseModel):
 
 
 class ModuleData(BaseModel):
-    module_class: str = Field(..., description="Module Class name")
     name: str = Field(..., description="Module name in pipeline")
+    module_class: str = Field(..., description="Module Class name")
     parameters: list[ModuleParameter] = Field(
         default=[], description="List of data paramaters"
     )

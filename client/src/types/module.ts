@@ -24,8 +24,8 @@ export interface Module {
 }
 
 export type ModuleData = {
-  moduleClass: string;
   name: string;
+  moduleClass: string;
   parameters: ModuleParameter[];
   inputFormats: FormatDefinition[];
   outputFormats: FormatDefinition[];
