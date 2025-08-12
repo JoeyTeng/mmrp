@@ -6,6 +6,7 @@ module.exports = {
     "eslint --config client/eslint.config.mjs --cache --fix",
     () => "tsc --project client --noEmit",
     format,
+    () => "npm --prefix client run test:unit",
   ],
   "*.{css,json,md}": format,
 };
