@@ -32,14 +32,11 @@ export default function Modules() {
     });
   }, [modulesSorted]);
 
-  const filteredModules = useMemo(() => {
-    if (!searchQueryTrimmed)
-      return modulesSorted.map((module) => ({ item: module, score: 1 }));
-    return fuse.search(searchQueryTrimmed);
-  }, [fuse, modulesSorted, searchQueryTrimmed]);
-
   const groupedModules = useMemo(() => {
-    const grouped = filteredModules.reduce((accumulator, currentValue) => {
+    const results = searchQueryTrimmed
+      ? fuse.search(searchQueryTrimmed)
+      : modulesSorted.map((module) => ({ item: module, score: 1 }));
+    const grouped = results.reduce((accumulator, currentValue) => {
       const key =
         currentValue.item.type === NodeType.InputNode ||
         currentValue.item.type === NodeType.OutputNode
@@ -61,7 +58,7 @@ export default function Modules() {
     }, {} as GroupType);
 
     return grouped;
-  }, [filteredModules]);
+  }, [fuse, modulesSorted, searchQueryTrimmed]);
 
   if (!modules) return;
   return (
