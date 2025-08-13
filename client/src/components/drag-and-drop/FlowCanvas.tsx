@@ -39,6 +39,7 @@ import CanvasContextMenu, {
 import { useVideoReload } from "@/contexts/videoReloadContext";
 import { toast } from "react-toastify/unstyled";
 import { VideoType } from "../comparison-view/types";
+import { useFrames } from "@/contexts/FramesContext";
 
 export default function FlowCanvas({
   defaultNodes,
@@ -55,11 +56,12 @@ export default function FlowCanvas({
     setIsProcessing,
     setError,
     isProcessing,
-    videoType,
+    selectedVideoType,
     handlePipelineRun,
   } = useVideoReload();
   const { screenToFlowPosition, getNodes, getEdges, setNodes, setEdges } =
     useReactFlow();
+  const { resetFrames } = useFrames();
   const selectNode = useCallback(
     (nodeId: string) => {
       setNodes((nodes) =>
@@ -238,12 +240,13 @@ export default function FlowCanvas({
         toast.success("Pipeline valid, starting processing");
         setIsProcessing(true);
         handlePipelineRun();
-        if (videoType == VideoType.Video) {
+        if (selectedVideoType == VideoType.Video) {
+          resetFrames();
           // Classic backend pipeline processing
           const res = await sendPipelineToBackend(pipeline);
           setError(false);
           triggerReload(res); // Use response to load video
-        } else if (videoType == VideoType.Stream) {
+        } else if (selectedVideoType == VideoType.Stream) {
           // Stream mode - trigger WS connection using pipeline
           setError(false);
           triggerWebSocketConnection(pipeline); // Send pipeline to context for FrameStreamPlayer

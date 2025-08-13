@@ -2,12 +2,13 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import PlayerControls from "./PlayerControls";
-import { FrameData, ViewOptions } from "./types";
+import { ViewOptions } from "./types";
 import { useWebSocket } from "@/contexts/WebSocketContext";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
 import { Metrics } from "@/types/metrics";
 import { useFrames } from "@/contexts/FramesContext";
 import { useVideoReload } from "@/contexts/videoReloadContext";
+import { FrameData } from "@/types/frame";
 
 type Props = {
   view: ViewOptions;

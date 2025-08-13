@@ -1,6 +1,6 @@
 "use client";
 
-import { FrameData } from "@/components/comparison-view/types";
+import { FrameData } from "@/types/frame";
 import React, { createContext, useContext, useState } from "react";
 
 type FramesContextType = {
@@ -19,9 +19,9 @@ export const FramesProvider: React.FC<{ children: React.ReactNode }> = ({
   const resetFrames = () => setFrames([]);
 
   return (
-    <FramesContext.Provider value={{ frames, setFrames, resetFrames }}>
+    <FramesContext value={{ frames, setFrames, resetFrames }}>
       {children}
-    </FramesContext.Provider>
+    </FramesContext>
   );
 };
 

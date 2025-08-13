@@ -29,11 +29,9 @@ type VideoReloadContextType = {
     url: string,
     size?: number,
   ) => void;
-  videoType: VideoType;
-  setVideoType: (videoType: VideoType) => void;
-  isTypeChanged: boolean;
-  handleTypeChanged: () => void;
-  isPipelineRun: boolean;
+  activeVideoType: VideoType;
+  selectedVideoType: VideoType;
+  setSelectedVideoType: React.Dispatch<React.SetStateAction<VideoType>>;
   handlePipelineRun: () => void;
 };
 
@@ -77,9 +75,8 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     },
     [],
   );
-  const [videoType, setVideoType] = useState(VideoType.Video);
-  const [isTypeChanged, setIsTypeChanged] = useState(false);
-  const [isPipelineRun, setIsPipelineRun] = useState(true);
+  const [selectedVideoType, setSelectedVideoType] = useState(VideoType.Video);
+  const [activeVideoType, setActiveVideoType] = useState(VideoType.Video);
 
   const triggerReload = (res: PipelineResponse) => {
     setLatestResponse(res);
@@ -91,14 +88,8 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     setLatestRequest(req);
   };
 
-  const handleTypeChanged = () => {
-    setIsPipelineRun(false);
-    setIsTypeChanged(true);
-  };
-
   const handlePipelineRun = () => {
-    setIsPipelineRun(true);
-    setIsTypeChanged(false);
+    setActiveVideoType(selectedVideoType);
   };
 
   return (
@@ -114,11 +105,9 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
         setError,
         getLatestVideoInfo,
         setLatestVideoInfo,
-        videoType,
-        setVideoType,
-        isTypeChanged,
-        handleTypeChanged,
-        isPipelineRun,
+        activeVideoType,
+        selectedVideoType,
+        setSelectedVideoType,
         handlePipelineRun,
       }}
     >

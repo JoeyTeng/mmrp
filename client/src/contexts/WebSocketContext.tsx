@@ -108,14 +108,14 @@ export const WebSocketProvider = ({
   }, [closeConnection]);
 
   return (
-    <WebSocketContext.Provider
+    <WebSocketContext
       value={{
         createConnection,
         closeConnection,
       }}
     >
       {children}
-    </WebSocketContext.Provider>
+    </WebSocketContext>
   );
 };
 
