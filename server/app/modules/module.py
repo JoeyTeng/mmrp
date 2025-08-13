@@ -12,8 +12,6 @@ from app.schemas.module import (
 
 class ModuleBase(BaseModel, ABC):
     id: str = Field(..., description="Unique Module Identifier -ID")
-    module_class: str = Field(..., description="Module Class name")
-    name: str = Field(..., description="Module name in pipeline")
     type: str = Field(..., description="Module type in pipeline")
     position: Position = Field(
         default_factory=lambda: Position(x=0, y=0),
