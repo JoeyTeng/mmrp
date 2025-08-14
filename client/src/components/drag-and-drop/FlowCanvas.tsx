@@ -36,7 +36,7 @@ import NodeContextMenu, {
 import CanvasContextMenu, {
   CanvasContextMenuHandle,
 } from "./context-menu/CanvasContextMenu";
-import { useVideoReload } from "@/contexts/videoReloadContext";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
 import { handleError } from "@/utils/sharedFunctionality";
 

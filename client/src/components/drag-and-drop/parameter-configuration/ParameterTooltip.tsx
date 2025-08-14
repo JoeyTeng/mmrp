@@ -2,7 +2,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { ReactElement } from "react";
 
 interface ParameterTooltipProps {
-  description?: string | null;
+  description?: string;
   children: ReactElement;
 }
 
