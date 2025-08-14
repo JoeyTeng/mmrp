@@ -36,7 +36,9 @@ def append_to_mock_data(config_data: Any) -> None:
 
     try:
         raw_params: list[dict[str, Any]] = config_data.get("parameters", [])
-        enriched_data = ModuleData.model_validate({"parameters": raw_params})
+        enriched_data = ModuleData.model_validate(
+            {"name": name, "module_class": name, "parameters": raw_params}
+        )
 
         for parsed_param in enriched_data.parameters:
             raw_param: dict[str, Any] = next(

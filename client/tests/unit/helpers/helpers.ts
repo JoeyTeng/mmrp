@@ -1,11 +1,12 @@
 import type { Node } from "@xyflow/react";
-import type { NodeData } from "@/components/drag-and-drop/types";
 import { Position } from "@xyflow/react";
+import { ModuleData, ModuleParameter } from "@/types/module";
 
 export function makeNode(
   id: string,
-  data: Partial<NodeData> = {},
-): Node<NodeData> {
+  name: string,
+  parameters: ModuleParameter[] = [],
+): Node<ModuleData> {
   return {
     id,
     type: "processNode",
@@ -13,12 +14,11 @@ export function makeNode(
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
     data: {
-      name: "",
+      name,
       moduleClass: "",
-      params: {},
+      parameters,
       inputFormats: [],
       outputFormats: [],
-      ...data,
     },
   };
 }

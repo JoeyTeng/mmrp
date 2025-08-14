@@ -4,7 +4,7 @@ import { useModulesContext } from "@/contexts/ModulesContext";
 import { SearchOutlined } from "@mui/icons-material";
 import Fuse from "fuse.js";
 import ModuleItemGroup from "./ModuleItemGroup";
-import { NodeType } from "@/types/module";
+import { ModuleType } from "@/types/module";
 
 export default function Modules() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,8 +38,8 @@ export default function Modules() {
       : modulesSorted.map((module) => ({ item: module, score: 1 }));
     const grouped = results.reduce((accumulator, currentValue) => {
       const key =
-        currentValue.item.type === NodeType.InputNode ||
-        currentValue.item.type === NodeType.OutputNode
+        currentValue.item.type === ModuleType.InputNode ||
+        currentValue.item.type === ModuleType.OutputNode
           ? "Input and Output"
           : currentValue.item.name.charAt(0).toUpperCase();
       if (!accumulator[key]) {
