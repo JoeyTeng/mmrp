@@ -16,12 +16,7 @@ const ModuleItemGroup = ({ title, modules }: ModuleItemGroupProps) => {
       </Box>
       <Box>
         {modules.map((module) => (
-          <ModuleItem
-            key={module.id}
-            id={module.id}
-            name={module.name}
-            moduleClass={module.moduleClass}
-          />
+          <ModuleItem key={module.id} module={module} />
         ))}
       </Box>
     </Box>

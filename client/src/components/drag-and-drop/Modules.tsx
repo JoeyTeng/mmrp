@@ -12,7 +12,7 @@ export default function Modules() {
 
   const { modules } = useModulesContext();
   const modulesSorted = useMemo(() => {
-    return [...modules].sort((a, b) => a.name.localeCompare(b.name));
+    return [...modules].sort((a, b) => a.data.name.localeCompare(b.data.name));
   }, [modules]);
 
   type GroupType = Record<
@@ -41,7 +41,7 @@ export default function Modules() {
         currentValue.item.type === ModuleType.InputNode ||
         currentValue.item.type === ModuleType.OutputNode
           ? "Input and Output"
-          : currentValue.item.name.charAt(0).toUpperCase();
+          : currentValue.item.data.name.charAt(0).toUpperCase();
       if (!accumulator[key]) {
         accumulator[key] = {
           modules: [currentValue.item],
