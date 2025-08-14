@@ -1,11 +1,10 @@
 import { useReactFlow, Node } from "@xyflow/react";
 import { NodeAction } from "./NodeContextMenuConfig";
 import { useCallback } from "react";
-import { NodeData } from "../types";
-import { NodeType } from "@/types/module";
+import { ModuleData, ModuleType } from "@/types/module";
 
 export const useNodeActions = (
-  onEditNode: (node: Node<NodeData, NodeType>) => void,
+  onEditNode: (node: Node<ModuleData, ModuleType>) => void,
 ) => {
   const { getNode, deleteElements } = useReactFlow();
 
@@ -29,7 +28,7 @@ export const useNodeActions = (
           return;
         }
         case "configure": {
-          const node = getNode(nodeId) as Node<NodeData, NodeType>;
+          const node = getNode(nodeId) as Node<ModuleData, ModuleType>;
           if (node) onEditNode(node);
           return;
         }

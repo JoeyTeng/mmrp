@@ -13,10 +13,6 @@ export function handleError(error: unknown): string {
   return message;
 }
 
-export function isFrameworkHandledParameter(parameter: string): boolean {
-  return parameter === "input" || parameter === "output";
-}
-
 export const generateHash = (data: object): string => {
   const stringified = stringify(data) as string;
   return crypto.createHash("sha256").update(stringified).digest("hex");
