@@ -29,6 +29,7 @@ const ContextMenu = <ActionType extends string>({
     <Menu
       open={open}
       onClose={onClose}
+      disableAutoFocusItem
       anchorReference="anchorPosition"
       anchorPosition={
         position ? { top: position.y - 6, left: position.x + 2 } : undefined

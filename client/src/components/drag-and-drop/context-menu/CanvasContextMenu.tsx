@@ -1,12 +1,13 @@
 import { useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useCanvasActions } from "./useCanvasActions";
 import {
-  CANVAS_CONTEXT_MENU,
+  getCanvasContextMenu,
   CanvasContextAction,
 } from "./CanvasContextMenuConfig";
 import ContextMenu from "../../util/ContextMenu";
 import Modal from "@/components/util/Modal";
 import { CANVAS_MODAL_OPTIONS, CanvasModalAction } from "./CanvasModal";
+import { useVideoReload } from "@/contexts/videoReloadContext";
 
 export type CanvasContextMenuHandle = {
   open: (position: { x: number; y: number }) => void;
@@ -21,6 +22,7 @@ interface CanvasContextMenuProps {
 
 const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
   const { handleCanvasAction, isEmpty } = useCanvasActions(onRun);
+  const { isProcessing } = useVideoReload();
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -32,7 +34,7 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
     (actionId: CanvasContextAction) => {
       handleCloseMenu();
       if (actionId === "clear") {
-        if (isEmpty) {
+        if (isEmpty()) {
           return;
         }
         setIsModalOpen(true);
@@ -84,7 +86,7 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
         open={isOpen}
         dense
         position={menuPositionRef.current}
-        items={CANVAS_CONTEXT_MENU}
+        items={getCanvasContextMenu(isProcessing)}
         onAction={handleAction}
         onClose={handleCloseMenu}
       />
