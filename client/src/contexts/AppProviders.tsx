@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { VideoMetricsProvider } from "./VideoMetricsContext";
-import { VideoReloadProvider } from "./videoReloadContext";
+import { VideoReloadProvider } from "./VideoReloadContext";
 import { WebSocketProvider } from "./WebSocketContext";
 import { ReactFlowProvider } from "@xyflow/react";
 import { ModulesProvider } from "./ModulesContext";
