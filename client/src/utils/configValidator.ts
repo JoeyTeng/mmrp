@@ -51,7 +51,7 @@ export async function validateConfigFile(config: File): Promise<boolean> {
     );
   if (!validateFormats(json.outputFormats))
     throw Error(
-      "The input formats could not be validated. Please check the height, width, and frame rate.",
+      "The output formats could not be validated. Please check the height, width, and frame rate.",
     );
 
   // Check parameters keys
@@ -76,10 +76,10 @@ const validateFormats = (formatsArr: IOFormat[]): boolean => {
 
     // Validate width / height if provided
     if (typeof f.width === "number") {
-      if (f.width <= 32 || f.width >= 2160) return false;
+      if (f.width < 32 || f.width > 16384) return false;
     }
     if (typeof f.height === "number") {
-      if (f.height <= 32 || f.height >= 2160) return false;
+      if (f.height < 32 || f.height > 8704) return false;
     }
 
     // Validate frame rate if provided
