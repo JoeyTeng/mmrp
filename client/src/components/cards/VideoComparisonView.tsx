@@ -5,7 +5,7 @@ import InterleavingFrames from "@/components/comparison-view/InterleavingFrames"
 import MenuDropdown from "@/components/comparison-view/MenuDropdown";
 import { Box, Checkbox, FormControlLabel, Typography } from "@mui/material";
 import { VideoType, ViewOptions } from "@/components/comparison-view/types";
-import { useVideoReload } from "@/contexts/videoReloadContext";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { useState } from "react";
 
 const VideoComparisonView = () => {
