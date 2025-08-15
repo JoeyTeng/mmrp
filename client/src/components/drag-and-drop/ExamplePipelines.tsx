@@ -5,7 +5,6 @@ import { useReactFlow } from "@xyflow/react";
 import { ExamplePipeline } from "@/types/pipeline";
 import { Settings } from "@mui/icons-material";
 import { ExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
-import { mapBackendToFrontend } from "./util";
 
 export default function DefaultPipelines() {
   const pipelines = useContext(ExamplePipelinesContext);
@@ -14,7 +13,7 @@ export default function DefaultPipelines() {
 
   const handleLoad = (pipeline: ExamplePipeline) => {
     // This will change once the modules schema are refactored to match the backend
-    const { nodes, edges } = mapBackendToFrontend(pipeline);
+    const { nodes, edges } = pipeline;
     instance.setNodes(nodes);
     instance.setEdges(edges);
     instance.fitView();

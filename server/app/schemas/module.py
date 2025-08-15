@@ -87,6 +87,8 @@ class ModuleParameter(BaseModel):
 
 
 class ModuleData(BaseModel):
+    name: str = Field(..., description="Module name in pipeline")
+    module_class: str = Field(..., description="Module Class name")
     parameters: list[ModuleParameter] = Field(
         default=[], description="List of data paramaters"
     )
@@ -107,6 +109,10 @@ class ModuleData(BaseModel):
 
         enriched_parameters: list[ModuleParameter] = []
         for param_ in parameters_:
+            # TODO - Find a better logic to handle this
+            #       in a better way.
+            if param_["name"].lower() in {"input", "output"}:
+                continue
             # Validate and enrich parameter constraints
             constraint_ = ParameterConstraint.model_validate(param_)
 

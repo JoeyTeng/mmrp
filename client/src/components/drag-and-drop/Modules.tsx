@@ -5,18 +5,14 @@ import { ModulesContext } from "@/contexts/ModulesContext";
 
 export default function Modules() {
   const modules = useContext(ModulesContext);
+
   if (!modules) return;
 
   return (
     <Box className="flex overflow-hidden h-full w-full flex-col">
       <Box className="flex flex-wrap gap-2">
         {modules.map((item) => (
-          <ModuleItem
-            key={item.id}
-            id={item.id}
-            name={item.name}
-            moduleClass={item.moduleClass}
-          />
+          <ModuleItem key={item.id} module={item} />
         ))}
       </Box>
     </Box>

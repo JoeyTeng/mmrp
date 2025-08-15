@@ -1,82 +1,11 @@
 /** Function that gets a single initial value for a param**/
 
 import { Edge, Node } from "@xyflow/react";
-import { NodePort, NodeData } from "./types";
-import {
-  NodeType,
-  ParamValueType,
-  ParameterDefinition,
-  FormatDefinition,
-} from "@/types/module";
+import { ModuleData, ModuleParameter, ModuleType } from "@/types/module";
 import { toast } from "react-toastify/unstyled";
-import { ExamplePipeline } from "@/types/pipeline";
-
-export function getInitialNodeParamValue(
-  parameters: ParameterDefinition[],
-): Record<string, ParamValueType> {
-  return parameters.reduce(
-    (initialParams, p) => {
-      const paramMetaData = p.metadata;
-      let val: ParamValueType;
-
-      // 1) pick explicit default if there is one
-      if (
-        paramMetaData.constraints.default != null &&
-        paramMetaData.constraints.default != undefined
-      ) {
-        val = paramMetaData.constraints.default as ParamValueType;
-      }
-      // 2) else pick the first constraints entry (if any)
-      else if (
-        paramMetaData.constraints.options != undefined &&
-        paramMetaData.constraints.options.length > 0
-      ) {
-        val = paramMetaData.constraints.options[0] as ParamValueType;
-      }
-      // 3) else pick the min value (if any)
-      else if (
-        paramMetaData.constraints.min != null &&
-        paramMetaData.constraints.min != undefined
-      ) {
-        val = paramMetaData.constraints.min as ParamValueType;
-      }
-      // 4) final fallback
-      else {
-        val = paramMetaData.type === "bool" ? false : ""; // safety val for type int and float is empty string
-      }
-
-      // 5) additional check to make sure default is in [min,max] range
-      if (
-        paramMetaData.constraints.min != null &&
-        paramMetaData.constraints.max != null &&
-        typeof val === "number"
-      ) {
-        const [min, max] = [
-          paramMetaData.constraints.min,
-          paramMetaData.constraints.max,
-        ];
-        val = Math.min(Math.max(val, min), max);
-      }
-
-      initialParams[p.name] = val;
-      return initialParams;
-    },
-    {} as Record<string, ParamValueType>,
-  );
-}
-
-export function makePorts(
-  formats: FormatDefinition[],
-  prefix: "input" | "output",
-): NodePort[] {
-  return formats.map((fmt, i) => ({
-    id: `${prefix}-${i}`,
-    formats: fmt,
-  })) as NodePort[];
-}
 
 export function checkPipeline(
-  nodes: Node<NodeData, NodeType>[],
+  nodes: Node<ModuleData, ModuleType>[],
   edges: Edge[],
 ): boolean {
   // no nodes, empty canvas
@@ -86,14 +15,14 @@ export function checkPipeline(
   }
 
   //  Find the one source
-  const sources: Node[] = nodes.filter((n) => n.type === NodeType.InputNode);
+  const sources: Node[] = nodes.filter((n) => n.type === ModuleType.InputNode);
   if (sources.length !== 1) {
     toast.error("Exactly one connected source node required.");
     return false;
   }
 
   //  Find the results
-  const results = nodes.filter((n) => n.type === NodeType.OutputNode);
+  const results = nodes.filter((n) => n.type === ModuleType.OutputNode);
   if (results.length > 2 || results.length == 0) {
     toast.error("The pipeline needs only one or two result nodes.");
     return false;
@@ -113,18 +42,19 @@ export function checkPipeline(
   // Player assignment rules
   const specified_player = new Set<string>();
   for (const result of results) {
-    const params = result.data.params as { video_player: string; path: string };
+    const params = result.data.parameters as ModuleParameter[];
+
     if (results.length == 1) {
       // if there is only one result node, it must be displayed on the right
-      if (!(params.video_player === "right")) {
+      if (!(params[0].metadata.value === "right")) {
         toast.error("Your result must be displayed in the right player.");
         return false;
       }
     } else {
       // if there are two result nodes, they must have different video players specified
       if (specified_player.size === 0) {
-        specified_player.add(params.video_player);
-      } else if (specified_player.has(params.video_player)) {
+        specified_player.add(params[0].metadata.value as string);
+      } else if (specified_player.has(params[0].metadata.value as string)) {
         toast.error("Your results must be displayed in two different players.");
         return false;
       }
@@ -181,41 +111,41 @@ export function checkPipeline(
 
 // will be deleted after frontend and backend schemas are unified
 
-export function mapBackendToFrontend(p: ExamplePipeline): {
-  nodes: Node<NodeData, NodeType>[];
-  edges: Edge[];
-} {
-  const nodes = p.nodes.map((mod) => ({
-    id: mod.id,
-    type: mod.type as NodeType,
-    position: mod.position,
-    data: {
-      name: mod.name,
-      moduleClass: mod.moduleClass,
-      params: Object.fromEntries(
-        (mod.data.parameters ?? []).map((param) => [
-          param.name,
-          param.metadata.value,
-        ]),
-      ),
-      inputFormats: (mod.data.inputFormats ?? []).map((format, i) => ({
-        id: `in-${i}`,
-        formats: format,
-      })),
-      outputFormats: (mod.data.outputFormats ?? []).map((format, i) => ({
-        id: `out-${i}`,
-        formats: format,
-      })),
-    },
-  }));
+// export function mapBackendToFrontend(p: ExamplePipeline): {
+//   nodes: Node<NodeData, NodeType>[];
+//   edges: Edge[];
+// } {
+//   const nodes = p.nodes.map((mod) => ({
+//     id: mod.id,
+//     type: mod.type as NodeType,
+//     position: mod.position,
+//     data: {
+//       name: mod.name,
+//       moduleClass: mod.moduleClass,
+//       params: Object.fromEntries(
+//         (mod.data.parameters ?? []).map((param) => [
+//           param.name,
+//           param.metadata.value,
+//         ]),
+//       ),
+//       inputFormats: (mod.data.inputFormats ?? []).map((format, i) => ({
+//         id: `in-${i}`,
+//         formats: format,
+//       })),
+//       outputFormats: (mod.data.outputFormats ?? []).map((format, i) => ({
+//         id: `out-${i}`,
+//         formats: format,
+//       })),
+//     },
+//   }));
 
-  const edges = p.edges.map((e) => ({
-    id: e.id,
-    source: e.source,
-    target: e.target,
-    sourceHandle: e.sourceHandle ?? "out-0",
-    targetHandle: e.targetHandle ?? "in-0",
-  }));
+//   const edges = p.edges.map((e) => ({
+//     id: e.id,
+//     source: e.source,
+//     target: e.target,
+//     sourceHandle: e.sourceHandle ?? "out-0",
+//     targetHandle: e.targetHandle ?? "in-0",
+//   }));
 
-  return { nodes, edges };
-}
+//   return { nodes, edges };
+// }
