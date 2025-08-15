@@ -5,31 +5,20 @@ import InterleavingFrames from "@/components/comparison-view/InterleavingFrames"
 import MenuDropdown from "@/components/comparison-view/MenuDropdown";
 import { Box, Checkbox, FormControlLabel, Typography } from "@mui/material";
 import { VideoType, ViewOptions } from "@/components/comparison-view/types";
-import { useVideoReload } from "@/contexts/videoReloadContext";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { useState } from "react";
 
 const VideoComparisonView = () => {
   const [view, setView] = useState(ViewOptions.SideBySide);
   const {
+    selectedVideoType,
+    setSelectedVideoType,
+    activeVideoType,
     isProcessing,
-    setVideoType,
-    handleTypeChanged,
-    videoType,
-    isPipelineRun,
   } = useVideoReload();
 
   const handleStreamCheckboxToggle = (checked: boolean) => {
-    setVideoType(checked ? VideoType.Stream : VideoType.Video);
-    handleTypeChanged();
-  };
-
-  const getVideoType = () => {
-    if (
-      (videoType == VideoType.Stream && isPipelineRun) ||
-      (videoType == VideoType.Video && !isPipelineRun)
-    )
-      return VideoType.Stream;
-    return VideoType.Video;
+    setSelectedVideoType(checked ? VideoType.Stream : VideoType.Video);
   };
 
   return (
@@ -42,7 +31,7 @@ const VideoComparisonView = () => {
           <FormControlLabel
             control={
               <Checkbox
-                checked={videoType === VideoType.Stream}
+                checked={selectedVideoType === VideoType.Stream}
                 onChange={(e) => handleStreamCheckboxToggle(e.target.checked)}
                 disabled={isProcessing}
                 disableRipple
@@ -67,10 +56,10 @@ const VideoComparisonView = () => {
         </Box>
         <Box className="flex-1 flex overflow-hidden">
           {view === ViewOptions.SideBySide && (
-            <SideBySide key={`${view}`} type={getVideoType()} />
+            <SideBySide key={`${view}`} type={activeVideoType} />
           )}
           {view === ViewOptions.Interleaving && (
-            <InterleavingFrames key={`${view}`} type={getVideoType()} />
+            <InterleavingFrames key={`${view}`} type={activeVideoType} />
           )}
         </Box>
       </Box>

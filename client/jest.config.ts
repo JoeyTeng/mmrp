@@ -18,6 +18,8 @@ const customJestConfig: Config = {
     "^@/components/(.*)$": "<rootDir>/src/components/$1",
     "^@/hooks/(.*)$": "<rootDir>/src/hooks/$1",
     "^@/utils/(.*)$": "<rootDir>/src/utils/$1",
+    "^@/services/(.*)$": "<rootDir>/src/services/$1",
+    "^@/contexts/(.*)$": "<rootDir>/src/contexts/$1",
   },
 
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],

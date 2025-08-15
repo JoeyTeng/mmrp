@@ -15,7 +15,7 @@ class ModuleRegistry:
     @classmethod
     def get_by_spacename(cls, module_class: str) -> ModuleBase:
         for module in cls._modules.values():
-            if module.module_class == module_class:
+            if module.data.module_class == module_class:
                 return module
         raise KeyError(f"No module found with spacename starting with: {module_class}")
 
