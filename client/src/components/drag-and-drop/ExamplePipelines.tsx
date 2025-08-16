@@ -6,7 +6,7 @@ import { ExamplePipeline } from "@/types/pipeline";
 import { Settings } from "@mui/icons-material";
 import { ExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
 
-export default function DefaultPipelines() {
+export default function ExamplePipelines() {
   const pipelines = useContext(ExamplePipelinesContext);
 
   const instance = useReactFlow();

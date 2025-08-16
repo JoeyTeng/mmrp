@@ -12,7 +12,7 @@ import { SidebarItem } from "./types";
 import VideoQualityMetrics from "../comparison-metrics/VideoQualityMetrics";
 import Modules from "../drag-and-drop/Modules";
 import { PipelineResponse } from "@/types/pipeline";
-import DefaultPipelines from "../drag-and-drop/ExamplePipelines";
+import ExamplePipelines from "../drag-and-drop/ExamplePipelines";
 
 export const getLeftSidebarItems = (
   setUploadOpen: (open: boolean) => void,
@@ -63,7 +63,7 @@ export const getLeftSidebarItems = (
     id: "example-pipelines",
     title: "Example Pipelines",
     icon: <LibraryAdd />,
-    panelContent: <DefaultPipelines />,
+    panelContent: <ExamplePipelines />,
     showAfterDivider: true,
   },
 ];
