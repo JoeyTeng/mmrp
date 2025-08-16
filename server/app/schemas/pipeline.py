@@ -28,8 +28,6 @@ class PipelineResponse(BaseModel):
 
 class NodeSpec(BaseModel):
     id: str
-    module_class: str
-    name: str
     type: str
     position: dict[str, float]
     data: ModuleData

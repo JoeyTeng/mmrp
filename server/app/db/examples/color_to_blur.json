@@ -1,16 +1,16 @@
 {
   "name": "Color to Blur pipeline",
   "nodes": [
-   {
+    {
       "id": "n1",
-      "module_class": "video_source",
-      "name": "Video Source",
       "type": "inputNode",
       "position": {
         "x": 0,
         "y": 100
       },
       "data": {
+        "name": "Video Source",
+        "module_class": "video_source",
         "parameters": [
           {
             "name": "path",
@@ -37,14 +37,14 @@
     },
     {
       "id": "n2",
-      "module_class": "color",
-      "name": "Color",
       "type": "processNode",
       "position": {
         "x": 200,
         "y": 100
       },
       "data": {
+        "name": "Color",
+        "module_class": "color",
         "parameters": [
           {
             "name": "input_colorspace",
@@ -54,12 +54,7 @@
               "constraints": {
                 "type": "select",
                 "default": "RGB",
-                "options": [
-                  "YCbCr",
-                  "HSV",
-                  "Lab",
-                  "RGB"
-                ],
+                "options": ["YCbCr", "HSV", "Lab", "RGB"],
                 "required": true,
                 "description": "Input color space"
               }
@@ -73,12 +68,7 @@
               "constraints": {
                 "type": "select",
                 "default": "RGB",
-                "options": [
-                  "YCbCr",
-                  "HSV",
-                  "Lab",
-                  "RGB"
-                ],
+                "options": ["YCbCr", "HSV", "Lab", "RGB"],
                 "required": true,
                 "description": "Output color space"
               }
@@ -101,14 +91,14 @@
     },
     {
       "id": "n3",
-      "module_class": "blur",
-      "name": "Blur",
       "type": "processNode",
       "position": {
         "x": 400,
         "y": 100
       },
       "data": {
+        "name": "Blur",
+        "module_class": "blur",
         "parameters": [
           {
             "name": "kernel_size",
@@ -133,11 +123,7 @@
               "constraints": {
                 "type": "select",
                 "default": "gaussian",
-                "options": [
-                  "gaussian",
-                  "median",
-                  "average"
-                ],
+                "options": ["gaussian", "median", "average"],
                 "required": true,
                 "description": "Blur algorithm type"
               }
@@ -160,14 +146,14 @@
     },
     {
       "id": "n4",
-      "module_class": "video_output",
-      "name": "Video Output",
       "type": "outputNode",
       "position": {
         "x": 600,
         "y": 100
       },
       "data": {
+        "name": "Video Output",
+        "module_class": "video_output",
         "parameters": [
           {
             "name": "video_player",
@@ -177,10 +163,7 @@
               "constraints": {
                 "type": "select",
                 "default": "right",
-                "options": [
-                  "left",
-                  "right"
-                ],
+                "options": ["left", "right"],
                 "required": true,
                 "description": "Output Video Player"
               }
@@ -202,22 +185,22 @@
       "id": "e1",
       "source": "n1",
       "target": "n2",
-      "sourceHandle": "out-0",
-      "targetHandle": "in-0"
+      "sourceHandle": "output-0-handle",
+      "targetHandle": "input-0-handle"
     },
     {
       "id": "e2",
       "source": "n2",
       "target": "n3",
-      "sourceHandle": "out-0",
-      "targetHandle": "in-0"
+      "sourceHandle": "output-0-handle",
+      "targetHandle": "input-0-handle"
     },
     {
       "id": "e3",
       "source": "n3",
       "target": "n4",
-      "sourceHandle": "out-0",
-      "targetHandle": "in-0"
+      "sourceHandle": "output-0-handle",
+      "targetHandle": "input-0-handle"
     }
   ]
 }

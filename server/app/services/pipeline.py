@@ -233,11 +233,19 @@ def list_examples() -> list[ExamplePipeline]:
         try:
             raw = json.loads(file.read_text())
 
-            module_classes = {m.module_class for m in ModuleRegistry.get_all().values()}
+            module_classes = {
+                m.data.module_class
+                for m in ModuleRegistry.get_all().values()
+                if hasattr(m, "data") and hasattr(m.data, "module_class")
+            }
+
             nodes = raw.get("nodes", [])
             edges = raw.get("edges", [])
 
-            if not all(node.get("module_class") in module_classes for node in nodes):
+            if not all(
+                node.get("data", {}).get("module_class") in module_classes
+                for node in nodes
+            ):
                 print(f" Skipping {file.name} — unsupported module found ")
                 continue
 

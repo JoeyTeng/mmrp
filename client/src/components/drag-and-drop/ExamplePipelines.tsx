@@ -12,7 +12,6 @@ export default function DefaultPipelines() {
   const instance = useReactFlow();
 
   const handleLoad = (pipeline: ExamplePipeline) => {
-    // This will change once the modules schema are refactored to match the backend
     const { nodes, edges } = pipeline;
     instance.setNodes(nodes);
     instance.setEdges(edges);
