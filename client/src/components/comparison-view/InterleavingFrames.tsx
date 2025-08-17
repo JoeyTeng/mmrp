@@ -14,15 +14,29 @@ type Props = {
 };
 
 const InterleavingFrames = ({ type }: Props) => {
+  // Initialise error and loading states
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const {
+    latestResponse,
+    isProcessing,
+    isProcessingError,
+    setLatestVideoInfo,
+  } = useVideoReload();
+
+  // Initialise video and player references
   const playerRef = useRef<PlayerHandle>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const { latestResponse, setLatestVideoInfo } = useVideoReload();
+
+  // Group all loading and error states
+  const isAnyLoading = isLoading || isProcessing;
+  const isAnyError = error != "" || isProcessingError;
+
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
+  // When reload is triggered, load processed video
   useEffect(() => {
     setMetrics([]);
     setCurrentFrame(0);
@@ -82,12 +96,38 @@ const InterleavingFrames = ({ type }: Props) => {
       className="relative h-full w-full flex flex-col bg-black"
     >
       <Box
-        className={`relative flex-1 flex justify-center items-center overflow-hidden`}
+        className={
+          "relative flex-1 flex justify-center items-center overflow-hidden"
+        }
       >
-        {(isLoading || error) && (
+        {(isAnyLoading || isAnyError) && (
           <Box className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 text-white p-4 text-center">
             {isLoading ? (
               <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            ) : isProcessing ? (
+              <Box className="flex flex-col items-center justify-center">
+                <Box className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                <Box className="mt-4 text-lg font-medium">
+                  Processing Pipeline...
+                </Box>
+                <Box className="text-sm text-gray-300 mt-1">
+                  This might take some time.
+                </Box>
+              </Box>
+            ) : isProcessingError ? (
+              <Box className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white p-4 text-center">
+                {/* Error Icon */}
+                <Box className="flex items-center justify-center h-10 w-10 rounded-full bg-red-600 mb-4">
+                  <span className="text-3xl font-bold">!</span>
+                </Box>
+                {/* Error Text */}
+                <Box className="text-lg font-semibold">
+                  Error processing pipeline
+                </Box>
+                <Box className="text-sm text-gray-300 mt-1">
+                  Please try again or check your pipeline.
+                </Box>
+              </Box>
             ) : (
               error
             )}
