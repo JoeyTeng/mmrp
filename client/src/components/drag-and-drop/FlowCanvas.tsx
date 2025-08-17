@@ -61,7 +61,7 @@ export default function FlowCanvas({
   } = useVideoReload();
   const { screenToFlowPosition, getNodes, getEdges, setNodes, setEdges } =
     useReactFlow();
-  const { resetFrames } = useFrames();
+  const { resetFrames, isStreamActive } = useFrames();
   const selectNode = useCallback(
     (nodeId: string) => {
       setNodes((nodes) =>
@@ -314,10 +314,12 @@ export default function FlowCanvas({
             <Button
               variant="contained"
               className={
-                isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
+                isProcessing || isStreamActive
+                  ? "bg-gray-200 text-gray-100"
+                  : "bg-primary"
               }
               onClick={onRun}
-              loading={isProcessing}
+              loading={isProcessing || isStreamActive}
             >
               Run
             </Button>

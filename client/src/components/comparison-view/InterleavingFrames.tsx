@@ -158,7 +158,7 @@ const InterleavingFrames = ({ type }: Props) => {
         )}
       </Box>
       <UnifiedPlayer
-        key={`${type}-${ViewOptions.Interleaving}`}
+        key={type}
         view={ViewOptions.Interleaving}
         type={type}
         videoRefs={[videoRef]}

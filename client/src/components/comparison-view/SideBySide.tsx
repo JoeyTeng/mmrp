@@ -185,7 +185,7 @@ const SideBySide = ({ type }: Props) => {
 
       {/* Player Controls */}
       <UnifiedPlayer
-        key={`${type}-${ViewOptions.SideBySide}`}
+        key={type}
         view={ViewOptions.SideBySide}
         type={type}
         videoRefs={[videoARef, videoBRef]}

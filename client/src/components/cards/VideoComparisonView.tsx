@@ -7,6 +7,7 @@ import { Box, Checkbox, FormControlLabel, Typography } from "@mui/material";
 import { VideoType, ViewOptions } from "@/components/comparison-view/types";
 import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { useState } from "react";
+import { useFrames } from "@/contexts/FramesContext";
 
 const VideoComparisonView = () => {
   const [view, setView] = useState(ViewOptions.SideBySide);
@@ -16,6 +17,7 @@ const VideoComparisonView = () => {
     activeVideoType,
     isProcessing,
   } = useVideoReload();
+  const { isStreamActive } = useFrames();
 
   const handleStreamCheckboxToggle = (checked: boolean) => {
     setSelectedVideoType(checked ? VideoType.Stream : VideoType.Video);
@@ -33,7 +35,7 @@ const VideoComparisonView = () => {
               <Checkbox
                 checked={selectedVideoType === VideoType.Stream}
                 onChange={(e) => handleStreamCheckboxToggle(e.target.checked)}
-                disabled={isProcessing}
+                disabled={isProcessing || isStreamActive}
                 disableRipple
                 sx={{
                   padding: 0.5,

@@ -3,12 +3,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import PlayerControls from "./PlayerControls";
 import { ViewOptions } from "./types";
-import { useWebSocket } from "@/contexts/WebSocketContext";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
-import { Metrics } from "@/types/metrics";
 import { useFrames } from "@/contexts/FramesContext";
-import { FrameData } from "@/types/frame";
-import { useVideoReload } from "@/contexts/VideoReloadContext";
 
 type Props = {
   view: ViewOptions;
@@ -30,18 +26,12 @@ const FrameStreamPlayer = ({
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isUserPaused, setIsUserPaused] = useState(true);
-  const currentFpsRef = useRef(30);
-  const currentMimeRef = useRef("image/webp");
-  const latestMetricsRef = useRef<Partial<Metrics>>({});
-  const [isStreamActive, setIsStreamActive] = useState(false);
   const hasCalledFirstFrame = useRef(false);
-  const { setMetrics, currentFrame, setCurrentFrame } = useVideoMetrics(); // currentFrame is frame index in range [0, frames.length)
-  const { createConnection, closeConnection } = useWebSocket();
-  const { frames, setFrames } = useFrames();
+  const { currentFrame, setCurrentFrame } = useVideoMetrics(); // currentFrame is frame index in range [0, frames.length)
+  const { frames, isStreamActive } = useFrames();
   const effectiveFrameCount =
     view === ViewOptions.Interleaving ? frames.length * 2 : frames.length;
   const [index, setIndex] = useState(0); // index [0, frames.length) in Side-by-side, [0, 2 * frames.length) in Interleaving frames
-  const { latestRequest } = useVideoReload();
 
   // Trigger onFirstFrame callback once first frame is received
   useEffect(() => {
@@ -50,78 +40,6 @@ const FrameStreamPlayer = ({
       hasCalledFirstFrame.current = true;
     }
   }, [frames.length, onFirstFrame]);
-
-  // Establish WebSocket connection to receive video frame data
-  useEffect(() => {
-    if (!latestRequest || !("modules" in latestRequest)) return;
-
-    const expectedFrames = 2;
-    let frameBuffer: Blob[] = [];
-    setMetrics([]);
-    setFrames([]);
-    setCurrentFrame(0);
-    setIndex(0);
-
-    createConnection(
-      (data) => {
-        if (data instanceof ArrayBuffer) {
-          const blob = new Blob([data], { type: currentMimeRef.current });
-          frameBuffer.push(blob);
-
-          if (frameBuffer.length === expectedFrames) {
-            const commonFrameData = {
-              fps: currentFpsRef.current,
-              mime: currentMimeRef.current,
-            };
-            const metrics = {
-              psnr: latestMetricsRef.current.psnr!,
-              ssim: latestMetricsRef.current.ssim!,
-            };
-
-            const [original, filtered] = frameBuffer;
-            const frame: FrameData = {
-              blob: [original, filtered],
-              ...commonFrameData,
-            };
-            setFrames((prev) => [...prev, frame]);
-            setMetrics((prev) => [...prev, metrics]);
-
-            frameBuffer = [];
-            latestMetricsRef.current = {};
-          }
-        } else {
-          if (data.fps) currentFpsRef.current = data.fps;
-          if (data.mime) currentMimeRef.current = data.mime;
-          if (data.metrics) {
-            latestMetricsRef.current = {
-              psnr: data.metrics.psnr,
-              ssim: data.metrics.ssim,
-            };
-          }
-        }
-      },
-      () => {
-        setIsStreamActive(true);
-      },
-      undefined,
-      () => {
-        setIsStreamActive(false);
-      },
-      latestRequest,
-    );
-
-    return () => {
-      closeConnection();
-    };
-  }, [
-    closeConnection,
-    createConnection,
-    latestRequest,
-    setCurrentFrame,
-    setFrames,
-    setMetrics,
-    view,
-  ]);
 
   // Render frame at given index
   const renderFrame = useCallback(

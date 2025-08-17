@@ -9,9 +9,9 @@ const AppProviders = ({ children }: { children: ReactNode }) => (
   <ReactFlowProvider>
     <VideoMetricsProvider>
       <VideoReloadProvider>
-        <FramesProvider>
-          <WebSocketProvider>{children}</WebSocketProvider>
-        </FramesProvider>
+        <WebSocketProvider>
+          <FramesProvider>{children}</FramesProvider>
+        </WebSocketProvider>
       </VideoReloadProvider>
     </VideoMetricsProvider>
   </ReactFlowProvider>
