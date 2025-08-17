@@ -7,7 +7,7 @@ import UnifiedPlayer from "./UnifiedPlayer";
 import { PlayerHandle } from "./VideoPlayer";
 import { VideoType, ViewOptions } from "./types";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
-import { useVideoReload } from "@/contexts/videoReloadContext";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 
 type Props = {
   type: VideoType;

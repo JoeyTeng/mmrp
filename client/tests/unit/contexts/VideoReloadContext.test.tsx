@@ -105,6 +105,7 @@ describe("VideoReloadContext", () => {
     const mockResp: PipelineResponse = {
       left: "l.mp4",
       right: "r.mp4",
+      interleaved: "i.mp4",
       metrics: [{ psnr: 42, ssim: 0.98 }],
     };
 
