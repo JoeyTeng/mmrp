@@ -1,6 +1,6 @@
 import numpy as np
 from collections import defaultdict, deque
-from typing import Any, Iterator
+from typing import Any
 from pydantic import ValidationError
 from app.modules.module import ModuleBase
 from app.schemas.pipeline import PipelineModule
@@ -11,6 +11,7 @@ import base64
 from app.utils.quality_metrics import compute_metrics
 from app.schemas.metrics import Metrics
 from app.modules.utils.enums import ModuleName
+from typing import Deque
 
 
 def get_module_class(module: PipelineModule) -> str:
@@ -164,87 +165,45 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         fps,
         frame_iter,
     ):
-        # Run frames through whole pipeline and return the frames that need to be written
-        def base_pipeline_iterator() -> Iterator[tuple[str, np.ndarray]]:
-            frame_cache: dict[str, np.ndarray] = {}
-            for frame in frame_iter:
-                original_frame = frame.copy()
-                frame_cache.clear()
-                frame_cache[source_mod.id] = frame
-                # Process frames and save them to a frame cache
-                process_pipeline_frame(frame_cache, processing_nodes, module_map)
-
-                # Yield original frame for interleaving if only one result
-                if len(result_modules) == 1:
-                    yield "original", original_frame
-
-                # Compute quality metrics
-                if len(result_modules) in (1, 2):
-                    if len(result_modules) == 1:
-                        processed_frame = frame_cache[result_modules[0].source[0]]
-                        if original_frame.shape != processed_frame.shape:
-                            error_msg = "Original and processed frames must match in size for metric comparison"
-                            metrics.append(
-                                Metrics(message=error_msg, psnr=None, ssim=None)
-                            )
-                        else:
-                            metrics.append(
-                                compute_metrics(original_frame, processed_frame)
-                            )
-                    else:
-                        f1 = frame_cache[result_modules[0].source[0]]
-                        f2 = frame_cache[result_modules[1].source[0]]
-                        if f1.shape != f2.shape:
-                            error_msg = "Result frames must be the same size for metric comparison"
-                            metrics.append(
-                                Metrics(message=error_msg, psnr=None, ssim=None)
-                            )
-                        else:
-                            metrics.append(compute_metrics(f1, f2))
-
-                for result_mod in result_modules:
-                    for sid in result_mod.source:
-                        # Yield the result module and the corresponding frames to be written
-                        yield result_mod.id, frame_cache[sid]
-
-        # Buffer frames by id for original and result modules
-        buffered_frames: dict[str, list[np.ndarray]] = {"original": []}
-        for mod in result_modules:
-            buffered_frames[mod.id] = []
-
-        for mid, frame in base_pipeline_iterator():
-            if mid in buffered_frames:
-                buffered_frames[mid].append(frame)
-
-        # Create iterators from buffered frames
-        output_iters = {
-            mod.id: (frame for frame in buffered_frames[mod.id])
-            for mod in result_modules
+        # Generators for standard outputs
+        output_queues: dict[str, Deque[np.ndarray]] = {
+            mod.id: deque() for mod in result_modules
         }
         if len(result_modules) == 1:
-            output_iters["original"] = (frame for frame in buffered_frames["original"])
+            output_queues["original"] = deque()
 
-        # Interleaved iterator yields frames alternately from two sources
-        def interleaved_iterator() -> Iterator[np.ndarray]:
-            if len(result_modules) == 2:
-                # Map frames to left/right
-                left_frames = []
-                right_frames = []
-                for result_mod in result_modules:
-                    video_player_side = module_map[result_mod.id][1].get(
-                        "video_player", ""
+        # Process frames
+        for frame in frame_iter:
+            frame_cache: dict[str, np.ndarray] = {}
+            original_frame = frame.copy()
+            frame_cache[source_mod.id] = frame
+
+            # Process frames and save them to a frame cache
+            process_pipeline_frame(frame_cache, processing_nodes, module_map)
+
+            # Compute quality metrics
+            if len(result_modules) == 1:
+                processed_frame = frame_cache[result_modules[0].source[0]]
+                if original_frame.shape == processed_frame.shape:
+                    metrics.append(compute_metrics(original_frame, processed_frame))
+                else:
+                    error_msg = "Original and processed frames must match in size for metric comparison"
+                    metrics.append(Metrics(message=error_msg, psnr=None, ssim=None))
+                output_queues["original"].append(original_frame)
+                output_queues[result_modules[0].id].append(processed_frame)
+
+            elif len(result_modules) == 2:
+                f1 = frame_cache[result_modules[0].source[0]]
+                f2 = frame_cache[result_modules[1].source[0]]
+                if f1.shape == f2.shape:
+                    metrics.append(compute_metrics(f1, f2))
+                else:
+                    error_msg = (
+                        "Result frames must be the same size for metric comparison"
                     )
-                    if video_player_side == "left":
-                        left_frames = buffered_frames[result_mod.id]
-                    elif video_player_side == "right":
-                        right_frames = buffered_frames[result_mod.id]
-            else:
-                left_frames = buffered_frames["original"]
-                right_frames = buffered_frames[result_modules[0].id]
-
-            for l_frame, r_frame in zip(left_frames, right_frames):
-                yield l_frame
-                yield r_frame
+                    metrics.append(Metrics(message=error_msg, psnr=None, ssim=None))
+                output_queues[result_modules[0].id].append(f1)
+                output_queues[result_modules[1].id].append(f2)
 
         outputs: list[dict[str, str]] = []
 
@@ -262,30 +221,52 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             params["path"] = filename
             params["fps"] = fps
 
-            # Pass only the frames for the specific result module
-            mod_instance.process(output_iters[result_mod.id], params)
-
-            # Return the video player side and video file name
+            # Pass frames from the queue
+            mod_instance.process(iter(output_queues[result_mod.id]), params)
             outputs.append({"video_player": params["video_player"], "path": filename})
 
         # Write interleaved video output
         interleaved_mod = ModuleRegistry.get_by_spacename(ModuleName.RESULT)
-        interleaved_params: dict[str, Any] = {
+        interleaved_params = {
             "path": f"{source_file}-interleaved.webm",
             "fps": fps,
             "video_player": "interleaved",
         }
-        interleaved_mod.process(interleaved_iterator(), interleaved_params)
+
+        def interleaved_generator():
+            if len(result_modules) == 1:
+                left_frames = output_queues["original"]
+                right_frames = output_queues[result_modules[0].id]
+            else:
+                # Determine left/right by video_player param
+                left_mod = right_mod = None
+                for mod in result_modules:
+                    side = module_map[mod.id][1].get("video_player", "")
+                    if side == "left":
+                        left_mod = mod.id
+                    elif side == "right":
+                        right_mod = mod.id
+                if left_mod is None:
+                    left_mod = result_modules[0].id
+                if right_mod is None:
+                    right_mod = result_modules[1].id
+                left_frames = output_queues[left_mod]
+                right_frames = output_queues[right_mod]
+
+            while left_frames and right_frames:
+                yield left_frames.popleft()
+                yield right_frames.popleft()
+
+        interleaved_mod.process(interleaved_generator(), interleaved_params)
         outputs.append(
             {"video_player": "interleaved", "path": interleaved_params["path"]}
         )
 
         output_map = {entry["video_player"]: entry["path"] for entry in outputs}
-
         response = PipelineResponse(
             left=output_map.get("left", ""),
             right=output_map.get("right", ""),
-            metrics=metrics,
             interleaved=output_map.get("interleaved", ""),
+            metrics=metrics,
         )
         return response
