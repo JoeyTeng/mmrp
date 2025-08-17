@@ -227,8 +227,17 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         # Interleaved iterator yields frames alternately from two sources
         def interleaved_iterator() -> Iterator[np.ndarray]:
             if len(result_modules) == 2:
-                left_frames = buffered_frames[result_modules[0].id]
-                right_frames = buffered_frames[result_modules[1].id]
+                # Map frames to left/right
+                left_frames = []
+                right_frames = []
+                for result_mod in result_modules:
+                    video_player_side = module_map[result_mod.id][1].get(
+                        "video_player", ""
+                    )
+                    if video_player_side == "left":
+                        left_frames = buffered_frames[result_mod.id]
+                    elif video_player_side == "right":
+                        right_frames = buffered_frames[result_mod.id]
             else:
                 left_frames = buffered_frames["original"]
                 right_frames = buffered_frames[result_modules[0].id]
