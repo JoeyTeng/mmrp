@@ -58,7 +58,6 @@ export const FramesProvider: React.FC<{ children: React.ReactNode }> = ({
     setMetrics([]);
     setFrames([]);
     setCurrentFrame(0);
-    // setIndex(0);
 
     createConnection(
       (data) => {

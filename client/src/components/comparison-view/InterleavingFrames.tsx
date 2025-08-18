@@ -34,29 +34,7 @@ const InterleavingFrames = ({ type }: Props) => {
   const isAnyLoading = isLoading || isProcessing;
   const isAnyError = error != "" || isProcessingError;
 
-  const { setMetrics, setCurrentFrame } = useVideoMetrics();
-
-  // Load initial video
-  useEffect(() => {
-    if (type === VideoType.Stream) {
-      return () => {};
-    }
-
-    const loadInitialVideo = async () => {
-      try {
-        setIsLoading(true);
-        setError("");
-        const videoInfo = await loadVideo("example-video.mp4", false, videoRef);
-        setLatestVideoInfo("interleaved", videoInfo.url, videoInfo.size);
-      } catch (e) {
-        setError("Failed to load videos. Please try again. " + e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadInitialVideo();
-  }, [setCurrentFrame, setLatestVideoInfo, setMetrics, type]);
+  const { setCurrentFrame } = useVideoMetrics();
 
   // When reload is triggered, load processed video(s)
   useEffect(() => {

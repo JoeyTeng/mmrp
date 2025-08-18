@@ -43,18 +43,12 @@ const FrameStreamPlayer = ({
 
   // Render frame at given index
   const renderFrame = useCallback(
-    (virtualIndex: number) => {
-      if (virtualIndex >= effectiveFrameCount) return;
+    (index: number) => {
+      if (index >= effectiveFrameCount) return;
 
-      const frameIndex =
-        view === ViewOptions.Interleaving
-          ? Math.floor(virtualIndex / 2)
-          : virtualIndex;
+      const blobIndex = view === ViewOptions.Interleaving ? index % 2 : null;
 
-      const blobIndex =
-        view === ViewOptions.Interleaving ? virtualIndex % 2 : null;
-
-      const frame = frames[frameIndex];
+      const frame = frames[currentFrame];
       if (!frame) return;
 
       if (view === ViewOptions.SideBySide) {
@@ -92,7 +86,7 @@ const FrameStreamPlayer = ({
         img.src = url;
       }
     },
-    [frames, view, canvasRefs, effectiveFrameCount],
+    [effectiveFrameCount, view, frames, currentFrame, canvasRefs],
   );
 
   // Handle play/pause
@@ -146,7 +140,8 @@ const FrameStreamPlayer = ({
       return;
     }
 
-    if (index >= effectiveFrameCount - 1) {
+    if (index >= effectiveFrameCount) {
+      setIndex(effectiveFrameCount - 1);
       setIsPlaying(false);
       if (!isStreamActive) {
         setIsUserPaused(true);
