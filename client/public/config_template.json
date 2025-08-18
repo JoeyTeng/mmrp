@@ -19,8 +19,8 @@
           "BT.709 Full",
           "BT.709 Limited"
         ],
-        "width": 0,
-        "height": 0,
+        "width": 32,
+        "height": 32,
         "frame_rate": "29.97"
       }
     }
@@ -43,8 +43,8 @@
           "BT.709 Full",
           "BT.709 Limited"
         ],
-        "width": 0,
-        "height": 0,
+        "width": 32,
+        "height": 32,
         "frame_rate": "29.97"
       }
     }
