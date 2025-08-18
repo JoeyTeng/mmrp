@@ -5,6 +5,7 @@ import { useReactFlow } from "@xyflow/react";
 import { ExamplePipeline } from "@/types/pipeline";
 import { Settings } from "@mui/icons-material";
 import { ExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
+import { Box } from "@mui/material";
 
 export default function ExamplePipelines() {
   const pipelines = useContext(ExamplePipelinesContext);
@@ -12,18 +13,27 @@ export default function ExamplePipelines() {
   const instance = useReactFlow();
 
   const handleLoad = (pipeline: ExamplePipeline) => {
+    const confirmed = window.confirm(
+      "Loading this pipeline will replace your current canvas. Unsaved changes will be lost. Export the existing pipeline if needed. Continue?",
+    );
+    if (!confirmed) return;
     const { nodes, edges } = pipeline;
     instance.setNodes(nodes);
     instance.setEdges(edges);
     instance.fitView();
   };
 
-  if (!pipelines) return;
+  if (!pipelines)
+    return (
+      <div className="flex items-center justify-center h-full text-gray-500">
+        Loading Example Pipelines…
+      </div>
+    );
 
   return (
     <div className="space-y-2">
       {pipelines.map((p) => (
-        <button
+        <Box
           key={p.id}
           onClick={() => handleLoad(p)}
           className="w-full flex items-center gap-3 rounded-lg 
@@ -38,7 +48,7 @@ export default function ExamplePipelines() {
           <span className="text-sm font-medium text-gray-800 truncate">
             {p.name}
           </span>
-        </button>
+        </Box>
       ))}
     </div>
   );

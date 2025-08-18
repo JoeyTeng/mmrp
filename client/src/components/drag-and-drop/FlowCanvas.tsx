@@ -52,11 +52,10 @@ export default function FlowCanvas({
     }
 
     const first = examplePipelines[0];
-    console.log("Processing first pipeline:", first);
 
     const { nodes, edges } = first;
     return { initialNodes: nodes, initialEdges: edges };
-  }, [examplePipelines]);
+  }, [examplePipelines[0]]);
 
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
@@ -256,7 +255,6 @@ export default function FlowCanvas({
   }, []);
 
   if (!modules) return null;
-  if (!examplePipelines) return null;
 
   return (
     <Box
