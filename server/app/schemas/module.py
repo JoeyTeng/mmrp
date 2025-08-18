@@ -166,7 +166,7 @@ class VideoOutputParams(BaseModel):
 
 # Binaries can have any parameters, so we need a generic model
 class GenericParameterModel(BaseModel):
-    class Config:
+    class ConfigDict:
         extra = "allow"
 
 
