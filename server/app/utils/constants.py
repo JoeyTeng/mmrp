@@ -5,3 +5,5 @@ VIDEO_TYPES = {
     ".mov": "video/quicktime",
     ".avi": "video/x-msvideo",
 }
+
+TEMP_VIDEO_NAME = "temp_video"

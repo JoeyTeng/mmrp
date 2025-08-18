@@ -1,6 +1,7 @@
+// components/comparison-view/VideoComparisonView.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SideBySide from "@/components/comparison-view/SideBySide";
 import InterleavingFrames from "@/components/comparison-view/InterleavingFrames";
 import MenuDropdown from "@/components/comparison-view/MenuDropdown";
@@ -10,12 +11,20 @@ import {
   VideoType,
   ViewOptions,
 } from "@/components/comparison-view/types";
+import { useVideo } from "@/contexts/VideoContext";
 
 const VideoComparisonView = () => {
   const [selection, setSelection] = useState<MenuSelection>({
     view: ViewOptions.SideBySide,
     type: VideoType.Video,
   });
+  const { videos, isLoading, error, loadVideo } = useVideo();
+
+  useEffect(() => {
+    if (!videos.left) {
+      loadVideo("left", "example-video.mp4", false);
+    }
+  }, [videos, loadVideo]);
 
   return (
     <Box className="flex h-full w-full items-center justify-center m-0.5">
@@ -31,12 +40,16 @@ const VideoComparisonView = () => {
             <SideBySide
               key={`${selection.view}-${selection.type}`}
               type={selection.type}
+              isLoading={isLoading}
+              error={error}
             />
           )}
           {selection.view === ViewOptions.Interleaving && (
             <InterleavingFrames
               key={`${selection.view}-${selection.type}`}
               type={selection.type}
+              isLoading={isLoading}
+              error={error}
             />
           )}
         </Box>

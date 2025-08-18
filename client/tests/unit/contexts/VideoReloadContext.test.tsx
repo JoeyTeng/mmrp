@@ -9,12 +9,22 @@ import {
   useVideoMetrics,
 } from "@/contexts/VideoMetricsContext";
 import { PipelineResponse } from "@/types/pipeline";
+import { ReactFlowProvider } from "@xyflow/react";
+import { VideoProvider } from "@/contexts/VideoContext";
+
+jest.mock("@/hooks/useModule", () => ({
+  useModules: () => ({ modules: [], setModules: jest.fn() }),
+}));
 
 // Wrap both providers in one tree
 const wrapper: React.FC<{ children?: React.ReactNode }> = ({ children }) => (
-  <VideoMetricsProvider>
-    <VideoReloadProvider>{children}</VideoReloadProvider>
-  </VideoMetricsProvider>
+  <ReactFlowProvider>
+    <VideoProvider>
+      <VideoMetricsProvider>
+        <VideoReloadProvider>{children}</VideoReloadProvider>
+      </VideoMetricsProvider>
+    </VideoProvider>
+  </ReactFlowProvider>
 );
 
 describe("VideoReloadContext", () => {
@@ -32,6 +42,7 @@ describe("VideoReloadContext", () => {
     expect(result.current.isProcessing).toBe(false);
     expect(result.current.isProcessingError).toBe(false);
     expect(result.current.getLatestVideoInfo("left")).toEqual({
+      name: "",
       url: "",
       size: 0,
     });
@@ -54,27 +65,41 @@ describe("VideoReloadContext", () => {
 
     // First set: no revoke
     act(() => {
-      result.current.setLatestVideoInfo("right", "blob1", 100);
+      const videos = {
+        left: null,
+        right: { name: "my_file_1", size: 100, url: "blob1" },
+      };
+      result.current.setLatestVideoInfo(videos);
     });
     expect(URL.revokeObjectURL).not.toHaveBeenCalled();
     expect(result.current.getLatestVideoInfo("right")).toEqual({
-      url: "blob1",
+      name: "my_file_1",
       size: 100,
+      url: "blob1",
     });
 
     // Change URL: should revoke old
     act(() => {
-      result.current.setLatestVideoInfo("right", "blob2", 200);
+      const videos = {
+        left: null,
+        right: { name: "my_file_1", size: 200, url: "blob2" },
+      };
+      result.current.setLatestVideoInfo(videos);
     });
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob1");
     expect(result.current.getLatestVideoInfo("right")).toEqual({
-      url: "blob2",
+      name: "my_file_1",
       size: 200,
+      url: "blob2",
     });
 
     // Same URL again: no additional revoke
     act(() => {
-      result.current.setLatestVideoInfo("right", "blob2", 200);
+      const videos = {
+        left: null,
+        right: { name: "my_file_1", size: 200, url: "blob2" },
+      };
+      result.current.setLatestVideoInfo(videos);
     });
     expect((URL.revokeObjectURL as jest.Mock).mock.calls.length).toBe(1);
   });
@@ -82,12 +107,17 @@ describe("VideoReloadContext", () => {
   it("setLatestVideoInfo defaults size to zero when undefined", () => {
     const { result } = renderHook(() => useVideoReload(), { wrapper });
     act(() => {
+      const videos = {
+        left: { name: "my_file_1", size: 50, url: "blob3" },
+        right: null,
+      };
       // only two args, size omitted
-      result.current.setLatestVideoInfo("left", "blob3");
+      result.current.setLatestVideoInfo(videos);
     });
     expect(result.current.getLatestVideoInfo("left")).toEqual({
+      name: "my_file_1",
+      size: 50,
       url: "blob3",
-      size: 0, // <-- covers the `size ?? 0` branch
     });
   });
 

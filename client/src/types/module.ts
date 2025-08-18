@@ -73,3 +73,11 @@ export enum ModuleType {
   ProcessNode = "processNode",
   OutputNode = "outputNode",
 }
+
+export enum ModuleClass {
+  VIDEO_SOURCE = "video_source",
+}
+
+export enum ModuleParameterName {
+  VIDEO_SOURCE_PATH = "path",
+}

@@ -23,7 +23,7 @@ type WebSocketContextType = {
     onOpen?: () => void,
     onError?: (err: Event) => void,
     onClose?: () => void,
-    initMessage?: object,
+    filenames?: object,
   ) => void;
   closeConnection: () => void;
 };
@@ -40,7 +40,7 @@ export const WebSocketProvider = ({
   const wsRef = useRef<WebSocket | null>(null);
 
   const createConnection: WebSocketContextType["createConnection"] =
-    useCallback((onMessage, onOpen, onError, onClose, initMessage) => {
+    useCallback((onMessage, onOpen, onError, onClose, filenames) => {
       const existing = wsRef.current;
 
       if (
@@ -58,8 +58,8 @@ export const WebSocketProvider = ({
 
       ws.onopen = () => {
         console.log("WebSocket connection opened");
-        if (initMessage) {
-          ws.send(JSON.stringify(initMessage));
+        if (filenames) {
+          ws.send(JSON.stringify(filenames));
         }
         onOpen?.();
       };

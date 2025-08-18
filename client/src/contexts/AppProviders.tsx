@@ -3,16 +3,19 @@ import { VideoMetricsProvider } from "./VideoMetricsContext";
 import { VideoReloadProvider } from "./VideoReloadContext";
 import { WebSocketProvider } from "./WebSocketContext";
 import { ReactFlowProvider } from "@xyflow/react";
+import { VideoProvider } from "./VideoContext";
 import { ModulesProvider } from "./ModulesContext";
 
 const AppProviders = ({ children }: { children: ReactNode }) => (
   <ReactFlowProvider>
     <VideoMetricsProvider>
-      <VideoReloadProvider>
-        <WebSocketProvider>
-          <ModulesProvider>{children}</ModulesProvider>
-        </WebSocketProvider>
-      </VideoReloadProvider>
+      <VideoProvider>
+        <VideoReloadProvider>
+          <WebSocketProvider>
+            <ModulesProvider>{children}</ModulesProvider>
+          </WebSocketProvider>
+        </VideoReloadProvider>
+      </VideoProvider>
     </VideoMetricsProvider>
   </ReactFlowProvider>
 );

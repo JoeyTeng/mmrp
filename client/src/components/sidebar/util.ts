@@ -7,9 +7,14 @@ import {
   createProtectedExport,
   verifyImport,
 } from "@/utils/sharedFunctionality";
+import { useVideoService } from "@/services/videoService";
+import { useVideo } from "@/contexts/VideoContext";
+import { Module, ModuleClass, ModuleParameterName } from "@/types/module";
 
-export function useDownloadUtils() {
+export function useVideoUtils() {
   const { getLatestVideoInfo, latestResponse } = useVideoReload();
+  const { uploadVideo } = useVideoService();
+  const { loadVideo } = useVideo();
 
   const downloadSize = useMemo(() => {
     const leftVideoBytes = latestResponse?.left
@@ -67,7 +72,27 @@ export function useDownloadUtils() {
     });
   }
 
-  return { handleDownload, downloadSize };
+  // Upload Video
+  const handleUploadVideo = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "video/*";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const response = await uploadVideo(file);
+        await loadVideo("left", response.filename, false);
+      } catch (err) {
+        console.error(err);
+        toast.error("Video upload failed");
+      }
+    };
+    input.click();
+  }, [loadVideo, uploadVideo]);
+
+  return { handleDownload, downloadSize, handleUploadVideo };
 }
 
 export function usePipelineExport() {
@@ -77,6 +102,39 @@ export function usePipelineExport() {
 
   const { getNodes, getEdges, setNodes, setEdges, deleteElements } =
     useReactFlow();
+  const { getLatestVideoInfo } = useVideoReload();
+
+  const updateVideoSourcePath = useCallback(
+    (nodes: Module[]) => {
+      const currentVideoName = getLatestVideoInfo("left").name;
+
+      if (!currentVideoName) return nodes;
+
+      return nodes.map((node) => {
+        if (node.data?.moduleClass === ModuleClass.VIDEO_SOURCE) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              parameters: node.data.parameters.map((param) =>
+                param.name === ModuleParameterName.VIDEO_SOURCE_PATH
+                  ? {
+                      ...param,
+                      metadata: {
+                        ...param.metadata,
+                        value: currentVideoName,
+                      },
+                    }
+                  : param,
+              ),
+            },
+          };
+        }
+        return node;
+      });
+    },
+    [getLatestVideoInfo],
+  );
 
   // Export Pipeline
   const handleExportPipeline = useCallback(() => {
@@ -140,8 +198,10 @@ export function usePipelineExport() {
           edges: currentEdges,
         });
 
+        const typedNodes = nodes as Module[];
+        const updatedNodes = updateVideoSourcePath(typedNodes);
         // Set new pipeline
-        setNodes(nodes);
+        setNodes(updatedNodes);
         setEdges(edges);
 
         toast.success("Pipeline imported successfully");
@@ -153,6 +213,13 @@ export function usePipelineExport() {
       }
     };
     input.click();
-  }, [getNodes, getEdges, deleteElements, setEdges, setNodes]);
+  }, [
+    getNodes,
+    getEdges,
+    deleteElements,
+    setEdges,
+    setNodes,
+    updateVideoSourcePath,
+  ]);
   return { handleExportPipeline, handleImportPipeline };
 }

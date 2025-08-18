@@ -1,4 +1,5 @@
-import { loadVideo } from "@/services/videoService";
+import { renderHook } from "@testing-library/react";
+import { useVideoService } from "@/services/videoService";
 import { apiClient } from "@/services/apiClient";
 
 jest.mock("@/services/apiClient");
@@ -12,59 +13,79 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe("loadVideo", () => {
-  const mockBlob = new Blob(["video data"], { type: "video/mp4" });
-  const videoName = "test-video.mp4";
+describe("useVideoService", () => {
+  describe("loadVideo", () => {
+    const mockBlob = new Blob(["video data"], { type: "video/mp4" });
+    const videoName = "test-video.mp4";
 
-  it("sets the video ref src and returns url and size", async () => {
-    mockedApiClient.post.mockResolvedValueOnce({ data: mockBlob });
+    it("should load video successfully", async () => {
+      mockedApiClient.post.mockResolvedValueOnce({ data: mockBlob });
 
-    const mockRef = {
-      current: { src: "" },
-    } as React.RefObject<HTMLVideoElement>;
+      const { result } = renderHook(() => useVideoService());
+      const response = await result.current.loadVideo({
+        name: videoName,
+        output: false,
+      });
 
-    const result = await loadVideo(videoName, false, mockRef);
+      expect(mockedApiClient.post).toHaveBeenCalledWith(
+        "/video/",
+        { video_name: videoName, output: false },
+        { responseType: "blob" },
+      );
 
-    expect(mockedApiClient.post).toHaveBeenCalledWith(
-      "/video/",
-      { video_name: videoName, output: false },
-      { responseType: "blob" },
-    );
+      expect(URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
+      expect(response).toEqual({
+        name: videoName,
+        url: "/videos",
+        size: mockBlob.size,
+      });
+    });
 
-    expect(URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
-    expect(mockRef.current!.src).toBe("/videos");
-    expect(result).toEqual({ url: "/videos", size: mockBlob.size });
+    it("should throw error when API fails", async () => {
+      const error = new Error("Network error");
+      mockedApiClient.post.mockRejectedValueOnce(error);
+
+      const { result } = renderHook(() => useVideoService());
+
+      await expect(
+        result.current.loadVideo({ name: videoName, output: false }),
+      ).rejects.toThrow("Network error");
+    });
   });
 
-  it("handles case when ref.current is null", async () => {
-    mockedApiClient.post.mockResolvedValueOnce({ data: mockBlob });
+  describe("uploadVideo", () => {
+    const mockFile = new File(["video content"], "test.mp4", {
+      type: "video/mp4",
+    });
 
-    const mockRef = {
-      current: null,
-    } as React.RefObject<HTMLVideoElement | null>;
+    it("should upload video successfully", async () => {
+      const mockResponse = { data: { filename: "temp_file.mp4" } };
+      mockedApiClient.post.mockResolvedValueOnce(mockResponse);
 
-    const result = await loadVideo(videoName, true, mockRef);
+      const { result } = renderHook(() => useVideoService());
+      const response = await result.current.uploadVideo(mockFile);
 
-    expect(result).toEqual({ url: "/videos", size: mockBlob.size });
-  });
+      const formData = mockedApiClient.post.mock.calls[0][1] as FormData;
+      expect(formData.get("file")).toBe(mockFile);
 
-  it("throws and logs error on API failure", async () => {
-    const error = new Error("Network error");
-    mockedApiClient.post.mockRejectedValueOnce(error);
+      expect(response).toEqual(mockResponse.data);
+    });
 
-    const consoleSpy = jest
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-    const mockRef = {
-      current: { src: "" },
-    } as React.RefObject<HTMLVideoElement>;
+    it("should log error when upload fails", async () => {
+      const error = new Error("Upload failed");
+      mockedApiClient.post.mockRejectedValueOnce(error);
 
-    await expect(loadVideo(videoName, false, mockRef)).rejects.toThrow(
-      "Network error",
-    );
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
-    expect(consoleSpy).toHaveBeenCalled();
+      const { result } = renderHook(() => useVideoService());
+      await expect(result.current.uploadVideo(mockFile)).rejects.toThrow(
+        "Upload failed",
+      );
 
-    consoleSpy.mockRestore();
+      expect(consoleSpy).toHaveBeenCalledWith("Error uploading video", error);
+      consoleSpy.mockRestore();
+    });
   });
 });

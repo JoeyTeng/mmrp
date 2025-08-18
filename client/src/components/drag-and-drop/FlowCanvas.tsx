@@ -26,7 +26,7 @@ import { FlowCanvasProps } from "./types";
 import { ModuleData, ModuleType } from "@/types/module";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { Box, Button } from "@mui/material";
-import { sendPipelineToBackend } from "@/services/pipelineService";
+import { processPipeline } from "@/services/pipelineService";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useModulesContext } from "@/contexts/ModulesContext";
 import { checkPipeline } from "./util";
@@ -217,7 +217,7 @@ export default function FlowCanvas({
       try {
         toast.success("Pipeline valid, starting processing");
         setIsProcessing(true);
-        const res = await sendPipelineToBackend(pipeline);
+        const res = await processPipeline(pipeline);
         setError(false);
         triggerReload(res);
       } catch (err) {
