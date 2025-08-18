@@ -23,7 +23,7 @@ export default function Modules() {
   const fuse = useMemo(() => {
     return new Fuse(modulesSorted, {
       keys: [
-        { name: "name", weight: 0.6 },
+        { name: "data.name", weight: 0.6 },
         { name: "type", weight: 0.3 },
         { name: "data.parameters.name", weight: 0.1 },
       ],
