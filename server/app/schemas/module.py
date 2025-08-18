@@ -7,9 +7,9 @@ class ModuleFormat(BaseModel):
     pixel_format: list[PixelFormat] = Field(default_factory=list[PixelFormat])
     color_space: list[ColorSpace] = Field(default_factory=list[ColorSpace])
     color: Color | None = None
-    width: int | None = Field(default=None, ge=32, le=3840, description="Output width")
+    width: int | None = Field(default=None, ge=32, le=16384, description="Output width")
     height: int | None = Field(
-        default=None, ge=32, le=2160, description="Output height"
+        default=None, ge=32, le=8704, description="Output height"
     )
     frame_rate: FrameRate | None = Field(
         default=None, description="Frame rate of the video format"
@@ -168,8 +168,7 @@ class VideoOutputParams(BaseModel):
 
 # Binaries can have any parameters, so we need a generic model
 class GenericParameterModel(BaseModel):
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class VideoCodecParams(BaseModel):
