@@ -36,11 +36,8 @@ const InterleavingFrames = ({ type }: Props) => {
 
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
-  // When reload is triggered, load processed video
+  // Load initial video
   useEffect(() => {
-    setMetrics([]);
-    setCurrentFrame(0);
-
     if (type === VideoType.Stream) {
       return () => {};
     }
@@ -63,6 +60,8 @@ const InterleavingFrames = ({ type }: Props) => {
 
   // When reload is triggered, load processed video(s)
   useEffect(() => {
+    setCurrentFrame(0);
+
     if (type === VideoType.Stream) {
       return;
     }
@@ -88,7 +87,7 @@ const InterleavingFrames = ({ type }: Props) => {
     if (latestResponse != null) {
       loadOutputVideos();
     }
-  }, [latestResponse, setLatestVideoInfo, type]);
+  }, [latestResponse, setCurrentFrame, setLatestVideoInfo, type]);
 
   return (
     <Box

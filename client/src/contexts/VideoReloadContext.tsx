@@ -33,6 +33,7 @@ type VideoReloadContextType = {
   selectedVideoType: VideoType;
   setSelectedVideoType: React.Dispatch<React.SetStateAction<VideoType>>;
   handlePipelineRun: () => void;
+  isPipelineRun: boolean;
 };
 
 const VideoReloadContext = createContext<VideoReloadContextType | undefined>(
@@ -61,6 +62,7 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     right: { url: "", size: 0 },
     interleaved: { url: "", size: 0 },
   });
+  const [isPipelineRun, setIsPipelineRun] = useState(false);
 
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
@@ -93,7 +95,9 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handlePipelineRun = () => {
+    setMetrics([]);
     setActiveVideoType(selectedVideoType);
+    setIsPipelineRun(true);
   };
 
   return (
@@ -113,6 +117,7 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
         selectedVideoType,
         setSelectedVideoType,
         handlePipelineRun,
+        isPipelineRun,
       }}
     >
       {children}

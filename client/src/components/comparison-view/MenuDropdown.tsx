@@ -11,10 +11,13 @@ import {
 } from "@mui/material";
 import { MenuOutlined } from "@mui/icons-material";
 import { MenuDropdownProps, ViewOptions } from "./types";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 
 const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+  const { isPipelineRun } = useVideoReload();
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -23,6 +26,7 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
   const handleClose = () => setAnchorEl(null);
 
   const handleSelection = (view: ViewOptions) => {
+    console.log(isPipelineRun);
     onSelect(view);
     handleClose();
   };
@@ -41,11 +45,20 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
         <ListSubheader sx={{ fontSize: "0.875rem", lineHeight: "2" }}>
           Select view:
         </ListSubheader>
-        {Object.values(ViewOptions).map((option) => (
-          <MenuItem dense key={option} onClick={() => handleSelection(option)}>
-            <ListItemText>{option}</ListItemText>
-          </MenuItem>
-        ))}
+        {Object.values(ViewOptions).map((option) => {
+          const disabled =
+            option === ViewOptions.Interleaving && !isPipelineRun;
+          return (
+            <MenuItem
+              dense
+              key={option}
+              onClick={() => !disabled && handleSelection(option)}
+              disabled={disabled}
+            >
+              <ListItemText>{option}</ListItemText>
+            </MenuItem>
+          );
+        })}
       </Menu>
     </Box>
   );

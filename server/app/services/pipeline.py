@@ -227,7 +227,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
 
         # Write interleaved video output
         interleaved_mod = ModuleRegistry.get_by_spacename(ModuleName.RESULT)
-        interleaved_params = {
+        interleaved_params: dict[str, Any] = {
             "path": f"{source_file}-interleaved.webm",
             "fps": fps,
             "video_player": "interleaved",
