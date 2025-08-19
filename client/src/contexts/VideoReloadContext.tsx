@@ -12,9 +12,9 @@ import type { PipelineResponse } from "@/types/pipeline";
 import { useVideoMetrics } from "./VideoMetricsContext";
 import { VideoInfo, VideoMap, VideoRecordMap } from "@/types/video";
 import { useVideo } from "./VideoContext";
-import { useModules } from "@/hooks/useModule";
 import { useReactFlow } from "@xyflow/react";
-import { ModuleClass, ModuleParameterName } from "@/types/module";
+import { Module, ModuleClass, ModuleParameterName } from "@/types/module";
+import { useModulesContext } from "./ModulesContext";
 
 type VideoReloadContextType = {
   triggerReload: (res: PipelineResponse) => void;
@@ -29,6 +29,7 @@ type VideoReloadContextType = {
     size: number;
   };
   setLatestVideoInfo: (videos: VideoRecordMap | null) => void;
+  syncModules: () => void;
 };
 
 const VideoReloadContext = createContext<VideoReloadContextType | undefined>(
@@ -54,7 +55,7 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
 
   const { videos, loadVideo } = useVideo();
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
-  const { modules } = useModules();
+  const { setModules } = useModulesContext();
 
   useEffect(() => {
     if (latestResponse?.right) {
@@ -64,6 +65,37 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
       loadProcessedVideo();
     }
   }, [latestResponse, loadVideo]);
+
+  const updateModuleParam = useCallback(
+    (modules: Module[]): Module[] => {
+      const currentVideoName = videos.left?.name;
+      if (!currentVideoName) return modules;
+
+      return modules.map((module) => {
+        if (module.data?.moduleClass === ModuleClass.VIDEO_SOURCE) {
+          return {
+            ...module,
+            data: {
+              ...module.data,
+              parameters: module.data.parameters.map((param) =>
+                param.name === ModuleParameterName.VIDEO_SOURCE_PATH
+                  ? {
+                      ...param,
+                      metadata: {
+                        ...param.metadata,
+                        value: currentVideoName,
+                      },
+                    }
+                  : param,
+              ),
+            },
+          };
+        }
+        return module;
+      });
+    },
+    [videos.left?.name],
+  );
 
   const getLatestVideoInfo = useCallback(
     (video: VideoMap) => {
@@ -99,36 +131,16 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const syncModules = useCallback(() => {
-    setNodes((prevNodes) =>
-      prevNodes.map((node) => {
-        if (node.data?.moduleClass === ModuleClass.VIDEO_SOURCE) {
-          const updatedModule = modules.find(
-            (m) => m.data.moduleClass === node.data.moduleClass,
-          );
-          if (!updatedModule) return node;
+    const currentVideoName = videos.left?.name;
+    if (!currentVideoName) return;
 
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              parameters: updatedModule.data.parameters.map((param) =>
-                param.name === ModuleParameterName.VIDEO_SOURCE_PATH
-                  ? {
-                      ...param,
-                      metadata: {
-                        ...param.metadata,
-                        value: videos.left?.name,
-                      },
-                    }
-                  : param,
-              ),
-            },
-          };
-        }
-        return node;
-      }),
-    );
-  }, [modules, videos, setNodes]);
+    setNodes((prevNodes) => {
+      const typNodes = prevNodes as Module[];
+      return updateModuleParam(typNodes);
+    });
+
+    setModules((prevModules) => updateModuleParam(prevModules));
+  }, [videos, updateModuleParam, setModules, setNodes]);
 
   useEffect(() => {
     setLatestVideoInfo(videos);
@@ -152,6 +164,7 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
         setError,
         getLatestVideoInfo,
         setLatestVideoInfo,
+        syncModules,
       }}
     >
       {children}

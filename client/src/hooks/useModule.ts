@@ -22,5 +22,5 @@ export function useModules() {
     loadModules();
   }, []);
 
-  return { modules, loading, reloadModules: loadModules };
+  return { modules, loading, reloadModules: loadModules, setModules };
 }

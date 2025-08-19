@@ -2,11 +2,18 @@
 
 import { useModules } from "@/hooks/useModule";
 import { Module } from "@/types/module";
-import { createContext, ReactNode, useContext } from "react";
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useContext,
+} from "react";
 
 type ModulesContextType = {
   modules: Module[];
   reloadModules: () => void;
+  setModules: Dispatch<SetStateAction<Module[]>>;
 };
 
 const ModulesContext = createContext<ModulesContextType | undefined>(undefined);
@@ -18,10 +25,10 @@ export const useModulesContext = () => {
 };
 
 export const ModulesProvider = ({ children }: { children: ReactNode }) => {
-  const { modules, reloadModules } = useModules();
+  const { modules, reloadModules, setModules } = useModules();
 
   return (
-    <ModulesContext value={{ modules, reloadModules }}>
+    <ModulesContext value={{ modules, reloadModules, setModules }}>
       {children}
     </ModulesContext>
   );

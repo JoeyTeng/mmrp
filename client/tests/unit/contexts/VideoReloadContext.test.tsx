@@ -11,6 +11,8 @@ import {
 import { PipelineResponse } from "@/types/pipeline";
 import { ReactFlowProvider } from "@xyflow/react";
 import { VideoProvider } from "@/contexts/VideoContext";
+import { ModulesProvider } from "@/contexts/ModulesContext";
+import { WebSocketProvider } from "@/contexts/WebSocketContext";
 
 jest.mock("@/hooks/useModule", () => ({
   useModules: () => ({ modules: [], setModules: jest.fn() }),
@@ -19,11 +21,15 @@ jest.mock("@/hooks/useModule", () => ({
 // Wrap both providers in one tree
 const wrapper: React.FC<{ children?: React.ReactNode }> = ({ children }) => (
   <ReactFlowProvider>
-    <VideoProvider>
-      <VideoMetricsProvider>
-        <VideoReloadProvider>{children}</VideoReloadProvider>
-      </VideoMetricsProvider>
-    </VideoProvider>
+    <VideoMetricsProvider>
+      <VideoProvider>
+        <ModulesProvider>
+          <VideoReloadProvider>
+            <WebSocketProvider>{children}</WebSocketProvider>
+          </VideoReloadProvider>
+        </ModulesProvider>
+      </VideoProvider>
+    </VideoMetricsProvider>
   </ReactFlowProvider>
 );
 

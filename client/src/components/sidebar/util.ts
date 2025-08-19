@@ -8,11 +8,10 @@ import {
   verifyImport,
 } from "@/utils/sharedFunctionality";
 import { useVideo } from "@/contexts/VideoContext";
-import { Module, ModuleClass, ModuleParameterName } from "@/types/module";
 
 export function useVideoUtils() {
   const { getLatestVideoInfo, latestResponse } = useVideoReload();
-  const { loadVideo, uploadVideo } = useVideo();
+  const { uploadVideo } = useVideo();
 
   const downloadSize = useMemo(() => {
     const leftVideoBytes = latestResponse?.left
@@ -87,7 +86,7 @@ export function useVideoUtils() {
       }
     };
     input.click();
-  }, [loadVideo, uploadVideo]);
+  }, [uploadVideo]);
 
   return { handleDownload, downloadSize, handleUploadVideo };
 }
@@ -99,39 +98,7 @@ export function usePipelineExport() {
 
   const { getNodes, getEdges, setNodes, setEdges, deleteElements } =
     useReactFlow();
-  const { getLatestVideoInfo } = useVideoReload();
-
-  const updateVideoSourcePath = useCallback(
-    (nodes: Module[]) => {
-      const currentVideoName = getLatestVideoInfo("left").name;
-
-      if (!currentVideoName) return nodes;
-
-      return nodes.map((node) => {
-        if (node.data?.moduleClass === ModuleClass.VIDEO_SOURCE) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              parameters: node.data.parameters.map((param) =>
-                param.name === ModuleParameterName.VIDEO_SOURCE_PATH
-                  ? {
-                      ...param,
-                      metadata: {
-                        ...param.metadata,
-                        value: currentVideoName,
-                      },
-                    }
-                  : param,
-              ),
-            },
-          };
-        }
-        return node;
-      });
-    },
-    [getLatestVideoInfo],
-  );
+  const { syncModules } = useVideoReload();
 
   // Export Pipeline
   const handleExportPipeline = useCallback(() => {
@@ -194,13 +161,9 @@ export function usePipelineExport() {
           nodes: currentNodes,
           edges: currentEdges,
         });
-
-        const typedNodes = nodes as Module[];
-        const updatedNodes = updateVideoSourcePath(typedNodes);
-        // Set new pipeline
-        setNodes(updatedNodes);
+        setNodes(nodes);
         setEdges(edges);
-
+        syncModules();
         toast.success("Pipeline imported successfully");
       } catch (error) {
         console.error("Import error:", error);
@@ -210,13 +173,6 @@ export function usePipelineExport() {
       }
     };
     input.click();
-  }, [
-    getNodes,
-    getEdges,
-    deleteElements,
-    setEdges,
-    setNodes,
-    updateVideoSourcePath,
-  ]);
+  }, [getNodes, getEdges, deleteElements, setEdges, setNodes, syncModules]);
   return { handleExportPipeline, handleImportPipeline };
 }
