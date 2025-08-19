@@ -165,7 +165,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         fps,
         frame_iter,
     ):
-        # Base generator that processes frames and yields (stream_id, frame)
+        # Run frames through whole pipeline and return the frames that need to be written
         def base_pipeline_iterator() -> Iterator[tuple[str, np.ndarray]]:
             for frame in frame_iter:
                 frame_cache: dict[str, np.ndarray] = {}
@@ -196,9 +196,6 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                             "Result frames must be the same size for metric comparison"
                         )
                         metrics.append(Metrics(message=error_msg, psnr=None, ssim=None))
-                        metrics.append(
-                            Metrics(message="Frame size mismatch", psnr=None, ssim=None)
-                        )
                     yield result_modules[0].id, f1
                     yield result_modules[1].id, f2
 
@@ -268,7 +265,6 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             params["path"] = filename
             params["fps"] = fps
 
-            # Stream frames directly
             mod_instance.process(output_iters[result_mod.id], params)
             outputs.append({"video_player": params["video_player"], "path": filename})
 
