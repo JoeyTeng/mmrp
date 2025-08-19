@@ -8,7 +8,12 @@ from fastapi import UploadFile
 import numpy as np
 from app.utils.enums import VideoFormats
 from fastapi.responses import StreamingResponse
-from app.utils.constants import VIDEO_TYPES, TEMP_VIDEO_NAME
+from app.utils.constants import (
+    VIDEO_TYPES,
+    TEMP_VIDEO_NAME,
+    VIDEO_SOURCE_FOLDER,
+    TEMP_VIDEO_SOURCE_FOLDER,
+)
 
 
 def string_sanitizer(raw_name: str) -> str:
@@ -28,7 +33,9 @@ def get_base_dir_path() -> Path:
 
 # Get path of input video
 def get_video_path(video: str) -> Path:
-    return get_base_dir_path() / "videos" / video
+    if video.startswith(TEMP_VIDEO_NAME):
+        return get_base_dir_path() / TEMP_VIDEO_SOURCE_FOLDER / video
+    return get_base_dir_path() / VIDEO_SOURCE_FOLDER / video
 
 
 # Context manager for video capture and video writer
@@ -153,7 +160,7 @@ async def save_uploaded_video(file: UploadFile) -> str:
 
     file_ext = validate_video_extension(file.filename)
     file_name = f"{TEMP_VIDEO_NAME}{file_ext}"
-    video_path = get_base_dir_path() / "videos" / file_name
+    video_path = get_base_dir_path() / TEMP_VIDEO_SOURCE_FOLDER / file_name
 
     with video_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)

@@ -7,14 +7,12 @@ import {
   createProtectedExport,
   verifyImport,
 } from "@/utils/sharedFunctionality";
-import { useVideoService } from "@/services/videoService";
 import { useVideo } from "@/contexts/VideoContext";
 import { Module, ModuleClass, ModuleParameterName } from "@/types/module";
 
 export function useVideoUtils() {
   const { getLatestVideoInfo, latestResponse } = useVideoReload();
-  const { uploadVideo } = useVideoService();
-  const { loadVideo } = useVideo();
+  const { loadVideo, uploadVideo } = useVideo();
 
   const downloadSize = useMemo(() => {
     const leftVideoBytes = latestResponse?.left
@@ -82,8 +80,7 @@ export function useVideoUtils() {
       if (!file) return;
 
       try {
-        const response = await uploadVideo(file);
-        await loadVideo("left", response.filename, false);
+        await uploadVideo(file);
       } catch (err) {
         console.error(err);
         toast.error("Video upload failed");

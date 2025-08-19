@@ -17,7 +17,7 @@ type VideoContextType = {
   error: string | null;
   loadVideo: (side: VideoMap, name: string, output: boolean) => Promise<void>;
   uploadVideo: (file: File) => Promise<void>;
-  clearVideo: () => void;
+  clearVideo: (side: VideoMap) => void;
 };
 
 const VideoContext = createContext<VideoContextType | undefined>(undefined);
@@ -30,19 +30,34 @@ export const useVideo = () => {
 
 export const VideoProvider = ({ children }: { children: ReactNode }) => {
   const [videos, setVideos] = useState<VideoRecordMap>({
-    left: null, //source
-    right: null, //result
+    left: null,
+    right: null,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { loadVideo: loadVideoService, uploadVideo: uploadVideoService } =
     useVideoService();
 
+  const clearVideo = useCallback((side?: VideoMap) => {
+    setVideos((prev) => {
+      const newVideos = { ...prev };
+      if (!side || side === "left") {
+        if (newVideos.left?.url) URL.revokeObjectURL(newVideos.left.url);
+        newVideos.left = null;
+      }
+      if (!side || side === "right") {
+        if (newVideos.right?.url) URL.revokeObjectURL(newVideos.right.url);
+        newVideos.right = null;
+      }
+      return newVideos;
+    });
+  }, []);
+
   const loadVideo = useCallback(
     async (side: VideoMap, name: string, output: boolean) => {
+      setIsLoading(true);
+      setError(null);
       try {
-        setIsLoading(true);
-        setError(null);
         const response = await loadVideoService({ name, output });
         setVideos((prev) => ({ ...prev, [side]: response }));
       } catch (e) {
@@ -77,6 +92,8 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
       try {
         setIsLoading(true);
         setError(null);
+        // Clear right video before loading new one
+        clearVideo("right");
         const response = await uploadVideoService(file);
         await loadVideo("left", response.filename, false);
       } catch (e) {
@@ -86,23 +103,8 @@ export const VideoProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
       }
     },
-    [uploadVideoService, loadVideo],
+    [uploadVideoService, loadVideo, clearVideo],
   );
-
-  const clearVideo = useCallback((side?: VideoMap) => {
-    setVideos((prev) => {
-      const newVideos = { ...prev };
-      if (!side || side === "left") {
-        if (newVideos.left?.url) URL.revokeObjectURL(newVideos.left.url);
-        newVideos.left = null;
-      }
-      if (!side || side === "right") {
-        if (newVideos.right?.url) URL.revokeObjectURL(newVideos.right.url);
-        newVideos.right = null;
-      }
-      return newVideos;
-    });
-  }, []);
 
   return (
     <VideoContext
