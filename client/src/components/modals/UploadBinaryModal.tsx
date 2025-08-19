@@ -91,9 +91,15 @@ export default function UploadBinaryModal({
       let message = "An unexpected error occurred.";
 
       if ((error as AxiosError).isAxiosError) {
+        // Axios error: backend response
         const axiosError = error as AxiosError<{ detail?: string }>;
         message =
           axiosError.response?.data?.detail || axiosError.message || message;
+      } else if (error instanceof Error) {
+        // Frontend error
+        message = error.message;
+      } else if (typeof error === "string") {
+        message = error;
       }
 
       toast.error(message);
