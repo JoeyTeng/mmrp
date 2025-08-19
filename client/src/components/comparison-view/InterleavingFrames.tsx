@@ -56,7 +56,10 @@ const InterleavingFrames = ({ type }: Props) => {
           setLatestVideoInfo("interleaved", videoInfo.url, videoInfo.size);
         }
       } catch (e) {
-        setError("Failed to load output video: " + e);
+        setError(
+          "Failed to load video: " +
+            (e instanceof Error ? e.message : "Unknown error"),
+        );
       } finally {
         setIsLoading(false);
       }

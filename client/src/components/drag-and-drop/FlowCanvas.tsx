@@ -38,6 +38,7 @@ import CanvasContextMenu, {
 } from "./context-menu/CanvasContextMenu";
 import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
+import { handleError } from "@/utils/sharedFunctionality";
 import { VideoType } from "../comparison-view/types";
 import { useFrames } from "@/contexts/FramesContext";
 
@@ -241,6 +242,10 @@ export default function FlowCanvas({
       } catch (err) {
         console.error("Error sending pipeline to backend", err);
         setError(true);
+        // Dismiss success message
+        toast.dismiss();
+        // Display the error details
+        toast.error(handleError(err));
       } finally {
         setIsProcessing(false);
       }
