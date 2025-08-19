@@ -58,7 +58,10 @@ const SideBySide = ({ type }: Props) => {
         );
         setLatestVideoInfo("left", videoInfo.url, videoInfo.size);
       } catch (e) {
-        setError("Failed to load videos. Please try again. " + e);
+        setError(
+          "Failed to load videos: " +
+            (e instanceof Error ? e.message : "Unknown error"),
+        );
       } finally {
         setIsLoading(false);
       }
@@ -93,7 +96,10 @@ const SideBySide = ({ type }: Props) => {
           setLatestVideoInfo("right", rightVideoInfo.url, rightVideoInfo.size);
         }
       } catch (e) {
-        setError("Failed to load output video: " + e);
+        setError(
+          "Failed to load output video: " +
+            +(e instanceof Error ? e.message : "Unknown error"),
+        );
       } finally {
         setIsLoading(false);
       }
