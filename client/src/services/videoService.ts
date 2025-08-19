@@ -1,46 +1,35 @@
 import { apiClient } from "@/services/apiClient";
-import { RefObject } from "react";
-import axios from "axios";
+import { VideoInfoRequest } from "@/types/video";
+import { useCallback } from "react";
 
-export const loadVideo = async (
-  videoName: string,
-  output: boolean,
-  ref: RefObject<HTMLVideoElement | null>,
-) => {
-  try {
-    const response = await apiClient.post(
-      "/video/",
-      {
-        video_name: videoName,
-        output: output,
-      },
-      {
-        responseType: "blob",
-      },
-    );
-
-    const data = response.data;
-
-    const url = URL.createObjectURL(data);
-    if (ref.current) {
-      ref.current.src = url;
+export const useVideoService = () => {
+  const loadVideo = useCallback(async ({ name, output }: VideoInfoRequest) => {
+    try {
+      const response = await apiClient.post(
+        "/video/",
+        { video_name: name, output },
+        { responseType: "blob" },
+      );
+      const url = URL.createObjectURL(response.data);
+      return { name, url, size: response.data.size };
+    } catch (e) {
+      throw e;
     }
+  }, []);
 
-    return { url, size: data.size };
-  } catch (e) {
-    console.error(`Error loading video ${videoName}`, e);
-    if (axios.isAxiosError(e)) {
-      const data = e.response?.data;
-      if (data instanceof Blob) {
-        const text = await data.text();
-        let message = text;
-        try {
-          const j = JSON.parse(text);
-          message = j?.detail ?? text;
-        } catch {}
-        throw new Error(message);
-      }
+  const uploadVideo = useCallback(async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await apiClient.post("/video/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    } catch (e) {
+      throw e;
     }
-    throw e;
-  }
+  }, []);
+
+  return { loadVideo, uploadVideo };
 };

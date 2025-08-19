@@ -6,6 +6,7 @@ import {
   CloudDownloadOutlined,
   CloudUploadOutlined,
   DownloadOutlined,
+  AddAPhotoOutlined,
 } from "@mui/icons-material";
 import { SidebarItem } from "./types";
 import VideoQualityMetrics from "../comparison-metrics/VideoQualityMetrics";
@@ -17,12 +18,20 @@ export const getLeftSidebarItems = (
   handleDownload: () => void,
   handleImportPipeline: () => void,
   handleExportPipeline: () => void,
+  handleUploadVideo: () => void,
   downloadSize: string,
   isProcessing: boolean,
   latestResponse: PipelineResponse | null,
 ): SidebarItem[] => [
+  // Video Operations Section
   {
-    id: "download",
+    id: "video-upload",
+    title: "Upload Video",
+    icon: <AddAPhotoOutlined />,
+    action: handleUploadVideo,
+  },
+  {
+    id: "video-download",
     title: downloadSize ? `Download Video (${downloadSize})` : "Download Video",
     icon: <DownloadOutlined />,
     disabled: isProcessing || !!!latestResponse,

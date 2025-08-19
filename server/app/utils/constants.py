@@ -5,3 +5,8 @@ VIDEO_TYPES = {
     ".mov": "video/quicktime",
     ".avi": "video/x-msvideo",
 }
+
+TEMP_VIDEO_NAME = "temp_video"
+
+VIDEO_SOURCE_FOLDER = "videos"
+TEMP_VIDEO_SOURCE_FOLDER = "videos/temp"

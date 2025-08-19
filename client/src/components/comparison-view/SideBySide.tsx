@@ -1,28 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import UnifiedPlayer from "./UnifiedPlayer";
 import { PlayerHandle } from "./VideoPlayer";
 import { Box } from "@mui/material";
-import { loadVideo } from "@/services/videoService";
+import { useVideo } from "@/contexts/VideoContext";
 import { useVideoReload } from "@/contexts/VideoReloadContext";
-import { VideoType, ViewOptions } from "./types";
+import { VideoType, VideoViews, ViewOptions } from "./types";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
 
-type Props = {
-  type: VideoType;
-};
-
-const SideBySide = ({ type }: Props) => {
-  // Initialise error and loading states
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const {
-    latestResponse,
-    isProcessing,
-    isProcessingError,
-    setLatestVideoInfo,
-  } = useVideoReload();
+const SideBySide = ({ type, isLoading, error }: VideoViews) => {
+  const { videos } = useVideo();
+  const { latestResponse, isProcessing, isProcessingError } = useVideoReload();
 
   // Initialise video and player references
   const videoARef = useRef<HTMLVideoElement>(null);
@@ -34,11 +23,11 @@ const SideBySide = ({ type }: Props) => {
 
   // Group all loading and error states
   const isAnyLoading = isLoading || isProcessing;
-  const isAnyError = error != "" || isProcessingError;
+  const isAnyError = !!error || isProcessingError;
 
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
-  // Load initial video
+  // Reset metrics when video changes
   useEffect(() => {
     setMetrics([]);
     setCurrentFrame(0);
@@ -46,69 +35,7 @@ const SideBySide = ({ type }: Props) => {
     if (type === VideoType.Stream) {
       return;
     }
-
-    const loadInitialVideo = async () => {
-      try {
-        setIsLoading(true);
-        setError("");
-        const videoInfo = await loadVideo(
-          "example-video.mp4",
-          false,
-          videoARef,
-        );
-        setLatestVideoInfo("left", videoInfo.url, videoInfo.size);
-      } catch (e) {
-        setError(
-          "Failed to load videos: " +
-            (e instanceof Error ? e.message : "Unknown error"),
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadInitialVideo();
-  }, [setCurrentFrame, setLatestVideoInfo, setMetrics, type]);
-
-  // When reload is triggered, load processed video(s)
-  useEffect(() => {
-    if (type === VideoType.Stream) {
-      return;
-    }
-
-    const loadOutputVideos = async () => {
-      try {
-        setIsLoading(true);
-        if (latestResponse!.left !== "") {
-          const leftVideoInfo = await loadVideo(
-            latestResponse!.left,
-            true,
-            videoARef,
-          );
-          setLatestVideoInfo("left", leftVideoInfo.url, leftVideoInfo.size);
-        }
-        if (latestResponse!.right !== "") {
-          const rightVideoInfo = await loadVideo(
-            latestResponse!.right,
-            true,
-            videoBRef,
-          );
-          setLatestVideoInfo("right", rightVideoInfo.url, rightVideoInfo.size);
-        }
-      } catch (e) {
-        setError(
-          "Failed to load output video: " +
-            +(e instanceof Error ? e.message : "Unknown error"),
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (latestResponse != null) {
-      loadOutputVideos();
-    }
-  }, [latestResponse, setLatestVideoInfo, type]);
+  }, [latestResponse, setCurrentFrame, setMetrics, type]);
 
   return (
     <Box
@@ -151,26 +78,28 @@ const SideBySide = ({ type }: Props) => {
             )}
           </Box>
         )}
-        {type === VideoType.Video && (
+        {type === VideoType.Video && videos && (
           <>
             {/* Left Video */}
-            <Box
-              component="video"
-              ref={videoARef}
-              className="w-1/2 h-full object-contain"
-              onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
-              onLoadStart={() => setIsLoading(true)}
-              onCanPlay={() => setIsLoading(false)}
-              onError={() => setError("Failed to load original video")}
-            />
+            {videos.left?.url && (
+              <Box
+                component="video"
+                ref={videoARef}
+                src={videos.left.url}
+                className="w-1/2 h-full object-contain"
+                onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
+              />
+            )}
             {/* Right Video */}
-            <Box
-              component="video"
-              ref={videoBRef}
-              className="w-1/2 h-full object-contain"
-              muted
-              onError={() => setError("Failed to load filtered video")}
-            />
+            {videos.right?.url && (
+              <Box
+                component="video"
+                ref={videoBRef}
+                src={videos.right.url}
+                className="w-1/2 h-full object-contain"
+                muted
+              />
+            )}
           </>
         )}
         {type === VideoType.Stream && (
@@ -198,7 +127,6 @@ const SideBySide = ({ type }: Props) => {
         canvasRefs={[canvasARef, canvasBRef]}
         containerRef={containerRef}
         ref={playerRef}
-        onFirstFrame={() => setIsLoading(false)}
       />
     </Box>
   );

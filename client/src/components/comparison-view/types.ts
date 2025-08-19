@@ -10,6 +10,12 @@ export enum VideoType {
   Stream = "Stream of frames",
 }
 
+export type VideoViews = {
+  type: VideoType;
+  isLoading: boolean;
+  error: string | null;
+};
+
 export type MenuSelection = {
   view: ViewOptions;
   type: VideoType;

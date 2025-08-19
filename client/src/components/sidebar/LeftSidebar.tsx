@@ -1,7 +1,7 @@
 "use client";
 
 import { useVideoReload } from "@/contexts/VideoReloadContext";
-import { useDownloadUtils } from "../sidebar/util";
+import { useVideoUtils } from "../sidebar/util";
 import { usePipelineExport } from "../sidebar/util";
 import { getLeftSidebarItems } from "./sidebar-config";
 import { Sidebar } from "./Sidebar";
@@ -19,7 +19,7 @@ export default function LeftSidebar({
   reload: () => void;
 }) {
   const { latestResponse, isProcessing } = useVideoReload();
-  const { handleDownload, downloadSize } = useDownloadUtils();
+  const { handleDownload, handleUploadVideo, downloadSize } = useVideoUtils();
   const { handleImportPipeline, handleExportPipeline } = usePipelineExport();
   const [uploadOpen, setUploadOpen] = useState(false);
 
@@ -32,6 +32,7 @@ export default function LeftSidebar({
           handleDownload,
           handleImportPipeline,
           handleExportPipeline,
+          handleUploadVideo,
           downloadSize,
           isProcessing,
           latestResponse,

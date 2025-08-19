@@ -7,9 +7,11 @@ import {
   createProtectedExport,
   verifyImport,
 } from "@/utils/sharedFunctionality";
+import { useVideo } from "@/contexts/VideoContext";
 
-export function useDownloadUtils() {
+export function useVideoUtils() {
   const { getLatestVideoInfo, latestResponse } = useVideoReload();
+  const { uploadVideo } = useVideo();
 
   const downloadSize = useMemo(() => {
     const leftVideoBytes = latestResponse?.left
@@ -67,7 +69,26 @@ export function useDownloadUtils() {
     });
   }
 
-  return { handleDownload, downloadSize };
+  // Upload Video
+  const handleUploadVideo = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "video/*";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        await uploadVideo(file);
+      } catch (err) {
+        console.error(err);
+        toast.error("Video upload failed");
+      }
+    };
+    input.click();
+  }, [uploadVideo]);
+
+  return { handleDownload, downloadSize, handleUploadVideo };
 }
 
 export function usePipelineExport() {
@@ -77,6 +98,7 @@ export function usePipelineExport() {
 
   const { getNodes, getEdges, setNodes, setEdges, deleteElements } =
     useReactFlow();
+  const { syncModules } = useVideoReload();
 
   // Export Pipeline
   const handleExportPipeline = useCallback(() => {
@@ -139,11 +161,9 @@ export function usePipelineExport() {
           nodes: currentNodes,
           edges: currentEdges,
         });
-
-        // Set new pipeline
         setNodes(nodes);
         setEdges(edges);
-
+        syncModules();
         toast.success("Pipeline imported successfully");
       } catch (error) {
         console.error("Import error:", error);
@@ -153,6 +173,6 @@ export function usePipelineExport() {
       }
     };
     input.click();
-  }, [getNodes, getEdges, deleteElements, setEdges, setNodes]);
+  }, [getNodes, getEdges, deleteElements, setEdges, setNodes, syncModules]);
   return { handleExportPipeline, handleImportPipeline };
 }

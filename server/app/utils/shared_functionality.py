@@ -3,8 +3,17 @@ import typing
 import contextlib
 import cv2
 import re
+import shutil
+from fastapi import UploadFile
 import numpy as np
 from app.utils.enums import VideoFormats
+from fastapi.responses import StreamingResponse
+from app.utils.constants import (
+    VIDEO_TYPES,
+    TEMP_VIDEO_NAME,
+    VIDEO_SOURCE_FOLDER,
+    TEMP_VIDEO_SOURCE_FOLDER,
+)
 
 
 def string_sanitizer(raw_name: str) -> str:
@@ -18,14 +27,15 @@ def string_sanitizer(raw_name: str) -> str:
     return cleaned.title()  # Capitalize each word
 
 
+def get_base_dir_path() -> Path:
+    return Path.cwd()
+
+
 # Get path of input video
 def get_video_path(video: str) -> Path:
-    return (
-        Path(__file__).resolve().parent.parent.parent.parent
-        / "server"
-        / "videos"
-        / video
-    )
+    if video.startswith(TEMP_VIDEO_NAME):
+        return get_base_dir_path() / TEMP_VIDEO_SOURCE_FOLDER / video
+    return get_base_dir_path() / VIDEO_SOURCE_FOLDER / video
 
 
 # Context manager for video capture and video writer
@@ -106,3 +116,53 @@ def decode_video(
                 out_file.write(output_frame.tobytes())
 
     return Path(output_path)
+
+
+def validate_video_extension(file_name: str | None) -> str:
+    if file_name is None:
+        raise ValueError("Filename cannot be None")
+    file_ext = Path(file_name).suffix.lower()
+    if file_ext not in VIDEO_TYPES:
+        raise ValueError(f"Unsupported format. Allowed: {list(VIDEO_TYPES.keys())}")
+    return file_ext
+
+
+def stream_file(
+    file_path: Path, file_ext: str, download_name: str
+) -> StreamingResponse:
+    if not file_path.exists():
+        raise FileNotFoundError(f"Video not found at {file_path}")
+
+    def iterfile(chunk_size: int = 1024 * 1024):
+        with open(file_path, "rb") as file:
+            while chunk := file.read(chunk_size):
+                yield chunk
+
+    return StreamingResponse(
+        iterfile(),
+        media_type=VIDEO_TYPES[file_ext],
+        headers={
+            "Accept-Ranges": "bytes",
+            "Content-Disposition": f"inline; filename={download_name}",
+        },
+    )
+
+
+def get_video_path_by_request(video_name: str, output: bool) -> Path:
+    if output:
+        return Path(__file__).resolve().parent.parent.parent / "output" / video_name
+    return get_video_path(video_name)
+
+
+async def save_uploaded_video(file: UploadFile) -> str:
+    if file.filename is None:
+        raise ValueError("Uploaded file must have a filename")
+
+    file_ext = validate_video_extension(file.filename)
+    file_name = f"{TEMP_VIDEO_NAME}{file_ext}"
+    video_path = get_base_dir_path() / TEMP_VIDEO_SOURCE_FOLDER / file_name
+
+    with video_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return file_name

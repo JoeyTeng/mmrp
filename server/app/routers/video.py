@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
-from pathlib import Path
-from app.utils.shared_functionality import get_video_path
-from app.utils.constants import VIDEO_TYPES
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from app.utils.shared_functionality import (
+    get_video_path_by_request,
+    save_uploaded_video,
+    stream_file,
+    validate_video_extension,
+)
 from app.schemas.video import VideoRequest
 
 router = APIRouter(
@@ -21,39 +23,36 @@ router = APIRouter(
 def get_video(request: VideoRequest):
     try:
         video_name: str = request.video_name
-        file_ext = Path(video_name).suffix.lower()
+        video_output: bool = request.output
 
-        if file_ext not in VIDEO_TYPES:
-            raise HTTPException(
-                400, detail=f"Unsupported format. Allowed: {list(VIDEO_TYPES.keys())}"
-            )
+        file_ext = validate_video_extension(video_name)
+        video_path = get_video_path_by_request(video_name, video_output)
 
-        # Get video path
-        if request.output:
-            video_path = (
-                Path(__file__).resolve().parent.parent.parent / "output" / video_name
-            )
-        else:
-            video_path = get_video_path(video_name)
-
-        if not video_path.exists():
-            raise HTTPException(404, detail=f"Video not found at {video_path}")
-
-        # Read video in chunks for better performance
-        def iterfile(chunk_size: int = 1024 * 1024):  # 1 MB chunks
-            with open(video_path, "rb") as file:
-                while chunk := file.read(chunk_size):
-                    yield chunk
-
-        return StreamingResponse(
-            iterfile(),
-            media_type=VIDEO_TYPES[file_ext],
-            headers={
-                "Accept-Ranges": "bytes",
-                "Content-Disposition": f"inline; filename={video_name}",
-            },
-        )
-    except HTTPException:
-        raise
+        return stream_file(video_path, file_ext, video_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except KeyError as e:
+        raise HTTPException(status_code=400, detail=f"No such constraint field: {e}")
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        raise HTTPException(500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Unknown error: {str(e)}")
+
+
+@router.post("/upload")
+async def upload_video(file: UploadFile = File(...)):
+    try:
+        filename = await save_uploaded_video(file)
+        return {"filename": filename}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except KeyError as e:
+        raise HTTPException(status_code=400, detail=f"No such constraint field: {e}")
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unknown error: {str(e)}")

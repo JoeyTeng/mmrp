@@ -1,24 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { loadVideo } from "@/services/videoService";
+import { useEffect, useRef } from "react";
 import { Box } from "@mui/material";
 import UnifiedPlayer from "./UnifiedPlayer";
 import { PlayerHandle } from "./VideoPlayer";
-import { VideoType, ViewOptions } from "./types";
+import { VideoType, VideoViews, ViewOptions } from "./types";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
+import { useVideo } from "@/contexts/VideoContext";
 
-type Props = {
-  type: VideoType;
-};
+const InterleavingFrames = ({ type, isLoading, error }: VideoViews) => {
+  const { videos } = useVideo();
 
-const InterleavingFrames = ({ type }: Props) => {
-  const playerRef = useRef<PlayerHandle>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<PlayerHandle>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
   useEffect(() => {
@@ -26,34 +23,9 @@ const InterleavingFrames = ({ type }: Props) => {
     setCurrentFrame(0);
 
     if (type === VideoType.Stream) {
-      return () => {};
+      return () => { };
     }
-
-    let url: string = videoRef.current?.src || "";
-
-    const initializeVideos = async () => {
-      try {
-        setIsLoading(true);
-        setError("");
-
-        const videoInfo = await loadVideo("example-video.mp4", false, videoRef);
-        url = videoInfo.url;
-      } catch (e) {
-        setError(
-          "Failed to load video: " +
-            (e instanceof Error ? e.message : "Unknown error"),
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeVideos();
-
-    return () => {
-      URL.revokeObjectURL(url);
-    };
-  }, [setCurrentFrame, setMetrics, type]);
+  }, [type, setMetrics, setCurrentFrame]);
 
   return (
     <Box
@@ -72,18 +44,18 @@ const InterleavingFrames = ({ type }: Props) => {
             )}
           </Box>
         )}
-        {type === VideoType.Video && videoRef && (
+        {type === VideoType.Video && (
           <>
-            <Box
-              component="video"
-              ref={videoRef}
-              className={`h-full w-auto object-contain`}
-              onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
-              onLoadStart={() => setIsLoading(true)}
-              onCanPlay={() => setIsLoading(false)}
-              onError={() => setError("Failed to load video")}
-              controls={false}
-            />
+            {videos.left?.url && (
+              <Box
+                component="video"
+                ref={videoRef}
+                src={videos.left.url}
+                className={`h-full w-auto object-contain`}
+                onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
+                controls={false}
+              />
+            )}
           </>
         )}
         {type === VideoType.Stream && (
@@ -106,7 +78,6 @@ const InterleavingFrames = ({ type }: Props) => {
         getSourceLabel={(frame) => (frame % 2 === 0 ? "Video A" : "Video B")}
         containerRef={containerRef}
         ref={playerRef}
-        onFirstFrame={() => setIsLoading(false)}
       />
     </Box>
   );
