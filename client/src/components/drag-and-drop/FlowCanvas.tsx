@@ -48,6 +48,7 @@ import CanvasContextMenu, {
 } from "./context-menu/CanvasContextMenu";
 import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
+import { handleError } from "@/utils/sharedFunctionality";
 
 const STORAGE_KEY = "pipeline";
 
@@ -285,6 +286,10 @@ export default function FlowCanvas({
       } catch (err) {
         console.error("Error sending pipeline to backend", err);
         setError(true);
+        // Dismiss success message
+        toast.dismiss();
+        // Display the error details
+        toast.error(handleError(err));
       } finally {
         setIsProcessing(false);
       }
