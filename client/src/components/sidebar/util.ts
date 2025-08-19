@@ -101,7 +101,7 @@ export function usePipelineExport() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
-      console.error("Import error:", e);
+      console.error("Export error:", e);
       toast.error(
         `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`,
       );

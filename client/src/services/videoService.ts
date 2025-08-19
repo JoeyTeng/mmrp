@@ -1,5 +1,6 @@
 import { apiClient } from "@/services/apiClient";
 import { RefObject } from "react";
+import axios from "axios";
 
 export const loadVideo = async (
   videoName: string,
@@ -28,6 +29,18 @@ export const loadVideo = async (
     return { url, size: data.size };
   } catch (e) {
     console.error(`Error loading video ${videoName}`, e);
+    if (axios.isAxiosError(e)) {
+      const data = e.response?.data;
+      if (data instanceof Blob) {
+        const text = await data.text();
+        let message = text;
+        try {
+          const j = JSON.parse(text);
+          message = j?.detail ?? text;
+        } catch {}
+        throw new Error(message);
+      }
+    }
     throw e;
   }
 };
