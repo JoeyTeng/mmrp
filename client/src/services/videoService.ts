@@ -28,6 +28,7 @@ export const loadVideo = async (
 
     return { url, size: data.size };
   } catch (e) {
+    console.error(`Error loading video ${videoName}`, e);
     if (axios.isAxiosError(e)) {
       const data = e.response?.data;
       if (data instanceof Blob) {

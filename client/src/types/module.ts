@@ -1,23 +1,24 @@
 export type ParamValueType = string | number | boolean;
 export type ParamConstraintsType = "str" | "int" | "select" | "bool";
-export type FrameRate =
-  | "23.976"
-  | "24"
-  | "25"
-  | "29.97"
-  | "30"
-  | "48"
-  | "50"
-  | "59.94"
-  | "60"
-  | "120"
-  | "240";
+export const ALLOWED_FRAME_RATES = [
+  "23.976",
+  "24",
+  "25",
+  "29.97",
+  "30",
+  "48",
+  "50",
+  "59.94",
+  "60",
+  "120",
+  "240",
+] as const;
+
+export type FrameRate = (typeof ALLOWED_FRAME_RATES)[number];
 
 export interface Module {
   id: string;
-  moduleClass: string;
-  name: string;
-  type: NodeType;
+  type: ModuleType;
   position: {
     x: number;
     y: number;
@@ -25,31 +26,33 @@ export interface Module {
   data: ModuleData;
 }
 
-export interface ModuleData {
-  parameters: ParameterDefinition[];
+export type ModuleData = {
+  name: string;
+  moduleClass: string;
+  parameters: ModuleParameter[];
   inputFormats: FormatDefinition[];
   outputFormats: FormatDefinition[];
-}
+};
 
-export interface ParameterDefinition {
+export interface ModuleParameter {
   name: string;
-  metadata: ParameterData;
+  metadata: ParameterMetadata;
 }
 
-export interface ParameterData {
+export interface ParameterMetadata {
   value: ParamValueType;
   type: ParamConstraintsType;
-  constraints: ParameterConstraints;
+  constraints: ParameterConstraint;
 }
 
-export interface ParameterConstraints {
+export interface ParameterConstraint {
   type: ParamConstraintsType;
   default: ParamValueType;
-  required: boolean;
-  description: string;
   min?: number;
   max?: number;
-  options?: ParamValueType[];
+  options?: string[];
+  required: boolean;
+  description: string;
 }
 
 export interface FormatDefinition {
@@ -60,7 +63,12 @@ export interface FormatDefinition {
   frameRate?: FrameRate; //fps
 }
 
-export enum NodeType {
+export interface IOFormat {
+  type: string;
+  formats: FormatDefinition;
+}
+
+export enum ModuleType {
   InputNode = "inputNode",
   ProcessNode = "processNode",
   OutputNode = "outputNode",

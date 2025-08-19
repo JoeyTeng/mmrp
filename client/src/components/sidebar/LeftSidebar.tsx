@@ -1,6 +1,6 @@
 "use client";
 
-import { useVideoReload } from "@/contexts/videoReloadContext";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { useDownloadUtils } from "../sidebar/util";
 import { usePipelineExport } from "../sidebar/util";
 import { getLeftSidebarItems } from "./sidebar-config";

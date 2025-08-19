@@ -2,19 +2,22 @@ import crypto from "crypto";
 import stringify from "json-stable-stringify";
 import type { PipelineData, ProtectedExport } from "./types";
 import { AxiosError } from "axios";
+import axios from "axios";
 
 export function handleError(error: unknown): string {
   let message = "An unexpected error occurred.";
-  if ((error as AxiosError).isAxiosError) {
+  if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<{ detail?: string }>;
     message =
       axiosError.response?.data?.detail || axiosError.message || message;
+  } else if (error instanceof Error) {
+    // Frontend error
+    message = error.message;
+  } else if (typeof error === "string") {
+    message = error;
   }
+  console.error(message);
   return message;
-}
-
-export function isFrameworkHandledParameter(parameter: string): boolean {
-  return parameter === "input" || parameter === "output";
 }
 
 export const generateHash = (data: object): string => {
