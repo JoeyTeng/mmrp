@@ -5,9 +5,7 @@ import {
   CanvasContextAction,
 } from "./CanvasContextMenuConfig";
 import ContextMenu from "../../util/ContextMenu";
-import Modal from "@/components/util/Modal";
-import { CANVAS_MODAL_OPTIONS, CanvasModalAction } from "./CanvasModal";
-import { useVideoReload } from "@/contexts/videoReloadContext";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 
 export type CanvasContextMenuHandle = {
   open: (position: { x: number; y: number }) => void;
@@ -25,7 +23,6 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
   const { isProcessing } = useVideoReload();
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const menuPositionRef = useRef<{ x: number; y: number }>(null);
 
   const handleCloseMenu = () => setIsOpen(false);
@@ -37,32 +34,10 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
         if (isEmpty()) {
           return;
         }
-        setIsModalOpen(true);
-        return;
       }
       handleCanvasAction(actionId as CanvasContextAction);
     },
     [handleCanvasAction, isEmpty],
-  );
-
-  const handleCloseModal = () => setIsModalOpen(false);
-
-  const handleModalAction = useCallback(
-    (actionId: CanvasModalAction) => {
-      handleCloseMenu();
-      switch (actionId) {
-        case "cancel": {
-          handleCloseModal();
-          return;
-        }
-        case "delete": {
-          handleCanvasAction("clear" as CanvasContextAction);
-          handleCloseModal();
-          return;
-        }
-      }
-    },
-    [handleCanvasAction],
   );
 
   useImperativeHandle(ref, () => {
@@ -81,27 +56,14 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
   });
 
   return (
-    <>
-      <ContextMenu
-        open={isOpen}
-        dense
-        position={menuPositionRef.current}
-        items={getCanvasContextMenu(isProcessing)}
-        onAction={handleAction}
-        onClose={handleCloseMenu}
-      />
-      <Modal
-        open={isModalOpen}
-        title="Delete all modules?"
-        description={[
-          "Are you sure you want to permanently delete all modules in the pipeline?",
-          "This action cannot be undone.",
-        ]}
-        options={CANVAS_MODAL_OPTIONS}
-        onAction={handleModalAction}
-        onClose={handleCloseModal}
-      />
-    </>
+    <ContextMenu
+      open={isOpen}
+      dense
+      position={menuPositionRef.current}
+      items={getCanvasContextMenu(isProcessing)}
+      onAction={handleAction}
+      onClose={handleCloseMenu}
+    />
   );
 };
 

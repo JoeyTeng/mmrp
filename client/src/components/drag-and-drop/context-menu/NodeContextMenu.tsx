@@ -1,16 +1,31 @@
-import { useCallback, useImperativeHandle, useRef, useState } from "react";
-import { NODE_CONTEXT_MENU, NodeAction } from "./NodeContextMenuConfig";
+import {
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  NODE_CONTEXT_MENU,
+  NODE_SELECTION_CONTEXT_MENU,
+  NodeAction,
+} from "./NodeContextMenuConfig";
 import ContextMenu from "../../util/ContextMenu";
 import { useNodeActions } from "./useNodeActions";
 import { Node } from "@xyflow/react";
 import { ModuleData, ModuleType } from "@/types/module";
-import Modal from "@/components/util/Modal";
-import { CANVAS_MODAL_OPTIONS, CanvasModalAction } from "./CanvasModal";
 
-type MenuPayload = {
-  position: { x: number; y: number };
-  nodeId: string;
-};
+type MenuPayload =
+  | {
+      position: { x: number; y: number };
+      type: "single";
+      nodeId: string;
+    }
+  | {
+      position: { x: number; y: number };
+      type: "multi";
+      nodeIds: string[];
+    };
 
 export type NodeContextMenuHandle = {
   open: (payload: MenuPayload) => void;
@@ -23,58 +38,36 @@ interface NodeContextMenuProps {
 }
 
 const NodeContextMenu = ({ ref, onEditNode }: NodeContextMenuProps) => {
-  const { handleNodeAction, isBreakingChangeOnDelete, getNodeName } =
-    useNodeActions(onEditNode);
+  const { handleNodeAction } = useNodeActions(onEditNode);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [menuType, setMenuType] = useState<"multi" | "single" | null>(null);
   const menuPositionRef = useRef<{ x: number; y: number }>(null);
-  const nodeIdRef = useRef<string>(null);
+  const nodeIdsRef = useRef<string[] | null>(null);
+
+  const menuItems = useMemo(() => {
+    switch (menuType) {
+      case "multi":
+        return NODE_SELECTION_CONTEXT_MENU;
+      case "single":
+        return NODE_CONTEXT_MENU;
+      default:
+        return [];
+    }
+  }, [menuType]);
 
   const handleCloseMenu = () => setIsOpen(false);
 
   const handleAction = useCallback(
     (actionId: NodeAction) => {
-      if (!nodeIdRef.current) {
+      if (!nodeIdsRef.current) {
         console.error(
-          `Tried to execute NodeAction "${actionId}" with no NodeID.`,
+          `Tried to execute NodeAction "${actionId}" with no NodeID(s).`,
         );
         return;
       }
       handleCloseMenu();
-      if (actionId === "delete") {
-        if (isBreakingChangeOnDelete(nodeIdRef.current)) {
-          setIsModalOpen(true);
-          return;
-        }
-      }
-      handleNodeAction(actionId as NodeAction, nodeIdRef.current);
-    },
-    [handleNodeAction, isBreakingChangeOnDelete],
-  );
-
-  const handleCloseModal = () => setIsModalOpen(false);
-
-  const handleModalAction = useCallback(
-    (actionId: CanvasModalAction) => {
-      handleCloseMenu();
-      switch (actionId) {
-        case "cancel": {
-          handleCloseModal();
-          return;
-        }
-        case "delete": {
-          if (!nodeIdRef.current) {
-            console.error(
-              `Tried to execute NodeAction "${actionId}" with no NodeID.`,
-            );
-            return;
-          }
-          handleNodeAction("delete" as NodeAction, nodeIdRef.current);
-          handleCloseModal();
-          return;
-        }
-      }
+      handleNodeAction(actionId as NodeAction, nodeIdsRef.current);
     },
     [handleNodeAction],
   );
@@ -83,7 +76,11 @@ const NodeContextMenu = ({ ref, onEditNode }: NodeContextMenuProps) => {
     return {
       open(payload: MenuPayload) {
         menuPositionRef.current = payload.position;
-        nodeIdRef.current = payload.nodeId;
+
+        if (payload.type === "single") nodeIdsRef.current = [payload.nodeId];
+        else nodeIdsRef.current = payload.nodeIds;
+
+        setMenuType(payload.type);
         setIsOpen(true);
       },
       close() {
@@ -93,29 +90,14 @@ const NodeContextMenu = ({ ref, onEditNode }: NodeContextMenuProps) => {
   });
 
   return (
-    <>
-      <ContextMenu
-        open={isOpen}
-        dense
-        position={menuPositionRef.current}
-        items={NODE_CONTEXT_MENU}
-        onAction={handleAction}
-        onClose={handleCloseMenu}
-      />
-      <Modal
-        open={isModalOpen}
-        title={
-          nodeIdRef.current ? `Delete "${getNodeName(nodeIdRef.current)}"?` : ""
-        }
-        description={[
-          "Deleting this module will break one or more pipeline flows.",
-          "Are you sure you want to delete this module?",
-        ]}
-        options={CANVAS_MODAL_OPTIONS}
-        onAction={handleModalAction}
-        onClose={handleCloseModal}
-      />
-    </>
+    <ContextMenu
+      open={isOpen}
+      dense
+      position={menuPositionRef.current}
+      items={menuItems}
+      onAction={handleAction}
+      onClose={handleCloseMenu}
+    />
   );
 };
 
