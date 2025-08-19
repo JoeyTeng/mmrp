@@ -16,7 +16,7 @@ export default function ModuleItem({ module }: ModuleItemProps) {
     <Box
       draggable
       onDragStart={onDragStart}
-      className="p-2 mb-1 border border-gray-300 bg-gray-50 rounded cursor-grab"
+      className="p-3 max-w-full mb-2 border border-gray-300 bg-white rounded-lg font-semibold text-sm text-gray-800 cursor-grab shadow-sm text-pretty"
     >
       {module.data.name}
     </Box>
