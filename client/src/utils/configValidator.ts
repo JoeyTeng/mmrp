@@ -1,3 +1,4 @@
+import { ALLOWED_FRAME_RATES, FrameRate, IOFormat } from "@/types/module";
 import { camelizeKeys } from "./camelize";
 
 type ConfigParameter = {
@@ -44,6 +45,15 @@ export async function validateConfigFile(config: File): Promise<boolean> {
     return false;
   }
 
+  if (!validateFormats(json.inputFormats))
+    throw Error(
+      "The input formats could not be validated. Please check the height, width, and frame rate.",
+    );
+  if (!validateFormats(json.outputFormats))
+    throw Error(
+      "The output formats could not be validated. Please check the height, width, and frame rate.",
+    );
+
   // Check parameters keys
   const requiredParamKeys = ["name", "flag", "type", "required"];
 
@@ -58,3 +68,25 @@ export async function validateConfigFile(config: File): Promise<boolean> {
 
   return hasValidParams;
 }
+
+const validateFormats = (formatsArr: IOFormat[]): boolean => {
+  return formatsArr.every((fmt) => {
+    if (typeof fmt !== "object" || !fmt.formats) return false;
+    const f = fmt.formats;
+
+    // Validate width / height if provided
+    if (typeof f.width === "number") {
+      if (f.width < 32 || f.width > 16384) return false;
+    }
+    if (typeof f.height === "number") {
+      if (f.height < 32 || f.height > 8704) return false;
+    }
+
+    // Validate frame rate if provided
+    if (typeof f.frameRate === "string") {
+      if (!ALLOWED_FRAME_RATES.includes(f.frameRate as FrameRate)) return false;
+    }
+
+    return true;
+  });
+};
