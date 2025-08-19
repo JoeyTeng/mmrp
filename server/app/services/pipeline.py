@@ -229,38 +229,32 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
 def list_examples() -> list[ExamplePipeline]:
     example_pipelines: list[ExamplePipeline] = []
 
+    module_classes = {
+        m.data.module_class
+        for m in ModuleRegistry.get_all().values()
+        if hasattr(m, "data") and hasattr(m.data, "module_class")
+    }
+
     for file in sorted(EXAMPLES_DIR.glob("*.json")):
         try:
             raw = json.loads(file.read_text())
-
-            module_classes = {
-                m.data.module_class
-                for m in ModuleRegistry.get_all().values()
-                if hasattr(m, "data") and hasattr(m.data, "module_class")
-            }
-
+            raw["id"] = file.stem
             nodes = raw.get("nodes", [])
-            edges = raw.get("edges", [])
 
             if not all(
                 node.get("data", {}).get("module_class") in module_classes
                 for node in nodes
             ):
-                print(f" Skipping {file.name} — unsupported module found ")
+                print(f"Skipping {file.name} — unsupported module found")
                 continue
 
-            example_pipelines.append(
-                ExamplePipeline(
-                    id=file.stem,
-                    name=raw.get("name", file.stem.replace("_", " ").title()),
-                    nodes=nodes,
-                    edges=edges,
-                )
-            )
+            example_pipelines.append(ExamplePipeline.model_validate(raw))
 
         except json.JSONDecodeError:
-            print(f" Skipping {file.name} — bad JSON syntax ")
+            # TODO: replace print with proper logging & structured error response
+            print(f"Skipping {file.name} — bad JSON syntax")
         except ValidationError as e:
-            print(f" Skipping {file.name} — schema fail: {e}")
+            # TODO: replace print with proper logging & structured error response
+            print(f"Skipping {file.name} — schema fail: {e}")
 
     return example_pipelines

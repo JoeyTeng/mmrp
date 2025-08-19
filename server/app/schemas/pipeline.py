@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from app.schemas.metrics import Metrics
 from app.schemas.module import ModuleData
+from pydantic import model_validator
+from typing import Any
 
 
 class PipelineParameter(BaseModel):
@@ -26,14 +28,23 @@ class PipelineResponse(BaseModel):
     metrics: list[Metrics]
 
 
-class NodeSpec(BaseModel):
+class PipelineNodeData(ModuleData):
+    """ModuleData for pipeline nodes"""
+
+    # Override the validator to do nothing
+    @model_validator(mode="before")
+    def parse_raw_parameters(cls, values: dict[str, Any]) -> dict[str, Any]:
+        return values  # No transformation needed
+
+
+class PipelineNode(BaseModel):
     id: str
     type: str
     position: dict[str, float]
-    data: ModuleData
+    data: PipelineNodeData
 
 
-class EdgeSpec(BaseModel):
+class PipelineEdge(BaseModel):
     id: str
     source: str
     target: str
@@ -44,5 +55,5 @@ class EdgeSpec(BaseModel):
 class ExamplePipeline(BaseModel):
     id: str
     name: str
-    nodes: list[NodeSpec]
-    edges: list[EdgeSpec]
+    nodes: list[PipelineNode]
+    edges: list[PipelineEdge]

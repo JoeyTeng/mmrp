@@ -14,7 +14,7 @@ export default function ExamplePipelines() {
 
   const handleLoad = (pipeline: ExamplePipeline) => {
     const confirmed = window.confirm(
-      "Loading this pipeline will replace your current canvas. Unsaved changes will be lost. Export the existing pipeline if needed. Continue?",
+      "Loading this pipeline will replace your canvas, current changes will be lost. Export the existing pipeline if needed. Continue?",
     );
     if (!confirmed) return;
     const { nodes, edges } = pipeline;
