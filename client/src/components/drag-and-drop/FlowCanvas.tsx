@@ -39,6 +39,7 @@ import CanvasContextMenu, {
 import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
 import { ExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
+import { handleError } from "@/utils/sharedFunctionality";
 
 export default function FlowCanvas({
   editingNode,
@@ -232,6 +233,10 @@ export default function FlowCanvas({
       } catch (err) {
         console.error("Error sending pipeline to backend", err);
         setError(true);
+        // Dismiss success message
+        toast.dismiss();
+        // Display the error details
+        toast.error(handleError(err));
       } finally {
         setIsProcessing(false);
       }
