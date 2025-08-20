@@ -77,8 +77,7 @@ and so on ..
 
 Remove properties that are frontend-only:
 
-* `measured` (canvas node size)
-* `flag`, `options` (outside constraints)
+* `measured`,`flag`, `options` (outside constraints), etc.
 
 ## 4. Edges
 
