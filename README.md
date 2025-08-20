@@ -70,8 +70,8 @@ Convert field names:
 * `inputFormats` → `input_formats`
 * `outputFormats` → `output_formats`
 * `pixelFormat` → `pixel_format`
-* `colorSpace` → `color_space`
-and so on ..
+* `colorSpace` → `color_space`  
+and so on.
 
 ## 3. Drop UI-only fields
 
