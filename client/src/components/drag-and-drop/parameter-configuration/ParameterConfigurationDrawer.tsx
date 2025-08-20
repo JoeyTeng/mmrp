@@ -6,13 +6,31 @@ import { AppDrawer } from "@/components/sidebar/AppDrawer";
 import { ParameterConfigurationDrawerProps } from "../types";
 import { ModuleData, ModuleType, ParamValueType } from "@/types/module";
 import ParameterConfiguration from "./ParameterConfiguration";
-import { Box, Button, Divider, InputAdornment, TextField } from "@mui/material";
-import { SearchOutlined } from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  InputAdornment,
+  MenuItem,
+  Select,
+  TextField,
+} from "@mui/material";
+import { Delete, SearchOutlined } from "@mui/icons-material";
+import { usePersistTemplate } from "@/hooks/usePersistTemplate";
 
 export default function ParameterConfigurationDrawer({
   editingNode,
   clearEditingNode,
 }: ParameterConfigurationDrawerProps) {
+  const {
+    templates,
+    addTemplate,
+    removeTemplate,
+    exportTemplate,
+    importTemplate,
+  } = usePersistTemplate();
+
   const [tempNode, setTempNode] =
     useState<Node<ModuleData, ModuleType>>(editingNode);
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,6 +85,59 @@ export default function ParameterConfigurationDrawer({
       anchor="right"
     >
       <Box display="flex" flexDirection="column" height="100%" width="100%">
+        <Box sx={{ m: 2, mb: 0 }}>
+          <Select
+            fullWidth
+            size="small"
+            value=""
+            displayEmpty
+            onChange={(e) => {
+              const selected = templates.find((t) => t.name === e.target.value);
+              if (selected) {
+                setTempNode((prev) => ({
+                  ...prev,
+                  data: {
+                    ...prev.data,
+                    parameters: prev.data.parameters.map((param) => ({
+                      ...param,
+                      metadata: {
+                        ...param.metadata,
+                        value:
+                          selected.parameters[param.name] ??
+                          param.metadata.value,
+                      },
+                    })),
+                  },
+                }));
+              }
+            }}
+          >
+            <MenuItem value="" disabled>
+              Apply Template
+            </MenuItem>
+            {templates
+              .filter((t) => t.moduleClass === tempNode?.data.moduleClass)
+              .map((t) => (
+                <MenuItem
+                  key={t.name}
+                  value={t.name}
+                  sx={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  {t.name}
+                  <IconButton
+                    size="small"
+                    edge="end"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeTemplate(t.name, t.moduleClass);
+                    }}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </MenuItem>
+              ))}
+          </Select>
+        </Box>
         <Box m={2}>
           <TextField
             autoFocus
@@ -94,6 +165,95 @@ export default function ParameterConfigurationDrawer({
             onParamChange={handleParamChange}
             searchQuery={searchQuery.trim()}
           />
+        </Box>
+        <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+          <Button
+            fullWidth
+            className="p-3 max-w-full border border-gray-300 bg-white rounded-lg font-semibold text-sm text-gray-800 shadow-sm text-pretty"
+            sx={{ flex: 1, textTransform: "none" }}
+            onClick={() => {
+              setTempNode((prev) => {
+                const updatedParameters = prev.data.parameters.map((param) => ({
+                  ...param,
+                  metadata: {
+                    ...param.metadata,
+                    value: param.metadata.constraints.default,
+                  },
+                }));
+                return {
+                  ...prev,
+                  data: {
+                    ...prev.data,
+                    parameters: updatedParameters,
+                  },
+                };
+              });
+            }}
+          >
+            Reset to Defaults
+          </Button>
+          <Button
+            fullWidth
+            className="p-3 max-w-full border border-gray-300 bg-white rounded-lg font-semibold text-sm text-gray-800 shadow-sm text-pretty"
+            sx={{ flex: 1, textTransform: "none" }}
+            onClick={() => {
+              if (!tempNode) return;
+              const name = prompt("Enter a template name:");
+              if (!name) return;
+              addTemplate({
+                name,
+                moduleClass: tempNode.data.moduleClass,
+                parameters: Object.fromEntries(
+                  tempNode.data.parameters.map((p) => [
+                    p.name,
+                    p.metadata.value,
+                  ]),
+                ),
+              });
+            }}
+          >
+            Save as Template
+          </Button>
+        </Box>
+        <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+          <Button
+            className="p-3 max-w-full border border-gray-300 bg-white rounded-lg font-semibold text-sm text-gray-800 shadow-sm text-pretty"
+            sx={{ flex: 1, textTransform: "none" }}
+            onClick={() => {
+              if (tempNode) {
+                exportTemplate({
+                  name: tempNode.data.name || "template",
+                  moduleClass: tempNode.data.moduleClass,
+                  parameters: Object.fromEntries(
+                    tempNode.data.parameters.map((p) => [
+                      p.name,
+                      p.metadata.value,
+                    ]),
+                  ),
+                });
+              }
+            }}
+          >
+            Export Template
+          </Button>
+          <Button
+            component="label"
+            className="p-3 max-w-full border border-gray-300 bg-white rounded-lg font-semibold text-sm text-gray-800 shadow-sm text-pretty"
+            sx={{ flex: 1, textTransform: "none" }}
+          >
+            Import Template
+            <input
+              type="file"
+              accept="application/json"
+              hidden
+              onChange={(e) => {
+                if (e.target.files?.[0] && tempNode) {
+                  importTemplate(e.target.files[0], tempNode.data.moduleClass);
+                }
+                e.target.value = "";
+              }}
+            />
+          </Button>
         </Box>
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 2 }}
