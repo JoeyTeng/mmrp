@@ -2,14 +2,12 @@
 
 import { Button, Box } from "@mui/material";
 import { FileOpenOutlined } from "@mui/icons-material";
-import { toast } from "react-toastify/unstyled";
 import { useState } from "react";
 import SingleFileRow from "./SingleFileRow";
 import DualFileRow from "./DualFileRow";
 import { uploadBinaryToBackend } from "@/services/binaryService";
 import { GenericModal } from "./GenericModal";
-import { handleError } from "@/utils/sharedFunctionality";
-import { CopyableToast } from "@/utils/CopyableToast";
+import { displayError, handleError } from "@/utils/sharedFunctionality";
 
 export default function UploadBinaryModal({
   open,
@@ -59,11 +57,7 @@ export default function UploadBinaryModal({
       if (!osFiles.lib) missing.push(`${os} library`);
     });
     if (missing.length) {
-      toast.error(
-        <CopyableToast
-          message={`Missing file(s):\n- ${missing.join("\n- ")}`}
-        />,
-      );
+      displayError(`Missing file(s):\n- ${missing.join("\n- ")}`);
       return;
     }
 
@@ -88,16 +82,12 @@ export default function UploadBinaryModal({
       }
       // Error in validation --> res == false
       if (!res) {
-        toast.error(
-          <CopyableToast
-            message={
-              "The config file does not follow the required structure. (See template)"
-            }
-          />,
+        displayError(
+          "The config file does not follow the required structure. (See template)",
         );
       }
     } catch (error) {
-      toast.error(<CopyableToast message={handleError(error)} />);
+      displayError(handleError(error));
     } finally {
       setIsLoading(false);
     }

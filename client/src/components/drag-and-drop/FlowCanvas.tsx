@@ -38,8 +38,7 @@ import CanvasContextMenu, {
 } from "./context-menu/CanvasContextMenu";
 import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
-import { handleError } from "@/utils/sharedFunctionality";
-import { CopyableToast } from "@/utils/CopyableToast";
+import { displayError, handleError } from "@/utils/sharedFunctionality";
 
 export default function FlowCanvas({
   defaultNodes,
@@ -227,7 +226,7 @@ export default function FlowCanvas({
         // Dismiss success message
         toast.dismiss();
         // Display the error details
-        toast.error(<CopyableToast message={handleError(err)} />);
+        displayError(handleError(err));
       } finally {
         setIsProcessing(false);
       }

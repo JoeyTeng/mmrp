@@ -5,10 +5,9 @@ import { useReactFlow } from "@xyflow/react";
 import { useCallback } from "react";
 import {
   createProtectedExport,
+  displayError,
   verifyImport,
 } from "@/utils/sharedFunctionality";
-import React from "react";
-import { CopyableToast } from "@/utils/CopyableToast";
 
 export function useDownloadUtils() {
   const { getLatestVideoInfo, latestResponse } = useVideoReload();
@@ -104,10 +103,8 @@ export function usePipelineExport() {
       URL.revokeObjectURL(url);
     } catch (e) {
       console.error("Export error:", e);
-      toast.error(
-        React.createElement(CopyableToast, {
-          message: `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`,
-        }),
+      displayError(
+        `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`,
       );
     }
   }, [getNodes, getEdges]);
@@ -151,10 +148,8 @@ export function usePipelineExport() {
         toast.success("Pipeline imported successfully");
       } catch (error) {
         console.error("Import error:", error);
-        toast.error(
-          React.createElement(CopyableToast, {
-            message: `Import failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-          }),
+        displayError(
+          `Import failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
       }
     };
