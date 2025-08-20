@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useCallback,
-  useRef,
-  useMemo,
-  useEffect,
-  useState,
-} from "react";
+import React, { useCallback, useRef, useMemo } from "react";
 
 import {
   ReactFlow,
@@ -23,10 +17,6 @@ import {
   ControlButton,
   getIncomers,
   SelectionMode,
-  applyNodeChanges,
-  applyEdgeChanges,
-  type NodeMouseHandler,
-  type OnConnect,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
@@ -49,8 +39,7 @@ import CanvasContextMenu, {
 import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
 import { handleError } from "@/utils/sharedFunctionality";
-
-const STORAGE_KEY = "pipeline";
+import { usePersistPipeline } from "@/hooks/usePersistPipeline";
 
 export default function FlowCanvas({
   defaultNodes,
@@ -63,74 +52,42 @@ export default function FlowCanvas({
 
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();
+  const { screenToFlowPosition, getNodes, getEdges, setNodes, setEdges } =
+    useReactFlow<Node<ModuleData, ModuleType>, Edge>();
 
-  const { screenToFlowPosition } = useReactFlow<
-    Node<ModuleData, ModuleType>,
-    Edge
-  >();
+  const { persistedNodes, persistedEdges } = usePersistPipeline(
+    () => getNodes(),
+    () => getEdges(),
+    defaultNodes,
+    defaultEdges,
+  );
 
-  const modules = useModulesContext();
-
-  // Controlled state with localStorage bootstrap
-  const [nodes, setNodes] = useState<Node<ModuleData, ModuleType>[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const { nodes: n } = JSON.parse(saved);
-        return (
-          (n as Node<ModuleData, ModuleType>[]) ??
-          (defaultNodes as Node<ModuleData, ModuleType>[]) ??
-          []
-        );
-      }
-    } catch {}
-    return (defaultNodes as Node<ModuleData, ModuleType>[]) ?? [];
-  });
-
-  const [edges, setEdges] = useState<Edge[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const { edges: e } = JSON.parse(saved);
-        return (e as Edge[]) ?? (defaultEdges as Edge[]) ?? [];
-      }
-    } catch {}
-    return (defaultEdges as Edge[]) ?? [];
-  });
-
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        const nodes = (parsed.nodes as Node<ModuleData, ModuleType>[]) || [];
-        const edges = (parsed.edges as Edge[]) || [];
-        setNodes(nodes);
-        setEdges(edges);
-      } catch (err) {
-        console.error("Failed to parse saved pipeline", err);
-      }
-    }
-  }, [setNodes, setEdges]);
-
-  // persist to localStorage whenever nodes/edges change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges }));
-  }, [nodes, edges]);
-
-  const selectNode = useCallback((nodeId: string) => {
-    setNodes((nodes) =>
+  const selectNode = useCallback(
+    (nodeId: string) => {
+      setNodes((nodes) =>
+        nodes.map((node) => ({
+          ...node,
+          selected: node.id === nodeId,
+        })),
+      );
+    },
+    [setNodes],
+  );
+  const unselectNodesAndEdges = useCallback(() => {
+    setNodes((nodes: Node<ModuleData, ModuleType>[]) =>
       nodes.map((node) => ({
         ...node,
-        selected: node.id === nodeId,
+        selected: false,
       })),
     );
-  }, []);
 
-  const unselectNodesAndEdges = useCallback(() => {
-    setNodes((nodes) => nodes.map((node) => ({ ...node, selected: false })));
-    setEdges((edges) => edges.map((edge) => ({ ...edge, selected: false })));
-  }, []);
+    setEdges((edges: Edge[]) =>
+      edges.map((edge) => ({
+        ...edge,
+        selected: false,
+      })),
+    );
+  }, [setNodes, setEdges]);
 
   const handleNodeOpenMenu = useCallback(
     (event: React.MouseEvent, nodeId: string) => {
@@ -168,10 +125,7 @@ export default function FlowCanvas({
     [FlowNodeWithMenu],
   );
 
-  const onNodeContextMenu: NodeMouseHandler<Node<ModuleData, ModuleType>> = (
-    event,
-    node,
-  ) => {
+  const onNodeContextMenu = (event: React.MouseEvent, node: Node) => {
     event.preventDefault();
     unselectNodesAndEdges();
     selectNode(node.id);
@@ -188,8 +142,8 @@ export default function FlowCanvas({
     event.preventDefault();
     unselectNodesAndEdges();
     canvasContextMenuRef.current?.open({
-      x: (event as MouseEvent).clientX,
-      y: (event as MouseEvent).clientY,
+      x: event.clientX,
+      y: event.clientY,
     });
   };
 
@@ -197,6 +151,8 @@ export default function FlowCanvas({
     event.preventDefault();
     event.dataTransfer.dropEffect = "copy";
   }, []);
+
+  const { modules } = useModulesContext();
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -227,33 +183,18 @@ export default function FlowCanvas({
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [screenToFlowPosition],
+    [screenToFlowPosition, setNodes],
   );
-
-  // In controlled mode add the edges
-  const onConnect: OnConnect = useCallback((conn) => {
-    const newEdge: Edge = {
-      id: crypto.randomUUID(),
-      ...conn,
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        width: 20,
-        height: 20,
-      },
-    };
-    setEdges((eds) => [...eds, newEdge]);
-  }, []);
 
   const isValidConnection: IsValidConnection<Edge> = useCallback(
     (connection: Connection | Edge) => {
       const conn = connection as Connection;
-      const source = nodes.find((node) => node.id === conn.source);
-      const target = nodes.find((node) => node.id === conn.target);
-      if (!source || !target || source.id === target.id) return false;
-      const hasCycle = (
-        node: Node<ModuleData, ModuleType>,
-        visited = new Set<string>(),
-      ) => {
+      const nodes = getNodes();
+      const edges = getEdges();
+      const source = nodes.find((node) => node.id == conn.source);
+      const target = nodes.find((node) => node.id == conn.target);
+      if (!source || !target || source.id == target.id) return false;
+      const hasCycle = (node: Node, visited = new Set<string>()) => {
         if (visited.has(node.id)) return false;
         visited.add(node.id);
         for (const outgoer of getOutgoers(node, nodes, edges)) {
@@ -270,10 +211,15 @@ export default function FlowCanvas({
       };
       return !hasCycle(target) && hasOneIncomingConnection(source, target);
     },
-    [nodes, edges],
+    [getNodes, getEdges],
   );
 
   const onRun = async () => {
+    const nodes: Node<ModuleData, ModuleType>[] = getNodes() as Node<
+      ModuleData,
+      ModuleType
+    >[];
+    const edges: Edge[] = getEdges();
     if (checkPipeline(nodes, edges)) {
       const pipeline = dumpPipelineToJson(nodes, edges);
 
@@ -296,10 +242,8 @@ export default function FlowCanvas({
     }
   };
 
-  const onNodeDoubleClickHandler: NodeMouseHandler<
-    Node<ModuleData, ModuleType>
-  > = useCallback(
-    (event, node) => {
+  const onNodeDoubleClickHandler = useCallback(
+    (event: React.MouseEvent, node: Node<ModuleData, ModuleType>) => {
       event.preventDefault();
       event.stopPropagation();
       onEditNode(node);
@@ -320,18 +264,11 @@ export default function FlowCanvas({
       onContextMenu={(e) => e.preventDefault()}
     >
       <Box className="w-full h-full">
-        <ReactFlow<Node<ModuleData, ModuleType>, Edge>
+        <ReactFlow
           nodeTypes={nodeTypes}
           deleteKeyCode={editingNode != null ? [] : ["Delete", "Backspace"]}
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={(changes) =>
-            setNodes((nodes) => applyNodeChanges(changes, nodes))
-          }
-          onEdgesChange={(changes) =>
-            setEdges((edges) => applyEdgeChanges(changes, edges))
-          }
-          onConnect={onConnect}
+          defaultNodes={persistedNodes}
+          defaultEdges={persistedEdges}
           isValidConnection={isValidConnection}
           onDragOver={onDragOver}
           onDrop={onDrop}
