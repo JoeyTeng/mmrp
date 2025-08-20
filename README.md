@@ -38,9 +38,9 @@ cd server
 
 uv run uvicorn main:app --reload
 ```
-### Creating your own example pipeline configurations
+## Creating your own example pipeline configurations
 
-## Convert from Exported (Input) JSON
+### Convert from Exported (Input) JSON
 Draw the needed example configuration on the canvas and export it. When you export, the JSON contains extra frontend data that needs to be removed. To convert to Target JSON for storing in the backend follow below steps:
 
 ## 1. Remove wrapper metadata
@@ -48,7 +48,7 @@ Draw the needed example configuration on the canvas and export it. When you expo
 ```json
   {
     "metadata": { "version": "1.0", "timestamp": "..." },
-    "data": { "nodes": [...], "edges": [...] }
+    "data": { "nodes": [], "edges": [] }
   }
 ````
 
@@ -57,8 +57,8 @@ Draw the needed example configuration on the canvas and export it. When you expo
   ```json
   {
     "name": "My Pipeline",
-    "nodes": [...],
-    "edges": [...]
+    "nodes": [],
+    "edges": []
   }
   ```
 
