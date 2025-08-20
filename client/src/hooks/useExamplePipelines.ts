@@ -12,7 +12,7 @@ export function useExamplePipelines() {
   const loadPipelines = () => {
     setLoading(true);
     apiClient
-      .get("/pipeline/examples") // TODO: Validate response schema
+      .get("/pipeline/examples/") // TODO: Validate response schema
       .then((res) => setPipelines(camelizeKeys(res.data) as ExamplePipeline[]))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
