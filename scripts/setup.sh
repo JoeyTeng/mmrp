@@ -8,7 +8,6 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "Intstalling frontend dependencies..."
 cd "$ROOT_DIR/client"
 npm install
-npm run build
 
 # Install backend dependencies
 echo "Installing backend dependencies..."

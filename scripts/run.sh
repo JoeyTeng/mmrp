@@ -12,4 +12,5 @@ uv run uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2 &
 # Start frontend (serve prebuilt app)
 echo "Starting client…"
 cd "$ROOT_DIR/client"
+npm run build
 npm run start -- -p 3000 -H 0.0.0.0
