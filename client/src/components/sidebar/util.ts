@@ -7,6 +7,8 @@ import {
   createProtectedExport,
   verifyImport,
 } from "@/utils/sharedFunctionality";
+import React from "react";
+import { CopyableToast } from "@/utils/CopyableToast";
 
 export function useDownloadUtils() {
   const { getLatestVideoInfo, latestResponse } = useVideoReload();
@@ -103,7 +105,9 @@ export function usePipelineExport() {
     } catch (e) {
       console.error("Export error:", e);
       toast.error(
-        `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`,
+        React.createElement(CopyableToast, {
+          message: `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`,
+        }),
       );
     }
   }, [getNodes, getEdges]);
@@ -148,7 +152,9 @@ export function usePipelineExport() {
       } catch (error) {
         console.error("Import error:", error);
         toast.error(
-          `Import failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+          React.createElement(CopyableToast, {
+            message: `Import failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+          }),
         );
       }
     };

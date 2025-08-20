@@ -9,6 +9,7 @@ import DualFileRow from "./DualFileRow";
 import { uploadBinaryToBackend } from "@/services/binaryService";
 import { GenericModal } from "./GenericModal";
 import { handleError } from "@/utils/sharedFunctionality";
+import { CopyableToast } from "@/utils/CopyableToast";
 
 export default function UploadBinaryModal({
   open,
@@ -58,7 +59,11 @@ export default function UploadBinaryModal({
       if (!osFiles.lib) missing.push(`${os} library`);
     });
     if (missing.length) {
-      toast.error(`Missing file(s):\n- ${missing.join("\n- ")}`);
+      toast.error(
+        <CopyableToast
+          message={`Missing file(s):\n- ${missing.join("\n- ")}`}
+        />,
+      );
       return;
     }
 
@@ -84,11 +89,15 @@ export default function UploadBinaryModal({
       // Error in validation --> res == false
       if (!res) {
         toast.error(
-          "The config file does not follow the required structure. (See template)",
+          <CopyableToast
+            message={
+              "The config file does not follow the required structure. (See template)"
+            }
+          />,
         );
       }
     } catch (error) {
-      toast.error(handleError(error));
+      toast.error(<CopyableToast message={handleError(error)} />);
     } finally {
       setIsLoading(false);
     }
