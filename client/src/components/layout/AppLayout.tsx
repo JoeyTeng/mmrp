@@ -8,14 +8,17 @@ import Loading from "./Loading";
 import LeftSidebar from "../sidebar/LeftSidebar";
 import { useModulesContext } from "@/contexts/ModulesContext";
 import { SidebarContext } from "@/contexts/SidebarContext";
+import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [leftOpenPanelId, setLeftOpenPanelId] = useState<string | null>(null);
   const [rightOpenPanelId, setRightOpenPanelId] = useState<string | null>(null);
-  const { loading } = useModules();
+
+  const { loading: pipelineLoading } = useExamplePipelinesContext();
+  const { loading: modulesLoading } = useModules();
   const { reloadModules } = useModulesContext();
 
-  if (loading) {
+  if (modulesLoading || pipelineLoading) {
     return <Loading />;
   }
 

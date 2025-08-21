@@ -83,6 +83,7 @@ export default function FlowNode({
               }
             >
               <Handle
+                id={`input-${index}-handle`}
                 key={`input-${index}-handle`}
                 type="target"
                 position={Position.Left}
@@ -102,6 +103,7 @@ export default function FlowNode({
               }
             >
               <Handle
+                id={`output-${index}-handle`}
                 key={`output-${index}-handle`}
                 type="source"
                 position={Position.Right}

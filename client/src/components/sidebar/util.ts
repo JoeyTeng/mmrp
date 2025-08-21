@@ -5,6 +5,7 @@ import { Edge, Node, useReactFlow } from "@xyflow/react";
 import { useCallback } from "react";
 import {
   createProtectedExport,
+  displayError,
   verifyImport,
 } from "@/utils/sharedFunctionality";
 
@@ -114,7 +115,7 @@ export function usePipelineExport() {
         URL.revokeObjectURL(url);
       } catch (e) {
         console.error("Import error:", e);
-        toast.error(
+        displayError(
           `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`,
         );
       }
@@ -161,7 +162,7 @@ export function usePipelineExport() {
         toast.success("Pipeline imported successfully");
       } catch (error) {
         console.error("Import error:", error);
-        toast.error(
+        displayError(
           `Import failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
       }
