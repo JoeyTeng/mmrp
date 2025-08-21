@@ -46,7 +46,7 @@ This will install all dependencies and build the client.
 ```
 
 #### Starting the server
-This will run the server. You can run the application on `http://<VM_IP>:8000/`.
+This will run the server. Once the server is deployed, you can run the application on `http://<VM_IP>:8000/` as long as you are connected to the VPN.
 
 ```sh
 ./scripts/run.sh
