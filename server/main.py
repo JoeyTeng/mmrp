@@ -9,13 +9,20 @@ from app.routers import pipeline, video, modules, frame, binaries
 from app.db.convert_json_to_modules import get_all_mock_modules
 from app.services.binaries import download_gist_files
 
-# --- API ---
+
 api = APIRouter(prefix="/api")
 
 
 @api.get("/healthz")
 def healthz():
     return {"ok": True}
+
+
+api.include_router(pipeline.router)
+api.include_router(video.router)
+api.include_router(modules.router)
+api.include_router(frame.router)
+api.include_router(binaries.router)
 
 
 @asynccontextmanager
@@ -59,13 +66,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.include_router(pipeline.router)
-app.include_router(video.router)
-app.include_router(modules.router)
-app.include_router(frame.router)
-app.include_router(binaries.router)
-app.include_router(api)
 
 # Only mount static if the export exists (production)
 out_dir = Path(__file__).resolve().parents[1] / "client" / "out"
