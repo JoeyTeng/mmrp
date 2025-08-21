@@ -7,7 +7,7 @@ import { useState } from "react";
 import SingleFileRow from "./SingleFileRow";
 import DualFileRow from "./DualFileRow";
 import { uploadBinaryToBackend } from "@/services/binaryService";
-import { GenericModal } from "./GenericModal";
+import { GenericModal } from "../util/GenericModal";
 import { handleError } from "@/utils/sharedFunctionality";
 
 export default function UploadBinaryModal({
