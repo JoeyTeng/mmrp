@@ -95,7 +95,8 @@ async def upload_module(
                             f.write(await file.read())
 
         # Read config file to add binary to module registry
-        append_to_mock_data(data)
+        path = BASE_DIR / "db" / "json_data" / f"{executable_name}.json"
+        append_to_mock_data(data, path)
         return True
     except Exception as e:
         raise HTTPException(500, detail=f"Error uploading module: {str(e)}")
