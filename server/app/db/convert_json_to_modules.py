@@ -37,7 +37,7 @@ def convert_json(folder: Path) -> list[ModuleBase]:
 
 
 def load_binary_modules(binaries_dir: Path) -> Path:
-    out_path = Path(__file__).resolve().parent / "json_data" / "binaries"
+    out_path = Path(__file__).resolve().parent / "json_data" / "binaries.json"
     out_path.mkdir(parents=True, exist_ok=True)
 
     # Save binary config
