@@ -72,7 +72,7 @@ def sync_binaries(src: str):
 
     for binary in binaries_path.iterdir():
         target = OUTPUT_DIR / binary.name
-        if binary.is_dir():
+        if not target.exists() and binary.is_dir():
             shutil.copytree(binary, target, dirs_exist_ok=False)
 
     print("Syncing of binaries done!")
