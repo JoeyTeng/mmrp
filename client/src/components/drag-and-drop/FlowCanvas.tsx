@@ -38,16 +38,26 @@ import CanvasContextMenu, {
 } from "./context-menu/CanvasContextMenu";
 import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
-import { handleError } from "@/utils/sharedFunctionality";
+import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
+import { displayError, handleError } from "@/utils/sharedFunctionality";
 import { VideoType } from "../comparison-view/types";
 import { useFrames } from "@/contexts/FramesContext";
 
 export default function FlowCanvas({
-  defaultNodes,
-  defaultEdges,
   editingNode,
   onEditNode,
 }: FlowCanvasProps) {
+  const { pipelines: examplePipelines } = useExamplePipelinesContext();
+
+  const firstExamplePipeline = examplePipelines[0];
+  const { initialNodes, initialEdges } = useMemo(() => {
+    if (!firstExamplePipeline) {
+      return { initialNodes: [], initialEdges: [] };
+    }
+    const { nodes, edges } = firstExamplePipeline;
+    return { initialNodes: nodes, initialEdges: edges };
+  }, [firstExamplePipeline]);
+
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
 
@@ -245,7 +255,7 @@ export default function FlowCanvas({
         // Dismiss success message
         toast.dismiss();
         // Display the error details
-        toast.error(handleError(err));
+        displayError(handleError(err));
       } finally {
         setIsProcessing(false);
       }
@@ -277,8 +287,8 @@ export default function FlowCanvas({
         <ReactFlow
           nodeTypes={nodeTypes}
           deleteKeyCode={editingNode != null ? [] : ["Delete", "Backspace"]}
-          defaultNodes={defaultNodes}
-          defaultEdges={defaultEdges}
+          defaultNodes={initialNodes}
+          defaultEdges={initialEdges}
           isValidConnection={isValidConnection}
           onDragOver={onDragOver}
           onDrop={onDrop}
@@ -288,7 +298,7 @@ export default function FlowCanvas({
           onNodesDelete={closeContextMenus}
           onEdgesDelete={closeContextMenus}
           fitViewOptions={{
-            padding: 1,
+            padding: 0.2,
           }}
           defaultEdgeOptions={{
             markerEnd: {
@@ -331,6 +341,7 @@ export default function FlowCanvas({
           </Panel>
         </ReactFlow>
       </Box>
+
       <NodeContextMenu ref={nodeContextMenuRef} onEditNode={onEditNode} />
       <CanvasContextMenu ref={canvasContextMenuRef} onRun={onRun} />
     </Box>

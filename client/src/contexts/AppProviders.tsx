@@ -5,6 +5,7 @@ import { WebSocketProvider } from "./WebSocketContext";
 import { FramesProvider } from "./FramesContext";
 import { ReactFlowProvider } from "@xyflow/react";
 import { ModulesProvider } from "./ModulesContext";
+import { ExamplePipelinesProvider } from "./ExamplePipelinesContext";
 
 const AppProviders = ({ children }: { children: ReactNode }) => (
   <ReactFlowProvider>
@@ -12,7 +13,9 @@ const AppProviders = ({ children }: { children: ReactNode }) => (
       <VideoReloadProvider>
         <WebSocketProvider>
           <FramesProvider>
-            <ModulesProvider>{children}</ModulesProvider>
+            <ExamplePipelinesProvider>
+              <ModulesProvider>{children}</ModulesProvider>
+            </ExamplePipelinesProvider>
           </FramesProvider>
         </WebSocketProvider>
       </VideoReloadProvider>
