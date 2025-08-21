@@ -1,6 +1,4 @@
-# mmrp
-
-Cisco VIPER: VIsual Pipeline EditoR
+# Cisco VIPER: VIsual Pipeline EditoR
 
 ## Contributors
 
@@ -48,7 +46,7 @@ This will install all dependencies and build the client.
 ```
 
 #### Starting the server
-This will run the server. You can run the application on `http:<VM_IP>:8000/`.
+This will run the server. You can run the application on `http://<VM_IP>:8000/`.
 
 ```sh
 ./scripts/run.sh
