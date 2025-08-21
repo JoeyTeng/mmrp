@@ -12,12 +12,6 @@ from app.services.binaries import download_gist_files
 
 api = APIRouter(prefix="/api")
 
-
-@api.get("/healthz")
-def healthz():
-    return {"ok": True}
-
-
 api.include_router(pipeline.router)
 api.include_router(video.router)
 api.include_router(modules.router)
@@ -56,8 +50,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
+app.include_router(api)
 
-origins = ["http://localhost:3000", "http://10.47.53.99:3000http://10.47.53.99"]
+origins = ["http://localhost:3000", "http://10.47.53.99:3000", "http://10.47.53.99"]
 
 app.add_middleware(
     CORSMiddleware,
