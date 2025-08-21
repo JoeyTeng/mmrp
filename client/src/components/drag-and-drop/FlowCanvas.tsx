@@ -39,7 +39,7 @@ import CanvasContextMenu, {
 import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
 import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
-import { handleError } from "@/utils/sharedFunctionality";
+import { displayError, handleError } from "@/utils/sharedFunctionality";
 
 export default function FlowCanvas({
   editingNode,
@@ -236,7 +236,7 @@ export default function FlowCanvas({
         // Dismiss success message
         toast.dismiss();
         // Display the error details
-        toast.error(handleError(err));
+        displayError(handleError(err));
       } finally {
         setIsProcessing(false);
       }
