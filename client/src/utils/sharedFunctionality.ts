@@ -3,6 +3,9 @@ import stringify from "json-stable-stringify";
 import type { PipelineData, ProtectedExport } from "./types";
 import { AxiosError } from "axios";
 import axios from "axios";
+import { toast } from "react-toastify/unstyled";
+import { CopyableToast } from "./CopyableToast";
+import React from "react";
 
 export function handleError(error: unknown): string {
   let message = "An unexpected error occurred.";
@@ -18,6 +21,10 @@ export function handleError(error: unknown): string {
   }
   console.error(message);
   return message;
+}
+
+export function displayError(message: string): void {
+  toast.error(React.createElement(CopyableToast, { message: message }));
 }
 
 export const generateHash = (data: object): string => {

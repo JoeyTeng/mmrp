@@ -11,6 +11,11 @@ import base64
 from app.utils.quality_metrics import compute_metrics
 from app.schemas.metrics import Metrics
 from app.modules.utils.enums import ModuleName
+from pathlib import Path
+from app.schemas.pipeline import ExamplePipeline
+import json
+
+EXAMPLES_DIR = Path(__file__).parent.parent / "db/examples"
 
 
 def get_module_class(module: PipelineModule) -> str:
@@ -219,3 +224,37 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             metrics=metrics,
         )
         return response
+
+
+def list_examples() -> list[ExamplePipeline]:
+    example_pipelines: list[ExamplePipeline] = []
+
+    module_classes = {
+        m.data.module_class
+        for m in ModuleRegistry.get_all().values()
+        if hasattr(m, "data") and hasattr(m.data, "module_class")
+    }
+
+    for file in sorted(EXAMPLES_DIR.glob("*.json")):
+        try:
+            raw = json.loads(file.read_text())
+            raw["id"] = file.stem
+            nodes = raw.get("nodes", [])
+
+            if not all(
+                node.get("data", {}).get("module_class") in module_classes
+                for node in nodes
+            ):
+                print(f"Skipping {file.name} — unsupported module found")
+                continue
+
+            example_pipelines.append(ExamplePipeline.model_validate(raw))
+
+        except json.JSONDecodeError:
+            # TODO: replace print with proper logging & structured error response
+            print(f"Skipping {file.name} — bad JSON syntax")
+        except ValidationError as e:
+            # TODO: replace print with proper logging & structured error response
+            print(f"Skipping {file.name} — schema fail: {e}")
+
+    return example_pipelines
