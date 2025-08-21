@@ -6,11 +6,13 @@ import {
   CloudDownloadOutlined,
   CloudUploadOutlined,
   DownloadOutlined,
+  LibraryAdd,
 } from "@mui/icons-material";
 import { SidebarItem } from "./types";
 import VideoQualityMetrics from "../comparison-metrics/VideoQualityMetrics";
 import Modules from "../drag-and-drop/Modules";
 import { PipelineResponse } from "@/types/pipeline";
+import ExamplePipelines from "../drag-and-drop/ExamplePipelines";
 
 export const getLeftSidebarItems = (
   setUploadOpen: (open: boolean) => void,
@@ -55,6 +57,13 @@ export const getLeftSidebarItems = (
     title: "Upload Module",
     icon: <UploadFileOutlined />,
     action: () => setUploadOpen(true),
+    showAfterDivider: true,
+  },
+  {
+    id: "example-pipelines",
+    title: "Example Pipelines",
+    icon: <LibraryAdd />,
+    panelContent: <ExamplePipelines />,
     showAfterDivider: true,
   },
 ];

@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import ValidationError
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
-from app.services.pipeline import handle_pipeline_request
+from app.schemas.pipeline import ExamplePipeline
+from app.services.pipeline import handle_pipeline_request, list_examples
 
 router = APIRouter(
     prefix="/pipeline",
@@ -28,3 +29,12 @@ def process_pipeline(request: PipelineRequest):
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+@router.get("/examples/", response_model=list[ExamplePipeline])
+def get_pipeline_examples():
+    try:
+        examples = list_examples()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+    return examples
