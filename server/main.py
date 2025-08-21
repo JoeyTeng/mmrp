@@ -35,6 +35,13 @@ async def lifespan(app: FastAPI):
         if binaries_dir.exists() and binaries_dir.is_dir():
             print(f"Cleaning up binaries directory: {binaries_dir}")
             shutil.rmtree(binaries_dir)
+        # Clean up temporary binary data
+        json_dir = (
+            Path(__file__).resolve().parent / "app" / "db" / "json_data" / "binaries"
+        )
+        if json_dir.exists() and json_dir.is_dir():
+            print(f"Cleaning up binaries data: {json_dir}")
+            shutil.rmtree(json_dir)
         # Clean up yuv video files
         videos_dir = Path(__file__).resolve().parent / "videos"
         if videos_dir.exists() and videos_dir.is_dir():

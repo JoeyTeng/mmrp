@@ -37,7 +37,8 @@ def convert_json(folder: Path) -> list[ModuleBase]:
 
 
 def load_binary_modules(binaries_dir: Path) -> Path:
-    out_path = Path(__file__).resolve().parent / "json_data" / "binaries.json"
+    out_path = Path(__file__).resolve().parent / "json_data" / "binaries"
+    out_path.mkdir(parents=True, exist_ok=True)
 
     # Save binary config
     for binary in binaries_dir.iterdir():
@@ -51,12 +52,11 @@ def load_binary_modules(binaries_dir: Path) -> Path:
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 config_data = json.load(f)
-
-            append_to_mock_data(config_data, out_path)
+            bin_path = out_path / f"{binary.name}.json"
+            append_to_mock_data(config_data, bin_path)
             print(f"Processed {config_path}")
         except Exception as e:
             print(f"Failed to process {config_path}: {e}")
-
     return out_path
 
 
