@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
 app.include_router(api)
 
-origins = ["http://localhost:3000", "http://10.47.53.99:3000", "http://10.47.53.99"]
+origins = ["http://localhost:3000", "http://10.47.53.99"]
 
 app.add_middleware(
     CORSMiddleware,
