@@ -20,7 +20,7 @@ import {
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
-
+import crypto from "crypto";
 import FlowNode, { FlowNodeProps } from "@/components/drag-and-drop/FlowNode";
 import { FlowCanvasProps } from "./types";
 import { ModuleData, ModuleType } from "@/types/module";
