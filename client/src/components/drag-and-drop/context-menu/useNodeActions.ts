@@ -39,11 +39,10 @@ export const useNodeActions = (
           uniqueNodeIds.has(edge.source) && uniqueNodeIds.has(edge.target),
       );
 
-      const duplicatedNodes: Node[] = [];
-      nodes.forEach((node) => {
+      const duplicatedNodes: Node[] = nodes.map((node) => {
         const newId = crypto.randomUUID();
         nodeIdsMap.set(node.id, newId);
-        duplicatedNodes.push({
+        return {
           id: newId,
           data: { ...node.data },
           type: node.type,
@@ -55,7 +54,7 @@ export const useNodeActions = (
           },
           sourcePosition: node.sourcePosition,
           targetPosition: node.targetPosition,
-        });
+        };
       });
 
       const duplicatedEdges: Edge[] = edges.map((edge) => ({
@@ -68,7 +67,6 @@ export const useNodeActions = (
 
       addNodes(duplicatedNodes);
       addEdges(duplicatedEdges);
-      return;
     },
     [addEdges, addNodes, getEdges, getFilteredNodes, getNodesBounds],
   );

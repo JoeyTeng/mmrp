@@ -24,7 +24,6 @@ export const useCanvasActions = (onRun: () => void) => {
           onRun();
           return;
         case "add_node":
-          if (sidebar?.leftOpenPanelId) return;
           sidebar?.setLeftOpenPanelId("modules");
           return;
         default:

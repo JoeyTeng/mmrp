@@ -119,51 +119,28 @@ export default function FlowCanvas({
     [FlowNodeWithMenu],
   );
 
-  const onNodeContextMenu = (event: React.MouseEvent, node: Node) => {
+  const handleNodeContextMenu = (event: React.MouseEvent, nodes: Node[]) => {
     event.preventDefault();
-    const selectedNodes = getNodes().filter((node) => node.selected);
-    if (selectedNodes.length > 1) {
-      nodeContextMenuRef.current?.open({
-        position: {
-          x: event.clientX,
-          y: event.clientY,
-        },
-        type: "multi",
-        nodeIds: selectedNodes.map((node) => node.id),
-      });
-      return;
-    }
+    if (!nodes || nodes.length === 0) return;
+    const position = { x: event.clientX, y: event.clientY };
     nodeContextMenuRef.current?.open({
-      position: {
-        x: event.clientX,
-        y: event.clientY,
-      },
-      type: "single",
-      nodeId: node.id,
+      position,
+      ...(nodes.length === 1
+        ? { type: "single", nodeId: nodes[0].id }
+        : { type: "multi", nodeIds: nodes.map((node) => node.id) }),
     });
   };
 
+  const onNodeContextMenu = (event: React.MouseEvent, node: Node) => {
+    const selectedNodes = getNodes().filter((node) => node.selected);
+    handleNodeContextMenu(
+      event,
+      selectedNodes.length > 1 ? selectedNodes : [node],
+    );
+  };
+
   const onSelectionContextMenu = (event: React.MouseEvent, nodes: Node[]) => {
-    event.preventDefault();
-    if (nodes.length === 1) {
-      nodeContextMenuRef.current?.open({
-        position: {
-          x: event.clientX,
-          y: event.clientY,
-        },
-        type: "single",
-        nodeId: nodes[0].id,
-      });
-      return;
-    }
-    nodeContextMenuRef.current?.open({
-      position: {
-        x: event.clientX,
-        y: event.clientY,
-      },
-      type: "multi",
-      nodeIds: nodes.map((node) => node.id),
-    });
+    handleNodeContextMenu(event, nodes);
   };
 
   const onPaneContextMenu = (event: React.MouseEvent | MouseEvent) => {
