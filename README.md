@@ -51,7 +51,7 @@ Draw the needed example configuration on the canvas and export it. When you expo
   "metadata": { "version": "1.0", "timestamp": "" },
   "data": { "nodes": [], "edges": [] }
 }
-````
+```
 
 **Target JSON**:
 
