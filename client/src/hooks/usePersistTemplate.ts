@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify/unstyled";
 import { NodeTemplate } from "@/components/drag-and-drop/types";
+import { displayError } from "@/utils/sharedFunctionality";
 
 const TEMPLATE_STORAGE_KEY = "templates";
 
@@ -32,7 +33,7 @@ export function usePersistTemplate() {
       );
 
       if (exists) {
-        toast.error("Template with this name already exists for this module.");
+        displayError("Template with this name already exists for this module.");
         return false;
       }
 
@@ -62,7 +63,7 @@ export function usePersistTemplate() {
     let name = window.prompt("Enter a name for this template", template.name);
 
     if (!name || !name.trim()) {
-      toast.error("Export cancelled: name is required.");
+      displayError("Export cancelled: name is required.");
       return;
     }
     name = name.trim();
@@ -86,7 +87,7 @@ export function usePersistTemplate() {
       toast.success(`Template "${name}" exported successfully!`);
     } catch (e) {
       console.error("Export failed:", e);
-      toast.error("Failed to export template.");
+      displayError("Failed to export template.");
     }
   }, []);
 
@@ -99,7 +100,7 @@ export function usePersistTemplate() {
         const parsed: NodeTemplate = JSON.parse(text);
 
         if (parsed.moduleClass !== currentModuleClass) {
-          toast.error("Cannot import template: module class mismatch.");
+          displayError("Cannot import template: module class mismatch.");
           return;
         }
 
@@ -108,7 +109,7 @@ export function usePersistTemplate() {
         );
         console.log("dupl", duplicate);
         if (duplicate) {
-          toast.error("Template with this name already exists.");
+          displayError("Template with this name already exists.");
           return;
         }
 
@@ -118,7 +119,7 @@ export function usePersistTemplate() {
         toast.success("Template imported successfully!");
       } catch (e) {
         console.error(e);
-        toast.error("Invalid template file.");
+        displayError("Invalid template file.");
       }
     },
     [templates],
