@@ -20,7 +20,7 @@ import {
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
-import crypto from "crypto";
+import { v4 as uuidv4 } from "uuid";
 import FlowNode, { FlowNodeProps } from "@/components/drag-and-drop/FlowNode";
 import { FlowCanvasProps } from "./types";
 import { ModuleData, ModuleType } from "@/types/module";
@@ -162,7 +162,7 @@ export default function FlowCanvas({
 
       // Create Node for the Canvas
       const newNode: Node<ModuleData, ModuleType> = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         type,
         position,
         data: {
