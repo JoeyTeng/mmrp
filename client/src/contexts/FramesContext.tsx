@@ -19,7 +19,6 @@ type FramesContextType = {
   setFrames: React.Dispatch<React.SetStateAction<FrameData[]>>;
   resetFrames: () => void;
   isStreamActive: boolean;
-  startStream: () => void;
 };
 
 const FramesContext = createContext<FramesContextType | undefined>(undefined);
@@ -47,6 +46,13 @@ export const FramesProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsStreamActive(false);
     hasStarted.current = false;
   }, [closeConnection]);
+
+  // TODO: Refactor the WebSocket part, to:
+  //  - Creation of the WebSocket is done in FlowCanvas when the user submit the pipeline for execution
+  //  - Explicitly send a message to the backend upon submitting the pipeline in FlowCanvas
+  //  - In FrameStreamPlayer only register handlers for onMessage, onOpen, onClose, etc.
+  //  - Closure of the socket is either handled automatically or explicitly at FlowCanvas.
+  //  - Establish WebSocket connection to receive video frame data
 
   // starts video frame stream via WebSocket
   const startStream = useCallback(() => {
@@ -127,9 +133,7 @@ export const FramesProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [stopStream]);
 
   return (
-    <FramesContext
-      value={{ frames, setFrames, resetFrames, isStreamActive, startStream }}
-    >
+    <FramesContext value={{ frames, setFrames, resetFrames, isStreamActive }}>
       {children}
     </FramesContext>
   );

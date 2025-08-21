@@ -9,9 +9,9 @@ from app.schemas.pipeline import PipelineRequest, PipelineResponse
 from app.services.module_registry import ModuleRegistry
 import uuid
 import base64
-from app.utils.quality_metrics import compute_metrics
 from app.schemas.metrics import Metrics
 from app.modules.utils.enums import ModuleName
+from app.services.frame import compute_frame_metrics
 
 
 def get_module_class(module: PipelineModule) -> str:
@@ -84,7 +84,6 @@ def get_execution_order(modules: list[PipelineModule]) -> list[PipelineModule]:
 def prepare_pipeline(
     request: PipelineRequest,
 ) -> tuple[
-    list[PipelineModule],
     dict[str, tuple[ModuleBase, dict[str, Any]]],
     PipelineModule,
     list[PipelineModule],
@@ -148,13 +147,13 @@ def prepare_pipeline(
         if m.module_class not in {ModuleName.VIDEO_SOURCE, ModuleName.RESULT}
     ]
 
-    return ordered_modules, module_map, source_mod, result_modules, processing_nodes
+    return module_map, source_mod, result_modules, processing_nodes
 
 
 # Handle the pipeline request and process the video
 def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     # Prepare ordered modules, module mapping, and processing nodes
-    (_, module_map, source_mod, result_modules, processing_nodes) = prepare_pipeline(
+    (module_map, source_mod, result_modules, processing_nodes) = prepare_pipeline(
         request
     )
 
@@ -178,24 +177,16 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                 # Compute quality metrics
                 if len(result_modules) == 1:
                     processed_frame = frame_cache[result_modules[0].source[0]]
-                    if original_frame.shape == processed_frame.shape:
-                        metrics.append(compute_metrics(original_frame, processed_frame))
-                    else:
-                        error_msg = "Original and processed frames must match in size for metric comparison"
-                        metrics.append(Metrics(message=error_msg, psnr=None, ssim=None))
+                    metrics.append(
+                        compute_frame_metrics(original_frame, processed_frame)
+                    )
                     yield "original", original_frame
                     yield result_modules[0].id, processed_frame
 
-                elif len(result_modules) == 2:
+                else:
                     f1 = frame_cache[result_modules[0].source[0]]
                     f2 = frame_cache[result_modules[1].source[0]]
-                    if f1.shape == f2.shape:
-                        metrics.append(compute_metrics(f1, f2))
-                    else:
-                        error_msg = (
-                            "Result frames must be the same size for metric comparison"
-                        )
-                        metrics.append(Metrics(message=error_msg, psnr=None, ssim=None))
+                    metrics.append(compute_frame_metrics(f1, f2))
                     yield result_modules[0].id, f1
                     yield result_modules[1].id, f2
 

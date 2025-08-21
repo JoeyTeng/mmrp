@@ -1,8 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-import cv2
 import asyncio
 import json
-from app.utils.shared_functionality import as_context
 from app.schemas.frame import FrameData
 from app.schemas.pipeline import PipelineRequest
 from app.services.pipeline import (
@@ -12,8 +10,6 @@ from app.services.pipeline import (
 from app.services.frame import compute_frame_metrics, encode_frames, map_frames
 
 router = APIRouter()
-
-cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
 
 
 @router.websocket("/ws/video")
@@ -28,8 +24,8 @@ async def video_feed(websocket: WebSocket) -> None:
         request: PipelineRequest = PipelineRequest(**data)
 
         # Prepare ordered modules, module mapping, and processing nodes
-        (_, module_map, source_mod, result_modules, processing_nodes) = (
-            prepare_pipeline(request)
+        (module_map, source_mod, result_modules, processing_nodes) = prepare_pipeline(
+            request
         )
 
         with module_map[source_mod.id][0].process(
