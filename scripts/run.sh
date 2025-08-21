@@ -8,9 +8,3 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "Starting server…"
 cd "$ROOT_DIR/server"
 uv run uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2 &
-
-# Start frontend (serve prebuilt app)
-echo "Starting client…"
-cd "$ROOT_DIR/client"
-NODE_ENV=production npm run build
-NODE_ENV=production npm run start -- -p 3000 -H 0.0.0.0

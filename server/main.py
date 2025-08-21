@@ -1,12 +1,21 @@
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pathlib import Path
 import shutil
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 from app.routers import pipeline, video, modules, frame, binaries
 from app.db.convert_json_to_modules import get_all_mock_modules
 from app.services.binaries import download_gist_files
+
+# --- API ---
+api = APIRouter(prefix="/api")
+
+
+@api.get("/healthz")
+def healthz():
+    return {"ok": True}
 
 
 @asynccontextmanager
@@ -39,7 +48,7 @@ async def lifespan(app: FastAPI):
         print(f"Error during cleanup: {e}")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
 
 origins = ["http://localhost:3000", "http://10.47.53.99:3000"]
 
@@ -56,6 +65,9 @@ app.include_router(video.router)
 app.include_router(modules.router)
 app.include_router(frame.router)
 app.include_router(binaries.router)
+app.include_router(api)
+
+app.mount("/", StaticFiles(directory="../client/out", html=True), name="static")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

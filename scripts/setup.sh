@@ -5,12 +5,13 @@ set -e  # exit if any command fails
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Install frontend dependencies and build once
-echo "Intstalling frontend dependencies..."
+echo "Frontend: install & build (static export)..."
 cd "$ROOT_DIR/client"
 npm install
+npm run build
 
 # Install backend dependencies
-echo "Installing backend dependencies..."
+echo "Backend: Installing dependencies..."
 cd "$ROOT_DIR/server"
 uv sync
 
