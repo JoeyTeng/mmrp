@@ -8,7 +8,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "Frontend: install & build (static export)..."
 cd "$ROOT_DIR/client"
 npm install
-npm run build
+NEXT_PUBLIC_API_URL=/api NODE_ENV=production npm run build
 
 # Install backend dependencies
 echo "Backend: Installing dependencies..."

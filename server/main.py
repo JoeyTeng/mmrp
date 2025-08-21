@@ -67,7 +67,18 @@ app.include_router(frame.router)
 app.include_router(binaries.router)
 app.include_router(api)
 
-app.mount("/", StaticFiles(directory="../client/out", html=True), name="static")
+# Only mount static if the export exists (production)
+out_dir = Path(__file__).resolve().parents[1] / "client" / "out"
+if out_dir.exists():
+    app.mount("/", StaticFiles(directory=str(out_dir), html=True), name="static")
+else:
+
+    @app.get("/")
+    def dev_root():
+        return {
+            "msg": "Dev mode: Run `npm run dev` on port 3000, or build the client to create /client/out."
+        }
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
