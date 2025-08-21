@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { Sidebar } from "../sidebar/Sidebar";
 import { Box } from "@mui/material";
 import { RIGHT_SIDEBAR_ITEMS } from "../sidebar/sidebar-config";
@@ -7,13 +7,13 @@ import { useModules } from "@/hooks/useModule";
 import Loading from "./Loading";
 import LeftSidebar from "../sidebar/LeftSidebar";
 import { useModulesContext } from "@/contexts/ModulesContext";
-import { ExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
+import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [leftOpenPanelId, setLeftOpenPanelId] = useState<string | null>(null);
   const [rightOpenPanelId, setRightOpenPanelId] = useState<string | null>(null);
 
-  const { loading: pipelineLoading } = useContext(ExamplePipelinesContext);
+  const { loading: pipelineLoading } = useExamplePipelinesContext();
   const { loading: modulesLoading } = useModules();
   const { reloadModules } = useModulesContext();
 

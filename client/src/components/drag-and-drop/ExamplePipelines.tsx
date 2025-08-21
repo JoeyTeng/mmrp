@@ -1,15 +1,14 @@
 "use client";
 
-import { useContext } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { ExamplePipeline } from "@/types/pipeline";
 import { Settings } from "@mui/icons-material";
-import { ExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
+import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
 import { Box, Button } from "@mui/material";
 import { toast } from "react-toastify/unstyled";
 
 export default function ExamplePipelines() {
-  const { pipelines } = useContext(ExamplePipelinesContext);
+  const { pipelines } = useExamplePipelinesContext();
 
   const instance = useReactFlow();
 
@@ -42,7 +41,6 @@ export default function ExamplePipelines() {
         </Box>
       ),
       {
-        autoClose: false,
         closeOnClick: false,
       },
     );

@@ -43,7 +43,7 @@ uv run uvicorn main:app --reload
 ### Convert from Exported JSON
 Draw the needed example configuration on the canvas and export it. When you export, the JSON contains extra frontend data that needs to be removed. To convert to Target JSON for storing in the backend follow below steps:
 
-## 1. Remove wrapper metadata
+### 1. Remove wrapper metadata
 
 ```json
   {
@@ -54,15 +54,15 @@ Draw the needed example configuration on the canvas and export it. When you expo
 
 **Target JSON**:
 
-  ```json
+```json
   {
     "name": "My Pipeline",
     "nodes": [],
     "edges": []
   }
-  ```
+```
 
-## 2. Rename keys (camelCase → snake\_case)
+### 2. Rename keys (camelCase → snake\_case)
 
 Convert field names:
 
@@ -73,15 +73,15 @@ Convert field names:
 * `colorSpace` → `color_space`  
 and so on.
 
-## 3. Drop UI-only fields
+### 3. Drop UI-only fields
 
 Remove properties that are frontend-only:
 
 * `measured`,`flag`, `options` (outside constraints), etc.
 
-## 4. Edges
+### 4. Edges
 
-### Ensure edges expose the following keys and remove other excesss keys :
+#### Ensure edges expose the following keys and remove other excesss keys :
 
 ```json
 {

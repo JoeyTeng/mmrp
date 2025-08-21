@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef, useMemo, useContext } from "react";
+import React, { useCallback, useRef, useMemo } from "react";
 
 import {
   ReactFlow,
@@ -38,14 +38,14 @@ import CanvasContextMenu, {
 } from "./context-menu/CanvasContextMenu";
 import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
-import { ExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
+import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
 import { handleError } from "@/utils/sharedFunctionality";
 
 export default function FlowCanvas({
   editingNode,
   onEditNode,
 }: FlowCanvasProps) {
-  const { pipelines: examplePipelines } = useContext(ExamplePipelinesContext);
+  const { pipelines: examplePipelines } = useExamplePipelinesContext();
 
   const firstExamplePipeline = examplePipelines[0];
   const { initialNodes, initialEdges } = useMemo(() => {
