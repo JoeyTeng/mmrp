@@ -1,0 +1,206 @@
+{
+  "name": "Blur to Color Pipeline",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "inputNode",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "data": {
+        "name": "Video Source",
+        "module_class": "video_source",
+        "parameters": [
+          {
+            "name": "path",
+            "metadata": {
+              "value": "example-video.mp4",
+              "type": "str",
+              "constraints": {
+                "type": "str",
+                "default": "example-video.mp4",
+                "required": true,
+                "description": "Input file path"
+              }
+            }
+          }
+        ],
+        "input_formats": [],
+        "output_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "n2",
+      "type": "processNode",
+      "position": {
+        "x": 220,
+        "y": 100
+      },
+      "data": {
+        "name": "Blur",
+        "module_class": "blur",
+        "parameters": [
+          {
+            "name": "kernel_size",
+            "metadata": {
+              "value": 5,
+              "type": "int",
+              "constraints": {
+                "type": "int",
+                "default": 5,
+                "min": 1,
+                "max": 31,
+                "required": true,
+                "description": "Kernel size (must be odd)"
+              }
+            }
+          },
+          {
+            "name": "method",
+            "metadata": {
+              "value": "gaussian",
+              "type": "select",
+              "constraints": {
+                "type": "select",
+                "default": "gaussian",
+                "options": ["gaussian", "median", "average"],
+                "required": true,
+                "description": "Blur algorithm type"
+              }
+            }
+          }
+        ],
+        "input_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ],
+        "output_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "n3",
+      "type": "processNode",
+      "position": {
+        "x": 400,
+        "y": 100
+      },
+      "data": {
+        "name": "Color",
+        "module_class": "color",
+        "parameters": [
+          {
+            "name": "input_colorspace",
+            "metadata": {
+              "value": "RGB",
+              "type": "select",
+              "constraints": {
+                "type": "select",
+                "default": "RGB",
+                "options": ["YCbCr", "HSV", "Lab", "RGB"],
+                "required": true,
+                "description": "Input color space"
+              }
+            }
+          },
+          {
+            "name": "output_colorspace",
+            "metadata": {
+              "value": "Lab",
+              "type": "select",
+              "constraints": {
+                "type": "select",
+                "default": "RGB",
+                "options": ["YCbCr", "HSV", "Lab", "RGB"],
+                "required": true,
+                "description": "Output color space"
+              }
+            }
+          }
+        ],
+        "input_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ],
+        "output_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "n4",
+      "type": "outputNode",
+      "position": {
+        "x": 600,
+        "y": 100
+      },
+      "data": {
+        "name": "Video Output",
+        "module_class": "video_output",
+        "parameters": [
+          {
+            "name": "video_player",
+            "metadata": {
+              "value": "right",
+              "type": "select",
+              "constraints": {
+                "type": "select",
+                "default": "right",
+                "options": ["left", "right"],
+                "required": true,
+                "description": "Output Video Player"
+              }
+            }
+          }
+        ],
+        "input_formats": [
+          {
+            "pixel_format": ["bgr24"],
+            "color_space": ["BT.709 Full"]
+          }
+        ],
+        "output_formats": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "output-0-handle",
+      "targetHandle": "input-0-handle"
+    },
+    {
+      "id": "e2",
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "output-0-handle",
+      "targetHandle": "input-0-handle"
+    },
+    {
+      "id": "e3",
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "output-0-handle",
+      "targetHandle": "input-0-handle"
+    }
+  ]
+}
