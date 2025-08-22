@@ -40,6 +40,7 @@ import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
 import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
 import { displayError, handleError } from "@/utils/sharedFunctionality";
+import { usePersistPipeline } from "@/hooks/usePersistPipeline";
 
 export default function FlowCanvas({
   editingNode,
@@ -64,7 +65,15 @@ export default function FlowCanvas({
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();
   const { screenToFlowPosition, getNodes, getEdges, setNodes, setEdges } =
-    useReactFlow();
+    useReactFlow<Node<ModuleData, ModuleType>, Edge>();
+
+  const { persistedNodes, persistedEdges } = usePersistPipeline(
+    () => getNodes(),
+    () => getEdges(),
+    initialNodes,
+    initialEdges,
+  );
+
   const selectNode = useCallback(
     (nodeId: string) => {
       setNodes((nodes) =>
@@ -77,7 +86,7 @@ export default function FlowCanvas({
     [setNodes],
   );
   const unselectNodesAndEdges = useCallback(() => {
-    setNodes((nodes: Node[]) =>
+    setNodes((nodes: Node<ModuleData, ModuleType>[]) =>
       nodes.map((node) => ({
         ...node,
         selected: false,
@@ -286,8 +295,8 @@ export default function FlowCanvas({
           deleteKeyCode={
             !!editingNode || !hasFocus ? [] : ["Delete", "Backspace"]
           }
-          defaultNodes={initialNodes}
-          defaultEdges={initialEdges}
+          defaultNodes={persistedNodes}
+          defaultEdges={persistedEdges}
           isValidConnection={isValidConnection}
           onDragOver={onDragOver}
           onDrop={onDrop}
