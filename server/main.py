@@ -6,7 +6,6 @@ import shutil
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from app.routers import pipeline, video, modules, frame, binaries
-from app.db.convert_json_to_modules import get_all_mock_modules
 from app.services.binaries import download_gist_files, sync_binaries
 
 
@@ -21,8 +20,6 @@ api.include_router(binaries.router)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load a registry of all modules at start up
-    get_all_mock_modules()
     # Download and extract all binaries
     binaries_dir = download_gist_files()
     sync_binaries("/home/test/binaries")
