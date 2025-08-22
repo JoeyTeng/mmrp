@@ -1,3 +1,5 @@
+import argparse
+import sys
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -52,11 +54,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
 app.include_router(api)
 
-origins = ["http://localhost:3000", "http://10.47.53.99"]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -75,5 +75,51 @@ else:
         }
 
 
+def main():
+    parser = argparse.ArgumentParser(description="Run FastAPI app")
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument(
+        "--reload", action="store_true", help="Dev mode: auto-reload (single-process)"
+    )
+    parser.add_argument(
+        "--log-level",
+        default="info",
+        choices=["critical", "error", "warning", "info", "debug", "trace"],
+    )
+    parser.add_argument(
+        "--workers", type=int, default=1, help=">1 delegates to Uvicorn CLI"
+    )
+    args = parser.parse_args()
+
+    if args.workers > 1:
+        # Delegate to Uvicorn's CLI so you get proper multi-worker support
+        from uvicorn.main import main as uvicorn_cli
+
+        sys.argv = [
+            "uvicorn",
+            "main:app",
+            "--host",
+            args.host,
+            "--port",
+            str(args.port),
+            "--log-level",
+            args.log_level,
+            "--workers",
+            str(args.workers),
+        ] + (["--proxy-headers"] if not args.reload else ["--reload"])
+        return uvicorn_cli()
+
+    args = parser.parse_args()
+
+    uvicorn.run(
+        app,
+        host=args.host,
+        port=args.port,
+        reload=args.reload,
+        log_level=args.log_level,
+    )
+
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    main()
