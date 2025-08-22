@@ -16,20 +16,15 @@ import {
   TextField,
 } from "@mui/material";
 import { Delete, SearchOutlined } from "@mui/icons-material";
-import { usePersistTemplate } from "@/hooks/usePersistTemplate";
+import { usePersistPreset } from "@/hooks/usePersistPreset";
 import { useMemo } from "react";
 
 export default function ParameterConfigurationDrawer({
   editingNode,
   clearEditingNode,
 }: ParameterConfigurationDrawerProps) {
-  const {
-    templates,
-    addTemplate,
-    removeTemplate,
-    exportTemplate,
-    importTemplate,
-  } = usePersistTemplate();
+  const { presets, addPreset, removePreset, exportPreset, importPreset } =
+    usePersistPreset();
 
   const [tempNode, setTempNode] =
     useState<Node<ModuleData, ModuleType>>(editingNode);
@@ -76,9 +71,9 @@ export default function ParameterConfigurationDrawer({
     [],
   );
 
-  const currentTemplates = useMemo(
-    () => templates.filter((t) => t.moduleClass === tempNode?.data.moduleClass),
-    [templates, tempNode],
+  const currentPresets = useMemo(
+    () => presets.filter((t) => t.moduleClass === tempNode?.data.moduleClass),
+    [presets, tempNode],
   );
 
   return (
@@ -96,9 +91,9 @@ export default function ParameterConfigurationDrawer({
             fullWidth
             size="small"
             value=""
-            label="Apply Template"
+            label="Apply Preset"
             onChange={(e) => {
-              const selected = templates.find((t) => t.name === e.target.value);
+              const selected = presets.find((t) => t.name === e.target.value);
               if (selected) {
                 setTempNode((prev) => ({
                   ...prev,
@@ -118,12 +113,12 @@ export default function ParameterConfigurationDrawer({
               }
             }}
           >
-            {currentTemplates.length === 0 ? (
-              <MenuItem value="Apply Template" disabled>
-                No Templates Available. Import or save one.
+            {currentPresets.length === 0 ? (
+              <MenuItem value="Apply Preset" disabled>
+                No Presets Available. Import or save one.
               </MenuItem>
             ) : (
-              currentTemplates.map((t) => (
+              currentPresets.map((t) => (
                 <MenuItem
                   key={t.name}
                   value={t.name}
@@ -135,7 +130,7 @@ export default function ParameterConfigurationDrawer({
                     edge="end"
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeTemplate(t.name, t.moduleClass);
+                      removePreset(t.name, t.moduleClass);
                     }}
                   >
                     <Delete fontSize="small" />
@@ -205,9 +200,9 @@ export default function ParameterConfigurationDrawer({
             sx={{ flex: 1, textTransform: "none" }}
             onClick={() => {
               if (!tempNode) return;
-              const name = prompt("Enter a template name:");
+              const name = prompt("Enter a preset name:");
               if (!name) return;
-              addTemplate({
+              addPreset({
                 name,
                 moduleClass: tempNode.data.moduleClass,
                 parameters: Object.fromEntries(
@@ -219,7 +214,7 @@ export default function ParameterConfigurationDrawer({
               });
             }}
           >
-            Save as Template
+            Save as Preset
           </Button>
         </Box>
         <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
@@ -228,8 +223,8 @@ export default function ParameterConfigurationDrawer({
             sx={{ flex: 1, textTransform: "none" }}
             onClick={() => {
               if (tempNode) {
-                exportTemplate({
-                  name: tempNode.data.name || "template",
+                exportPreset({
+                  name: tempNode.data.name || "preset",
                   moduleClass: tempNode.data.moduleClass,
                   parameters: Object.fromEntries(
                     tempNode.data.parameters.map((p) => [
@@ -241,21 +236,21 @@ export default function ParameterConfigurationDrawer({
               }
             }}
           >
-            Export Template
+            Export Preset
           </Button>
           <Button
             component="label"
             className="p-3 max-w-full border border-gray-300 bg-white rounded-lg font-semibold text-sm text-gray-800 shadow-sm text-pretty"
             sx={{ flex: 1, textTransform: "none" }}
           >
-            Import Template
+            Import Preset
             <input
               type="file"
               accept="application/json"
               hidden
               onChange={(e) => {
                 if (e.target.files?.[0] && tempNode) {
-                  importTemplate(e.target.files[0], tempNode.data.moduleClass);
+                  importPreset(e.target.files[0], tempNode.data.moduleClass);
                 }
                 e.target.value = "";
               }}

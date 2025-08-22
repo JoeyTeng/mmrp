@@ -19,7 +19,7 @@ export type ParameterConfigurationProps = {
   searchQuery: string;
 };
 
-export type NodeTemplate = {
+export type NodePreset = {
   name: string;
   moduleClass: string;
   parameters: Record<string, ParamValueType>;
