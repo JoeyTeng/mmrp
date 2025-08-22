@@ -92,33 +92,18 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.workers > 1:
-        # Delegate to Uvicorn's CLI so you get proper multi-worker support
-        from uvicorn.main import main as uvicorn_cli
-
-        sys.argv = [
-            "uvicorn",
-            "main:app",
-            "--host",
-            args.host,
-            "--port",
-            str(args.port),
-            "--log-level",
-            args.log_level,
-            "--workers",
-            str(args.workers),
-        ] + (["--proxy-headers"] if not args.reload else ["--reload"])
-        return uvicorn_cli()
-
-    args = parser.parse_args()
-
-    uvicorn.run(
-        app,
+    config = uvicorn.Config(
+        "main:app",
         host=args.host,
         port=args.port,
-        reload=args.reload,
         log_level=args.log_level,
+        workers=args.workers,
+        proxy_headers=not args.reload,
+        reload=args.reload,
     )
+    server = uvicorn.Server(config)
+
+    server.run()
 
 
 if __name__ == "__main__":
