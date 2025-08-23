@@ -4,8 +4,8 @@ import { useReactFlow } from "@xyflow/react";
 import { ExamplePipeline } from "@/types/pipeline";
 import { Settings } from "@mui/icons-material";
 import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
-import { Box, Button } from "@mui/material";
-import { toast } from "react-toastify/unstyled";
+import { Box } from "@mui/material";
+import { showUndoToast } from "@/utils/UndoToast";
 
 export default function ExamplePipelines() {
   const { pipelines } = useExamplePipelinesContext();
@@ -20,28 +20,14 @@ export default function ExamplePipelines() {
     instance.setEdges(edges);
     instance.fitView();
 
-    toast.success(
-      ({ closeToast }) => (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <span>Pipeline loaded successfully!</span>
-          <Button
-            onClick={() => {
-              closeToast();
-              // Restore previous state
-              instance.setNodes(previousNodes);
-              instance.setEdges(previousEdges);
-              instance.fitView();
-              toast.info("Previous Changes Restored");
-            }}
-            size="small"
-            sx={{ border: "1px solid" }}
-          >
-            Undo
-          </Button>
-        </Box>
-      ),
-      {
-        closeOnClick: false,
+    showUndoToast(
+      `Pipeline ${pipeline.name} loaded successfully!`,
+      "Previous Pipeline Restored",
+      true,
+      () => {
+        instance.setNodes(previousNodes);
+        instance.setEdges(previousEdges);
+        instance.fitView();
       },
     );
   };
@@ -59,8 +45,8 @@ export default function ExamplePipelines() {
         <Box
           key={p.id}
           onClick={() => handleLoad(p)}
-          className="w-full flex items-center gap-3 rounded-lg 
-                   bg-white hover:bg-gray-100 px-3 py-2 
+          className="w-full flex items-center gap-3 rounded-lg
+                   bg-white hover:bg-gray-100 px-3 py-2
                    transition-all duration-200 border border-gray-300
                    shadow-sm hover:shadow-md cursor-pointer"
         >

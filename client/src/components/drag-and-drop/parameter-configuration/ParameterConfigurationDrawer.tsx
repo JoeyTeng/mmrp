@@ -13,11 +13,11 @@ import {
   IconButton,
   InputAdornment,
   MenuItem,
-  Select,
   TextField,
 } from "@mui/material";
 import { Delete, SearchOutlined } from "@mui/icons-material";
 import { usePersistTemplate } from "@/hooks/usePersistTemplate";
+import { useMemo } from "react";
 
 export default function ParameterConfigurationDrawer({
   editingNode,
@@ -76,6 +76,11 @@ export default function ParameterConfigurationDrawer({
     [],
   );
 
+  const currentTemplates = useMemo(
+    () => templates.filter((t) => t.moduleClass === tempNode?.data.moduleClass),
+    [templates, tempNode],
+  );
+
   return (
     <AppDrawer
       open={Boolean(editingNode)}
@@ -86,11 +91,12 @@ export default function ParameterConfigurationDrawer({
     >
       <Box display="flex" flexDirection="column" height="100%" width="100%">
         <Box sx={{ m: 2, mb: 0 }}>
-          <Select
+          <TextField
+            select
             fullWidth
             size="small"
             value=""
-            displayEmpty
+            label="Apply Template"
             onChange={(e) => {
               const selected = templates.find((t) => t.name === e.target.value);
               if (selected) {
@@ -112,12 +118,12 @@ export default function ParameterConfigurationDrawer({
               }
             }}
           >
-            <MenuItem value="" disabled>
-              Apply Template
-            </MenuItem>
-            {templates
-              .filter((t) => t.moduleClass === tempNode?.data.moduleClass)
-              .map((t) => (
+            {currentTemplates.length === 0 ? (
+              <MenuItem value="Apply Template" disabled>
+                No Templates Available. Import or save one.
+              </MenuItem>
+            ) : (
+              currentTemplates.map((t) => (
                 <MenuItem
                   key={t.name}
                   value={t.name}
@@ -135,8 +141,9 @@ export default function ParameterConfigurationDrawer({
                     <Delete fontSize="small" />
                   </IconButton>
                 </MenuItem>
-              ))}
-          </Select>
+              ))
+            )}
+          </TextField>
         </Box>
         <Box m={2}>
           <TextField

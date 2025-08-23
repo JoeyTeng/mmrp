@@ -4,13 +4,18 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify/unstyled";
 import { NodeTemplate } from "@/components/drag-and-drop/types";
 import { displayError } from "@/utils/sharedFunctionality";
+import { showUndoToast } from "@/utils/UndoToast";
 
 const TEMPLATE_STORAGE_KEY = "templates";
 
 function loadTemplates(): NodeTemplate[] {
   if (typeof window === "undefined") return [];
   const raw = localStorage.getItem(TEMPLATE_STORAGE_KEY);
-  return raw ? JSON.parse(raw) : [];
+  try {
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
 }
 
 function saveTemplates(templates: NodeTemplate[]) {
@@ -33,7 +38,9 @@ export function usePersistTemplate() {
       );
 
       if (exists) {
-        displayError("Template with this name already exists for this module.");
+        displayError(
+          `Template with name ${template.name} already exists for this module.`,
+        );
         return false;
       }
 
@@ -47,26 +54,49 @@ export function usePersistTemplate() {
   );
 
   // Remove a template
-  const removeTemplate = useCallback((name: string, moduleClass: string) => {
-    setTemplates((prev) => {
-      const updated = prev.filter(
-        (t) => !(t.name === name && t.moduleClass === moduleClass),
+  const removeTemplate = useCallback(
+    (name: string, moduleClass: string) => {
+      const templateToBeRemoved = templates.find(
+        (t) => t.name === name && t.moduleClass === moduleClass,
       );
-      saveTemplates(updated);
-      return updated;
-    });
-    toast.success("Template deleted successfully!");
-  }, []);
+      setTemplates((prev) => {
+        const updated = prev.filter(
+          (t) => !(t.name === name && t.moduleClass === moduleClass),
+        );
+        saveTemplates(updated);
+        return updated;
+      });
+
+      showUndoToast(
+        `Template ${name} deleted successfully!`,
+        `Template ${name} Restored`,
+        templateToBeRemoved !== undefined,
+        () => {
+          // Restore previous state
+          setTemplates((prev) => {
+            if (templateToBeRemoved) {
+              const restored = [...prev, templateToBeRemoved];
+              saveTemplates(restored);
+              return restored;
+            }
+            return prev;
+          });
+        },
+      );
+    },
+    [templates],
+  );
 
   // Export a single template
   const exportTemplate = useCallback((template: NodeTemplate) => {
-    let name = window.prompt("Enter a name for this template", template.name);
+    const name = window
+      .prompt("Enter a name for this template", template.name)
+      ?.trim();
 
-    if (!name || !name.trim()) {
+    if (!name) {
       displayError("Export cancelled: name is required.");
       return;
     }
-    name = name.trim();
 
     const exportData: NodeTemplate = {
       ...template,
@@ -94,7 +124,6 @@ export function usePersistTemplate() {
   // Import a single template
   const importTemplate = useCallback(
     async (file: File, currentModuleClass: string) => {
-      console.log("import");
       const text = await file.text();
       try {
         const parsed: NodeTemplate = JSON.parse(text);
@@ -107,7 +136,6 @@ export function usePersistTemplate() {
         const duplicate = templates.some(
           (t) => t.name === parsed.name && t.moduleClass === parsed.moduleClass,
         );
-        console.log("dupl", duplicate);
         if (duplicate) {
           displayError("Template with this name already exists.");
           return;
