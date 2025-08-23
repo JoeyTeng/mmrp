@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Node, Edge } from "@xyflow/react";
 import { ModuleData, ModuleType } from "@/types/module";
 
@@ -11,7 +11,7 @@ export function usePersistPipeline(
   defaultEdges: Edge[],
 ) {
   // Only store the initial values
-  const [persistedNodes] = useState<Node<ModuleData, ModuleType>[]>(() => {
+  const persistedNodes = useMemo<Node<ModuleData, ModuleType>[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -19,9 +19,9 @@ export function usePersistPipeline(
       } catch {}
     }
     return defaultNodes;
-  });
+  }, [defaultNodes]);
 
-  const [persistedEdges] = useState<Edge[]>(() => {
+  const persistedEdges = useMemo<Edge[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -29,7 +29,7 @@ export function usePersistPipeline(
       } catch {}
     }
     return defaultEdges;
-  });
+  }, [defaultEdges]);
 
   // Persist on visibility change or before unload
   useEffect(() => {
@@ -42,6 +42,7 @@ export function usePersistPipeline(
     window.addEventListener("beforeunload", handleSave);
     document.addEventListener("visibilitychange", handleSave);
     return () => {
+      handleSave();
       window.removeEventListener("beforeunload", handleSave);
       document.removeEventListener("visibilitychange", handleSave);
     };

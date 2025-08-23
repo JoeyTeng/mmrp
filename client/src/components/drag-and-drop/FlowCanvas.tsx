@@ -68,8 +68,8 @@ export default function FlowCanvas({
     useReactFlow<Node<ModuleData, ModuleType>, Edge>();
 
   const { persistedNodes, persistedEdges } = usePersistPipeline(
-    () => getNodes(),
-    () => getEdges(),
+    getNodes,
+    getEdges,
     initialNodes,
     initialEdges,
   );
