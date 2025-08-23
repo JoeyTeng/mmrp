@@ -1,9 +1,13 @@
-import { useCallback } from "react";
+import { useCallback, useContext } from "react";
 import { CanvasContextAction } from "./CanvasContextMenuConfig";
 import { useReactFlow } from "@xyflow/react";
+import { usePipelineExport } from "@/components/sidebar/util";
+import { SidebarContext } from "@/contexts/SidebarContext";
 
 export const useCanvasActions = (onRun: () => void) => {
   const { getNodes, deleteElements } = useReactFlow();
+  const { handleExportPipeline } = usePipelineExport();
+  const sidebar = useContext(SidebarContext);
   const handleCanvasAction = useCallback(
     (action: CanvasContextAction) => {
       switch (action) {
@@ -14,18 +18,22 @@ export const useCanvasActions = (onRun: () => void) => {
           return;
         }
         case "export":
+          handleExportPipeline();
           return;
         case "run":
           onRun();
           return;
         case "add_node":
+          sidebar?.setLeftOpenPanelId("modules");
           return;
         default:
           return;
       }
     },
-    [deleteElements, getNodes, onRun],
+    [deleteElements, getNodes, handleExportPipeline, onRun, sidebar],
   );
 
-  return { handleCanvasAction };
+  const isEmpty = () => getNodes().length === 0;
+
+  return { handleCanvasAction, isEmpty };
 };
