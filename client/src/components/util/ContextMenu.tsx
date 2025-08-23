@@ -2,7 +2,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { ListItemIcon, ListItemText, Divider } from "@mui/material";
 
-import { ContextMenuItem } from "../types";
+import { ContextMenuItem } from "./types";
 import React from "react";
 
 interface ContextMenuProps<ActionType extends string> {
@@ -29,6 +29,7 @@ const ContextMenu = <ActionType extends string>({
     <Menu
       open={open}
       onClose={onClose}
+      disableAutoFocusItem
       anchorReference="anchorPosition"
       anchorPosition={
         position ? { top: position.y - 6, left: position.x + 2 } : undefined

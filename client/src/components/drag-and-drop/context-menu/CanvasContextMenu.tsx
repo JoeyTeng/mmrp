@@ -1,10 +1,11 @@
 import { useCallback, useImperativeHandle, useRef, useState } from "react";
 import { useCanvasActions } from "./useCanvasActions";
 import {
-  CANVAS_CONTEXT_MENU,
+  getCanvasContextMenu,
   CanvasContextAction,
 } from "./CanvasContextMenuConfig";
-import ContextMenu from "./ContextMenu";
+import ContextMenu from "../../util/ContextMenu";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 
 export type CanvasContextMenuHandle = {
   open: (position: { x: number; y: number }) => void;
@@ -18,7 +19,8 @@ interface CanvasContextMenuProps {
 }
 
 const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
-  const { handleCanvasAction } = useCanvasActions(onRun);
+  const { handleCanvasAction, isEmpty } = useCanvasActions(onRun);
+  const { isProcessing } = useVideoReload();
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const menuPositionRef = useRef<{ x: number; y: number }>(null);
@@ -28,9 +30,14 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
   const handleAction = useCallback(
     (actionId: CanvasContextAction) => {
       handleCloseMenu();
+      if (actionId === "clear") {
+        if (isEmpty()) {
+          return;
+        }
+      }
       handleCanvasAction(actionId as CanvasContextAction);
     },
-    [handleCanvasAction],
+    [handleCanvasAction, isEmpty],
   );
 
   useImperativeHandle(ref, () => {
@@ -43,7 +50,7 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
         handleCloseMenu();
       },
       clearAll() {
-        handleCanvasAction("clear" as CanvasContextAction);
+        handleAction("clear" as CanvasContextAction);
       },
     };
   });
@@ -53,7 +60,7 @@ const CanvasContextMenu = ({ ref, onRun }: CanvasContextMenuProps) => {
       open={isOpen}
       dense
       position={menuPositionRef.current}
-      items={CANVAS_CONTEXT_MENU}
+      items={getCanvasContextMenu(isProcessing)}
       onAction={handleAction}
       onClose={handleCloseMenu}
     />

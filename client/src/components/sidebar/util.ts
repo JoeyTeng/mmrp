@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
-import { useReactFlow } from "@xyflow/react";
+import { Edge, Node, useReactFlow } from "@xyflow/react";
 import { useCallback } from "react";
 import {
   createProtectedExport,
@@ -71,43 +71,57 @@ export function useDownloadUtils() {
   return { handleDownload, downloadSize };
 }
 
+const removeDanglingEdges = (edges: Edge[], nodes: Node[]): Edge[] => {
+  const nodeIds = new Set(nodes.map((node) => node.id));
+
+  return edges.filter(
+    (edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target),
+  );
+};
+
 export function usePipelineExport() {
   const INPUT_TYPE = "file";
   const INPUT_ACCEPT = ".json";
-  const FILE_NAME = "pipeline";
 
   const { getNodes, getEdges, setNodes, setEdges, deleteElements } =
     useReactFlow();
 
   // Export Pipeline
-  const handleExportPipeline = useCallback(() => {
-    const nodes = getNodes();
-    const edges = getEdges();
+  const handleExportPipeline = useCallback(
+    (options?: { nodes: Node[]; edges?: Edge[]; filename?: string }) => {
+      const nodes = options ? options.nodes : getNodes();
+      const edges =
+        options?.edges && options.edges.length > 0
+          ? removeDanglingEdges(options.edges, nodes)
+          : removeDanglingEdges(getEdges(), nodes);
+      const filename = options?.filename ?? "pipeline";
 
-    if (!nodes.length && !edges.length) {
-      toast.info("Pipeline is empty");
-      return;
-    }
+      if (!nodes.length && !edges.length) {
+        toast.info("Pipeline is empty");
+        return;
+      }
 
-    try {
-      const protectedExport = createProtectedExport({ nodes, edges });
-      const blob = new Blob([JSON.stringify(protectedExport, null, 2)], {
-        type: "application/json",
-      });
+      try {
+        const protectedExport = createProtectedExport({ nodes, edges });
+        const blob = new Blob([JSON.stringify(protectedExport, null, 2)], {
+          type: "application/json",
+        });
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${FILE_NAME}-${new Date().toISOString()}${INPUT_ACCEPT}`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error("Export error:", e);
-      displayError(
-        `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`,
-      );
-    }
-  }, [getNodes, getEdges]);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${filename}-${new Date().toISOString()}${INPUT_ACCEPT}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error("Import error:", e);
+        displayError(
+          `Export failed: ${e instanceof Error ? e.message : "Unknown error"}`,
+        );
+      }
+    },
+    [getNodes, getEdges],
+  );
 
   // Import Pipeline
   const handleImportPipeline = useCallback(() => {
