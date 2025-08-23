@@ -1,6 +1,4 @@
-# mmrp
-
-Cisco VIPER: VIsual Pipeline EditoR
+# Cisco VIPER: VIsual Pipeline EditoR
 
 ## Contributors
 
@@ -17,10 +15,9 @@ cd client
 npm install
 ```
 
+## How to Run
 
-## Frontend
-
-### How to Run
+### Frontend
 
 ```sh
 cd client
@@ -29,14 +26,30 @@ npm run build
 npm run start
 ```
 
-## Backend
-
-### How to Run
+### Backend
 
 ```sh
 cd server
 
 uv run uvicorn main:app --reload
+```
+
+### Scripts
+
+There are also two scripts that can be used for deployment. You can deploy the server in the VM, the project is already installed there (inside test/mmrp).
+
+#### Preparing the environment
+This will install all dependencies and build the client.
+
+```sh
+./scripts/setup.sh
+```
+
+#### Starting the server
+This will run the server. Once the server is deployed, you can run the application on `http://<VM_IP>:8000/` as long as you are connected to the VPN. You can also pass command line arguments to the script (for example `--workers 2`).
+
+```sh
+./scripts/run.sh
 ```
 
 ## Creating your own example pipeline configurations

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef, useMemo } from "react";
+import React, { useCallback, useRef, useMemo, useState } from "react";
 
 import {
   ReactFlow,
@@ -20,7 +20,7 @@ import {
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
-
+import { v4 as uuidv4 } from "uuid";
 import FlowNode, { FlowNodeProps } from "@/components/drag-and-drop/FlowNode";
 import { FlowCanvasProps } from "./types";
 import { ModuleData, ModuleType } from "@/types/module";
@@ -58,6 +58,8 @@ export default function FlowCanvas({
 
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
+
+  const [hasFocus, setHasFocus] = useState(false);
 
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();
@@ -104,6 +106,7 @@ export default function FlowCanvas({
           x: coordinates.left,
           y: coordinates.bottom + 6,
         },
+        type: "single",
         nodeId: nodeId,
       });
     },
@@ -126,22 +129,32 @@ export default function FlowCanvas({
     [FlowNodeWithMenu],
   );
 
-  const onNodeContextMenu = (event: React.MouseEvent, node: Node) => {
+  const handleNodeContextMenu = (event: React.MouseEvent, nodes: Node[]) => {
     event.preventDefault();
-    unselectNodesAndEdges();
-    selectNode(node.id);
+    if (!nodes || nodes.length === 0) return;
+    const position = { x: event.clientX, y: event.clientY };
     nodeContextMenuRef.current?.open({
-      position: {
-        x: event.clientX,
-        y: event.clientY,
-      },
-      nodeId: node.id,
+      position,
+      ...(nodes.length === 1
+        ? { type: "single", nodeId: nodes[0].id }
+        : { type: "multi", nodeIds: nodes.map((node) => node.id) }),
     });
+  };
+
+  const onNodeContextMenu = (event: React.MouseEvent, node: Node) => {
+    const selectedNodes = getNodes().filter((node) => node.selected);
+    handleNodeContextMenu(
+      event,
+      selectedNodes.length > 1 ? selectedNodes : [node],
+    );
+  };
+
+  const onSelectionContextMenu = (event: React.MouseEvent, nodes: Node[]) => {
+    handleNodeContextMenu(event, nodes);
   };
 
   const onPaneContextMenu = (event: React.MouseEvent | MouseEvent) => {
     event.preventDefault();
-    unselectNodesAndEdges();
     canvasContextMenuRef.current?.open({
       x: event.clientX,
       y: event.clientY,
@@ -172,7 +185,7 @@ export default function FlowCanvas({
 
       // Create Node for the Canvas
       const newNode: Node<ModuleData, ModuleType> = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         type,
         position,
         data: {
@@ -263,11 +276,16 @@ export default function FlowCanvas({
     <Box
       className="w-full h-full relative bg-white rounded-lg border border-gray-300"
       onContextMenu={(e) => e.preventDefault()}
+      tabIndex={0}
+      onFocus={() => setHasFocus(true)}
+      onBlur={() => setHasFocus(false)}
     >
       <Box className="w-full h-full">
         <ReactFlow
           nodeTypes={nodeTypes}
-          deleteKeyCode={editingNode != null ? [] : ["Delete", "Backspace"]}
+          deleteKeyCode={
+            !!editingNode || !hasFocus ? [] : ["Delete", "Backspace"]
+          }
           defaultNodes={initialNodes}
           defaultEdges={initialEdges}
           isValidConnection={isValidConnection}
@@ -278,6 +296,7 @@ export default function FlowCanvas({
           onPaneContextMenu={onPaneContextMenu}
           onNodesDelete={closeContextMenus}
           onEdgesDelete={closeContextMenus}
+          onSelectionContextMenu={onSelectionContextMenu}
           fitViewOptions={{
             padding: 0.2,
           }}
@@ -297,6 +316,8 @@ export default function FlowCanvas({
           selectionOnDrag
           panOnDrag={[1, 2]}
           selectionMode={SelectionMode.Partial}
+          minZoom={0.33}
+          maxZoom={1}
         >
           <Controls>
             <ControlButton
