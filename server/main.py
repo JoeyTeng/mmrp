@@ -1,5 +1,4 @@
 import argparse
-import sys
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager

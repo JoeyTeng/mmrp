@@ -171,8 +171,9 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     ):
         # Run frames through whole pipeline and return the frames that need to be written
         def base_pipeline_iterator() -> Iterator[tuple[str, np.ndarray]]:
+            frame_cache: dict[str, np.ndarray] = {}
             for frame in frame_iter:
-                frame_cache: dict[str, np.ndarray] = {}
+                frame_cache.clear()
                 original_frame = frame.copy()
                 frame_cache[source_mod.id] = frame
 
@@ -196,25 +197,24 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                     yield result_modules[1].id, f2
 
         # Create as many independent streams as needed
-        num_outputs = (
-            len(result_modules) + (1 if len(result_modules) == 1 else 0) + 1
-        )  # +1 interleaved
-        tees = itertools.tee(base_pipeline_iterator(), num_outputs)
+        num_outputs = len(result_modules) + 1  # + 1 interleaved
+
+        streams = itertools.tee(base_pipeline_iterator(), num_outputs)
 
         # Assign iterators for result modules
-        idx = 0
-        output_iters: dict[str, Iterator[np.ndarray]] = {}
-        for mod in result_modules:
-            output_iters[mod.id] = (frame for sid, frame in tees[idx] if sid == mod.id)
-            idx += 1
+        output_iters = {}
+        for mod, stream in zip(result_modules, streams):
+            # Pass only the frames for the specific result module
+            def filtered_iter(
+                sid: str, stream: Iterator[tuple[str, np.ndarray]]
+            ) -> Iterator[np.ndarray]:
+                for key, frame in stream:
+                    if key == sid:
+                        yield frame
 
-        if len(result_modules) == 1:
-            output_iters["original"] = (
-                frame for sid, frame in tees[idx] if sid == "original"
-            )
-            idx += 1
+            output_iters[mod.id] = filtered_iter(mod.id, stream)
 
-        interleaved_source = tees[idx]
+        interleaved_source = streams[-1]
 
         # Interleaved generator
         def interleaved_iterator() -> Iterator[np.ndarray]:
@@ -266,8 +266,14 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
 
         # Write interleaved video output
         interleaved_mod = ModuleRegistry.get_by_spacename(ModuleName.RESULT)
+        # Create video file name
+        unique_id = uuid.uuid4()
+        filename_base64 = (
+            base64.urlsafe_b64encode(unique_id.bytes).decode("utf-8").rstrip("=")
+        )
+        filename = f"{source_file}-{filename_base64}.webm"
         interleaved_params: dict[str, Any] = {
-            "path": f"{source_file}-interleaved.webm",
+            "path": filename,
             "fps": fps,
             "video_player": "interleaved",
         }
