@@ -1,10 +1,9 @@
-from pathlib import Path
 from typing import Any, Iterator, override
 import cv2
 import numpy as np
 from app.modules.module import ModuleBase
 from app.schemas.module import ModuleFormat, ModuleParameter, VideoOutputParams
-from app.utils.shared_functionality import as_context
+from app.utils.shared_functionality import as_context, get_session_outputs_path
 
 
 class VideoOutput(ModuleBase):
@@ -29,14 +28,13 @@ class VideoOutput(ModuleBase):
 
     @override
     def process(
-        self, input_data: Iterator[np.ndarray], parameters: dict[str, Any]
+        self,
+        input_data: Iterator[np.ndarray],
+        parameters: dict[str, Any],
+        session_id: str,
     ) -> Any:
-        # mmrp/server/output
-        out_path = (
-            Path(__file__).resolve().parent.parent.parent.parent
-            / "output"
-            / parameters["path"]
-        )
+        out_dir = get_session_outputs_path(session_id)
+        out_path = out_dir / parameters["path"]
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path = str(out_path)
 

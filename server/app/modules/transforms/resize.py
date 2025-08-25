@@ -50,7 +50,9 @@ class ResizeModule(ModuleBase):
                 raise ValueError(f"Unsupported interpolation type: {interpolation}")
 
     @override
-    def process(self, input_data: str, parameters: dict[str, Any]) -> None:
+    def process(
+        self, input_data: str, parameters: dict[str, Any], session_id: str
+    ) -> None:
         width: int = parameters["width"]
         height: int = parameters["height"]
         new_size: tuple[int, int] = (width, height)

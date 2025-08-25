@@ -35,7 +35,9 @@ class GenericBinaryModule(ModuleBase):
 
     # Input data is expected to be the video name
     @override
-    def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:
+    def process(
+        self, input_data: Any, parameters: dict[str, Any], session_id: str
+    ) -> Any:
         # Get video and transform it to yuv
         video = BASE_DIR / "videos" / input_data
         if not video.exists():

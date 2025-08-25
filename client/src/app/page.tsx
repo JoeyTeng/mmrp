@@ -1,8 +1,6 @@
 import DragAndDropArea from "@/components/cards/DragAndDropArea";
 import AppLayout from "@/components/layout/AppLayout";
 import { Box } from "@mui/material";
-import { ToastContainer } from "react-toastify/unstyled";
-import "react-toastify/ReactToastify.css";
 import VideoComparisonView from "@/components/cards/VideoComparisonView";
 import AppProviders from "@/contexts/AppProviders";
 
@@ -20,7 +18,6 @@ export default function Home() {
             <DragAndDropArea />
           </Box>
         </Box>
-        <ToastContainer />
       </AppLayout>
     </AppProviders>
   );

@@ -1,14 +1,24 @@
 import argparse
-from fastapi import APIRouter, FastAPI
+import asyncio
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pathlib import Path
 import shutil
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 import uvicorn
-from app.routers import pipeline, video, modules, frame, binaries
+from app.routers import pipeline, video, modules, frame, binaries, session
 from app.db.convert_json_to_modules import get_all_mock_modules
 from app.services.binaries import download_gist_files
+from app.services.session_manager import (
+    session_cleaner,
+    refresh_session,
+    validate_session,
+)
+from app.context.session import set_session_context
+from starlette.responses import Response
+from typing import Awaitable, Callable
 
 
 api = APIRouter(prefix="/api")
@@ -26,6 +36,10 @@ async def lifespan(app: FastAPI):
     get_all_mock_modules()
     # Download and extract all binaries
     binaries_dir = download_gist_files()
+
+    # Start background cleaner:
+    # This will run daily to clean up expired sessions
+    asyncio.create_task(session_cleaner())
 
     yield  # Application is running
 
@@ -52,6 +66,42 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(docs_url="/api/docs", openapi_url="/api/openapi.json", lifespan=lifespan)
 app.include_router(api)
+
+
+@app.middleware("http")
+async def auth_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
+    if request.url.path.startswith("/session"):
+        return await call_next(request)
+
+    session_id = request.headers.get("session_id")
+
+    # If no session_id → reject
+    if not session_id or not validate_session(session_id):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "message": "Invalid or missing session.",
+                "refresh_token": True,
+            },
+        )
+
+    # Extend session validity
+    refresh_session(session_id, sliding_expiration=True)
+
+    # Attach for downstream handlers
+    request.state.session_id = session_id
+
+    # Set session context for the entire request lifecycle
+    with set_session_context(session_id):
+        response = await call_next(request)
+        response.headers["session_id"] = session_id
+        return response
+
 
 app.add_middleware(
     CORSMiddleware,
