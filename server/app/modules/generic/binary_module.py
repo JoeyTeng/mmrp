@@ -29,9 +29,6 @@ class GenericBinaryModule(ModuleBase):
     # Input data is expected to be the input video file path and output path (directory)
     @override
     def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:
-        print(
-            f"Processing {self.data.name} with input: {input_data} and parameters: {parameters}"
-        )
         in_path = Path(input_data["input"])
         out_path = Path(input_data["output"])
         if not in_path.exists():
@@ -63,8 +60,6 @@ class GenericBinaryModule(ModuleBase):
             raise FileNotFoundError("Executable path is not defined")
         binary_name: str = self.executable_path
         binary_dir = BASE_DIR / "binaries" / binary_name
-
-        print(f"Executing binary: {binary_name} in {binary_dir}")
 
         # Detect OS and choose binary accordingly
         exe_path: Path = binary_dir / f"{platform.system()}-{platform.machine()}"

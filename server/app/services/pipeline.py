@@ -159,14 +159,12 @@ def process_yuv_video(
     for processing_node in processing_nodes:
         # Process the video through each binary
         module, params = module_map[processing_node.id]
-        print(f"Module: {module}")
-        print(f" Parameters: {params}")
         if not isinstance(module, GenericBinaryModule):
             raise ValueError("YUV processing nodes must be binary modules")
         # For now, we assume a single input for each processing node
         assert len(processing_node.source) == 1
         input = video_cache[processing_node.source[0]]
-        print(f"Input: {input}")
+
         output_path = WORK_DIR / f"{time.time()}-{uuid.uuid4().hex}.yuv"
         binary_input: dict[str, Any] = {
             "input": input.path,
@@ -175,10 +173,9 @@ def process_yuv_video(
             "fps": input.fps,
             "output": output_path,
         }
-        print(binary_input)
+
         video_cache[processing_node.id] = module.process(binary_input, params)
 
-    print(f"Video cache: {video_cache}")
     outputs: list[dict[str, str]] = []
     for result in result_modules:
         assert len(result.source) == 1
@@ -200,6 +197,7 @@ def process_yuv_video(
         result_mod.process(result_input, params)
 
         outputs.append({"video_player": params["video_player"], "path": file})
+
     if len(result_modules) == 1:
         file_name = Path(source_file).stem
         original_out_path = (
