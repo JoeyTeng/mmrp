@@ -1,5 +1,6 @@
+import re
+import time
 import numpy as np
-from collections import defaultdict, deque
 from typing import Any, Iterator
 from pydantic import ValidationError
 from app.modules.module import ModuleBase
@@ -7,15 +8,22 @@ from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
 from app.services.module_registry import ModuleRegistry
 import uuid
-import base64
 from app.utils.quality_metrics import compute_metrics
 from app.schemas.metrics import Metrics
 from app.modules.utils.enums import ModuleName
 from pathlib import Path
 from app.schemas.pipeline import ExamplePipeline
 import json
+from app.utils.shared_functionality import (
+    create_filename_base,
+    get_execution_order,
+    get_video_path,
+)
+from app.schemas.video import VideoMetadata
 
 EXAMPLES_DIR = Path(__file__).parent.parent / "db/examples"
+WORK_DIR = Path(__file__).parent.parent / "output" / "work"
+WORK_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def get_module_class(module: PipelineModule) -> str:
@@ -37,113 +45,13 @@ def process_pipeline_frame(
         frame_cache[mod_id] = frame_output
 
 
-# Get modules in correct execution order in the pipeline
-def get_execution_order(modules: list[PipelineModule]) -> list[PipelineModule]:
-    # Map module id -> module
-    module_map: dict[str, PipelineModule] = {mod.id: mod for mod in modules}
-    all_module_ids = set(module_map.keys())
-
-    # Build the dependency graph (adjacency list of dependent ids)
-    graph: defaultdict[str, list[str]] = defaultdict(list)
-
-    # Tracks how many dependecies each module has
-    indegree: dict[str, int] = {mod.id: len(mod.source) for mod in modules}
-
-    for mod in modules:
-        if mod.source:
-            for dep_id in mod.source:
-                if dep_id not in all_module_ids:
-                    raise ValueError(
-                        f"Pipeline contains an invalid reference: {dep_id}"
-                    )
-                graph[dep_id].append(mod.id)
-
-    # Start with modules that have no dependencies
-    queue: deque[str] = deque(
-        [module_id for module_id, degree in indegree.items() if degree == 0]
-    )
-    execution_order: list[PipelineModule] = []
-
-    while queue:
-        current_id = queue.popleft()
-        execution_order.append(module_map[current_id])
-
-        for dependent_id in graph[current_id]:
-            indegree[dependent_id] -= 1
-            if indegree[dependent_id] == 0:
-                queue.append(dependent_id)
-
-    remaining_with_deps = [
-        module_id for module_id, degree in indegree.items() if degree > 0
-    ]
-    if remaining_with_deps:
-        raise ValueError(
-            f"Pipeline contains a cycle involving module IDs: {remaining_with_deps}"
-        )
-
-    return execution_order
-
-
-# Handle the pipeline request and process the video
-def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
-    ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
-    # Validate pipeline structure
-    if not ordered_modules:
-        raise ValueError("Pipeline is empty")
-
-    first_module_base = get_module_class(ordered_modules[0])
-    if first_module_base != ModuleName.VIDEO_SOURCE:
-        raise ValueError(f"Pipeline must start with a {ModuleName.VIDEO_SOURCE} module")
-
-    last_module_base = get_module_class(ordered_modules[-1])
-    if last_module_base != ModuleName.RESULT:
-        raise ValueError(f"Pipeline must end with a {ModuleName.RESULT} module")
-
-    module_map: dict[str, tuple[ModuleBase, dict[str, Any]]] = {
-        m.id: (
-            ModuleRegistry.get_by_spacename(get_module_class(m)),
-            {p.key: p.value for p in m.parameters},
-        )
-        for m in ordered_modules
-    }
-
-    # Validate module parameters
-    for mod in ordered_modules:
-        mod_id = mod.id
-        mod_instance, params = module_map[mod_id]
-        param_dict = {p.key: p.value for p in mod.parameters}
-        try:
-            validated = mod_instance.parameter_model(**param_dict)
-        except ValidationError as e:
-            raise ValueError(f"Parameter validation failed for module {mod.name}:\n{e}")
-        module_map[mod_id] = (mod_instance, validated.model_dump())
-
-    # Get source and result module
-    source_mod = ordered_modules[0]
-    result_modules = [
-        module
-        for module in ordered_modules
-        if get_module_class(module) == ModuleName.RESULT
-    ]
-
-    # Check and validate result modules
-    if not result_modules:
-        raise ValueError("Pipeline must end with at least one result module")
-    if len(result_modules) > 2:
-        raise ValueError("A maximum of two processed results is supported")
-    for result_mod in result_modules:
-        if not result_mod.source:
-            raise ValueError("Output source cannot be empty")
-        if source_mod.id in result_mod.source:
-            raise ValueError("Pipeline must have at least one processing node")
-
-    # Get processing nodes (remove source and result modules)
-    processing_nodes = [
-        m
-        for m in ordered_modules
-        if m.module_class not in {ModuleName.VIDEO_SOURCE, ModuleName.RESULT}
-    ]
-
+# Process mp4 videos (bgr colorspace) frame by frame as numpy arrays
+def process_video_frames(
+    module_map: dict[str, tuple[ModuleBase, dict[str, Any]]],
+    source_mod: PipelineModule,
+    result_modules: list[PipelineModule],
+    processing_nodes: list[PipelineModule],
+) -> PipelineResponse:
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
         source_file,
         fps,
@@ -178,14 +86,10 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         for result_mod in result_modules:
             mod_instance, params = module_map[result_mod.id]
 
-            # Create video file name
-            unique_id = uuid.uuid4()
-            filename_base64 = (
-                base64.urlsafe_b64encode(unique_id.bytes).decode("utf-8").rstrip("=")
-            )
-            filename = f"{source_file}-{filename_base64}.webm"
+            # Add output file name to parameters
+            file = f"{create_filename_base(source_file)}.webm"
+            params["path"] = file
 
-            params["path"] = filename
             params["fps"] = fps
 
             # Pass only the frames for the specific result module
@@ -195,7 +99,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             mod_instance.process(frame_iter_result(), params)
 
             # Return the video player side and video file name
-            outputs.append({"video_player": params["video_player"], "path": filename})
+            outputs.append({"video_player": params["video_player"], "path": file})
 
         output_map = {entry["video_player"]: entry["path"] for entry in outputs}
 
@@ -224,6 +128,152 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             metrics=metrics,
         )
         return response
+
+
+# Process YUV videos (YUV420p colorspace)
+def process_yuv_video(
+    source_file: str,
+    module_map: dict[str, tuple[ModuleBase, dict[str, Any]]],
+    source_mod: PipelineModule,
+    result_modules: list[PipelineModule],
+    processing_nodes: list[PipelineModule],
+) -> PipelineResponse:
+    # Get path to input YUV file
+    yuv_path = module_map[source_mod.id][0].process(None, module_map[source_mod.id][1])
+    m = re.search(
+        r"_(\d+)x(\d+)(?:_(\d+(?:\.\d+)?))?\.yuv$", source_file, flags=re.IGNORECASE
+    )
+    if not m:
+        raise ValueError(
+            f"YUV file '{source_file}' must encode size as '*_{{W}}x{{H}}[_{{FPS}}].yuv' "
+            f"(e.g., 'vidyo1_640x360_60.yuv')."
+        )
+    w, h = int(m.group(1)), int(m.group(2))
+    fps = float(m.group(3))
+
+    video_metadata = VideoMetadata(path=yuv_path, width=w, height=h, fps=fps)
+
+    video_cache: dict[str, VideoMetadata] = {source_mod.id: video_metadata}
+    for processing_node in processing_nodes:
+        if get_module_class(processing_node) != ModuleName.BINARY:
+            raise ValueError("YUV pipelines only support Binary modules")
+        # Process the video through each binary
+        module, params = module_map[processing_node.id]
+        # For now, we assume a single input for each processing node
+        assert len(processing_node.source) == 1
+        input = video_cache[processing_node.source[0]]
+        output_path = WORK_DIR / f"{time.time()}-{uuid.uuid4().hex}.yuv"
+        binary_input: dict[str, Any] = {
+            "input": input.path,
+            "width": input.width,
+            "height": input.height,
+            "fps": input.fps,
+            "output": output_path,
+        }
+        video_cache[processing_node.id] = module.process(binary_input, params)
+
+    outputs: list[dict[str, str]] = []
+    for result in result_modules:
+        assert len(result.source) == 1
+        input_metadata = video_cache[result.source[0]]
+        result_input = VideoMetadata(
+            path=input_metadata.path,
+            width=input_metadata.width,
+            height=input_metadata.height,
+            fps=input_metadata.fps,
+        )
+        result_mod, params = module_map[result.id]
+
+        # Add video source file to parameters
+        params["original"] = source_file
+        # Add output path to parameters
+        file = f"{create_filename_base(source_file)}.webm"
+        params["path"] = file
+
+        result_mod.process(result_input, params)
+
+        outputs.append({"video_player": params["video_player"], "path": file})
+
+    output_map = {entry["video_player"]: entry["path"] for entry in outputs}
+
+    return PipelineResponse(
+        left=output_map.get("left", ""), right=output_map.get("right", ""), metrics=[]
+    )
+
+
+# Handle the pipeline request (validation, execution order, processing)
+def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
+    ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
+
+    # Validate pipeline structure
+    if not ordered_modules:
+        raise ValueError("Pipeline is empty")
+
+    first_module_base = get_module_class(ordered_modules[0])
+    if first_module_base != ModuleName.VIDEO_SOURCE:
+        raise ValueError(f"Pipeline must start with a {ModuleName.VIDEO_SOURCE} module")
+
+    last_module_base = get_module_class(ordered_modules[-1])
+    if last_module_base != ModuleName.RESULT:
+        raise ValueError(f"Pipeline must end with a {ModuleName.RESULT} module")
+
+    module_map: dict[str, tuple[ModuleBase, dict[str, Any]]] = {
+        m.id: (
+            ModuleRegistry.get_by_spacename(get_module_class(m)),
+            {p.key: p.value for p in m.parameters},
+        )
+        for m in ordered_modules
+    }
+
+    # Validate module parameters
+    for mod in ordered_modules:
+        mod_id = mod.id
+        mod_instance, _ = module_map[mod_id]
+        param_dict = {p.key: p.value for p in mod.parameters}
+        try:
+            validated = mod_instance.parameter_model(**param_dict)
+        except ValidationError as e:
+            raise ValueError(f"Parameter validation failed for module {mod.name}:\n{e}")
+        module_map[mod_id] = (mod_instance, validated.model_dump())
+
+    # Get source and result module
+    source_mod = ordered_modules[0]
+    result_modules = [
+        module
+        for module in ordered_modules
+        if get_module_class(module) == ModuleName.RESULT
+    ]
+
+    # Check and validate result modules
+    if not result_modules:
+        raise ValueError("Pipeline must end with at least one result module")
+    if len(result_modules) > 2:
+        raise ValueError("A maximum of two processed results is supported")
+    for result_mod in result_modules:
+        if not result_mod.source:
+            raise ValueError("Output source cannot be empty")
+        if source_mod.id in result_mod.source:
+            raise ValueError("Pipeline must have at least one processing node")
+
+    # Get processing nodes (remove source and result modules)
+    processing_nodes = [
+        m
+        for m in ordered_modules
+        if m.module_class not in {ModuleName.VIDEO_SOURCE, ModuleName.RESULT}
+    ]
+
+    video_file = str(module_map[source_mod.id][1].get("path"))
+    video_path = get_video_path(video_file)
+    ext = video_path.suffix.lower()
+
+    if ext == ".yuv":
+        return process_yuv_video(
+            video_file, module_map, source_mod, result_modules, processing_nodes
+        )
+    else:
+        return process_video_frames(
+            module_map, source_mod, result_modules, processing_nodes
+        )
 
 
 def list_examples() -> list[ExamplePipeline]:

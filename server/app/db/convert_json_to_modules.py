@@ -22,7 +22,6 @@ def get_json_folder() -> Path:
 
 
 def convert_json(folder: Path) -> list[ModuleBase]:
-    print(f"Reading from json (convert_json): {folder}")
     modules: list[ModuleBase] = []
 
     for json_file in folder.glob("*.json"):
@@ -49,13 +48,11 @@ def load_binary_modules(binaries_dir: Path) -> Path:
         config_path = binary / "Linux-x86_64" / "config.json"
         if not config_path.exists():
             continue
-        print(f"Found config: {config_path}")
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 config_data = json.load(f)
             bin_path = out_path / f"{binary.name}.json"
             append_to_mock_data(config_data, bin_path)
-            print(f"Processed {config_path}")
         except Exception as e:
             print(f"Failed to process {config_path}: {e}")
     return out_path
@@ -71,7 +68,6 @@ def get_all_mock_modules() -> list[ModuleBase]:
     # and register these modules alongside the existing ones
     binaries_dir = Path(__file__).resolve().parents[2] / "binaries"
     if binaries_dir.exists():
-        print(f"Found binaries dir: {binaries_dir}")
         # Add data to mock data json
         binaries_folder = load_binary_modules(binaries_dir)
         # Read from newly created mock_data
@@ -96,7 +92,6 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
     modules: list[ModuleBase] = []
 
     for module_data in json_data.get("data", []):
-        print(f"{module_data}")
         try:
             module_class_ = module_data["name"]
             name_ = string_sanitizer(module_class_)
@@ -137,5 +132,4 @@ def json_to_modules(json_data: dict[str, Any]) -> list[ModuleBase]:
             )
         except Exception as e:
             raise ValueError(f"Error loading module: {module_data}: {str(e)}")
-    print(ModuleRegistry().get_all())
     return modules

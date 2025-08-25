@@ -3,17 +3,11 @@ from app.modules.module import ModuleBase
 from typing import Any, override
 from app.schemas.module import GenericParameterModel, ModuleFormat, ModuleParameter
 from pathlib import Path
-from app.utils.shared_functionality import (
-    decode_video,
-    write_yuv420_frame,
-    read_yuv420_frame,
-)
-from app.utils.enums import VideoFormats
 import platform
 import subprocess
 import json
-import tempfile
-import os
+from app.utils.shared_functionality import create_filename_base
+from app.schemas.video import VideoMetadata
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 
@@ -33,61 +27,41 @@ class GenericBinaryModule(ModuleBase):
     def get_output_formats(self) -> list[ModuleFormat]:
         return self.data.output_formats or []
 
-    # Input data is expected to be the video name
+    # Input data is expected to be the input video file path and output path (directory)
     @override
     def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:
-        # Get video and transform it to yuv
-        video = BASE_DIR / "videos" / input_data
-        if not video.exists():
-            raise FileNotFoundError(f"Video file not found: {video}")
-        yuv = decode_video(video, VideoFormats.BGR, VideoFormats.YUV_I420)
+        in_path = Path(input_data["input"])
+        out_dir = Path(input_data["output"])
+        if not in_path.exists():
+            raise FileNotFoundError(in_path)
+        out_path = out_dir / f"{create_filename_base(self.id)}.yuv"
 
-        output_dir = BASE_DIR / "output"
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / "output.yuv"
+        video_data = VideoMetadata(
+            path=in_path,
+            width=input_data["width"],
+            height=input_data["height"],
+            fps=input_data["fps"],
+        )
 
-        output_yuv = self.execute_binary(parameters, yuv, output_path)
-        return output_yuv
+        output = self.execute_binary(parameters, video_data, out_path)
+        return output
 
     @override
     def process_frame(
         self, frame: np.ndarray, parameters: dict[str, Any]
     ) -> np.ndarray:
-        width, height = frame.shape[1], frame.shape[0]
-
-        fd_in, input_path_raw = tempfile.mkstemp(suffix=".yuv")
-        fd_out, output_path_raw = tempfile.mkstemp(suffix=".yuv")
-        os.close(fd_in)
-        os.close(fd_out)
-
-        input_path = Path(input_path_raw)
-        output_path = Path(output_path_raw)
-
-        try:
-            # 1. Write input frame
-            write_yuv420_frame(frame, input_path)
-
-            # 2. Run binary
-            out = self.execute_binary(parameters, input=input_path, output=output_path)
-
-            # 3. Read processed frame
-            result_frame = read_yuv420_frame(out, width, height)
-
-        finally:
-            input_path.unlink(missing_ok=True)
-            output_path.unlink(missing_ok=True)
-
-        return result_frame
+        raise NotImplementedError(
+            "Binary module process entire videos, not individual frames"
+        )
 
     # Function that executes the binary
     def execute_binary(
-        self, parameters: dict[str, Any], input: Path, output: Path
-    ) -> Any:
+        self, parameters: dict[str, Any], input: VideoMetadata, output: Path
+    ) -> VideoMetadata:
         if self.executable_path is None:
             raise FileNotFoundError("Executable path is not defined")
         binary_name: str = self.executable_path
-        base_dir = Path(__file__).resolve().parents[3]
-        binary_dir = base_dir / "binaries" / binary_name
+        binary_dir = BASE_DIR / "binaries" / binary_name
 
         # Detect OS and choose binary accordingly
         exe_path: Path = binary_dir / f"{platform.system()}-{platform.machine()}"
@@ -135,6 +109,14 @@ class GenericBinaryModule(ModuleBase):
                     continue
                 value = parameters[name]
 
+            # Check if output width/height/fps have been provided and update output metadata
+            if flag == "-wout":
+                input.width = int(value)
+            elif flag == "-hout":
+                input.height = int(value)
+            elif flag == "-fps":
+                input.fps = float(value)
+
             # Boolean flags (e.g., --verbose)
             if param_type == "bool":
                 if value:
@@ -151,4 +133,8 @@ class GenericBinaryModule(ModuleBase):
             print("STDERR:\n", e.stderr)
             raise
 
-        return output
+        output_metadata = VideoMetadata(
+            path=output, width=input.width, height=input.height, fps=input.fps
+        )
+
+        return output_metadata

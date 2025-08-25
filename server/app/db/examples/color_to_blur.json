@@ -16,10 +16,11 @@
             "name": "path",
             "metadata": {
               "value": "example-video.mp4",
-              "type": "str",
+              "type": "select",
               "constraints": {
-                "type": "str",
+                "type": "select",
                 "default": "example-video.mp4",
+                "options": ["example-video.mp4", "vidyo1_640x360_60.yuv"],
                 "required": true,
                 "description": "Input file path"
               }
@@ -29,7 +30,7 @@
         "input_formats": [],
         "output_formats": [
           {
-            "pixel_format": ["bgr24"],
+            "pixel_format": ["bgr24", "yuv420p 8bit", "yuv420p 10bit", "yuv444p 8bit"],
             "color_space": ["BT.709 Full"]
           }
         ]
@@ -172,7 +173,7 @@
         ],
         "input_formats": [
           {
-            "pixel_format": ["bgr24"],
+            "pixel_format": ["bgr24", "yuv420p 8bit", "yuv420p 10bit", "yuv444p 8bit"],
             "color_space": ["BT.709 Full"]
           }
         ],

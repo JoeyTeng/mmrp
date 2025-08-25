@@ -13,7 +13,6 @@ def convert_format(format_entry: dict[str, Any]) -> dict[str, Any]:
 
 
 def append_to_mock_data(config_data: Any, out_path: Path) -> None:
-    print(f"Appending to {out_path}")
     # Process input and output formats
     input_formats = [convert_format(f) for f in config_data.get("input_formats", [])]
     output_formats = [convert_format(f) for f in config_data.get("output_formats", [])]
@@ -57,7 +56,6 @@ def append_to_mock_data(config_data: Any, out_path: Path) -> None:
 
             new_module["parameters"].append(param_entry)
 
-        print(f"Written Module: {new_module}")
     except ValidationError as e:
         raise ValueError(f"Invalid parameter definition: {e}")
 

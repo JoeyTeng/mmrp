@@ -7,7 +7,10 @@
       "output_formats": [
         {
           "pixel_format": [
-            "bgr24"
+            "bgr24",
+            "yuv420p 8bit",
+            "yuv420p 10bit",
+            "yuv444p 8bit"
           ],
           "color_space": [
             "BT.709 Full"
@@ -19,6 +22,7 @@
           "name": "path",
           "flag": "-i",
           "type": "str",
+          "options": ["example-video.mp4", "vidyo1_640x360_60.yuv"],
           "default": "example-video.mp4",
           "required": true,
           "description": "Input file path"
@@ -197,7 +201,10 @@
       "input_formats": [
         {
           "pixel_format": [
-            "bgr24"
+            "bgr24",
+            "yuv420p 8bit",
+            "yuv420p 10bit",
+            "yuv444p 8bit"
           ],
           "color_space": [
             "BT.709 Full"
