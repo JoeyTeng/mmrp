@@ -17,19 +17,21 @@ import {
   ControlButton,
   getIncomers,
   SelectionMode,
+  addEdge,
+  useEdgesState,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
 import { v4 as uuidv4 } from "uuid";
 import FlowNode, { FlowNodeProps } from "@/components/drag-and-drop/FlowNode";
 import { FlowCanvasProps } from "./types";
-import { ModuleData, ModuleType } from "@/types/module";
+import { FormatDefinition, ModuleData, ModuleType } from "@/types/module";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useModulesContext } from "@/contexts/ModulesContext";
-import { checkPipeline } from "./util";
+import { checkPipeline, compatibleFormats } from "./util";
 import NodeContextMenu, {
   NodeContextMenuHandle,
 } from "./context-menu/NodeContextMenu";
@@ -60,10 +62,11 @@ export default function FlowCanvas({
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
 
   const [hasFocus, setHasFocus] = useState(false);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();
-  const { screenToFlowPosition, getNodes, getEdges, setNodes, setEdges } =
+  const { screenToFlowPosition, getNodes, getEdges, setNodes, getNode } =
     useReactFlow();
   const selectNode = useCallback(
     (nodeId: string) => {
@@ -165,6 +168,48 @@ export default function FlowCanvas({
     event.preventDefault();
     event.dataTransfer.dropEffect = "copy";
   }, []);
+
+  const onConnect = (params: Connection) => {
+    const sourceNode = getNode(params.source!) as
+      | Node<ModuleData, ModuleType>
+      | undefined;
+    const targetNode = getNode(params.target!) as
+      | Node<ModuleData, ModuleType>
+      | undefined;
+
+    if (!sourceNode || !targetNode) return;
+
+    // Extract only default values from format expressions
+    const outs: FormatDefinition[] = (sourceNode.data?.outputFormats ?? []).map(
+      (f) => f.default,
+    );
+    const ins: FormatDefinition[] = (targetNode.data?.inputFormats ?? []).map(
+      (f) => f.default,
+    );
+
+    const isValid = compatibleFormats(outs, ins);
+
+    setEdges((eds) =>
+      addEdge(
+        {
+          ...params,
+          style: isValid
+            ? undefined
+            : { stroke: "#ef4444", strokeDasharray: "4 4" },
+          animated: !isValid,
+        },
+        eds,
+      ),
+    );
+
+    if (!isValid) {
+      const sourceName = sourceNode.data?.name ?? sourceNode.id;
+      const targetName = targetNode.data?.name ?? targetNode.id;
+      toast.error(
+        `Output format of "${sourceName}" is not compatible with input format of "${targetName}".`,
+      );
+    }
+  };
 
   const { modules } = useModulesContext();
 
@@ -287,15 +332,17 @@ export default function FlowCanvas({
             !!editingNode || !hasFocus ? [] : ["Delete", "Backspace"]
           }
           defaultNodes={initialNodes}
-          defaultEdges={initialEdges}
+          edges={edges}
           isValidConnection={isValidConnection}
           onDragOver={onDragOver}
+          onConnect={onConnect}
           onDrop={onDrop}
           onNodeDoubleClick={onNodeDoubleClickHandler}
           onNodeContextMenu={onNodeContextMenu}
           onPaneContextMenu={onPaneContextMenu}
           onNodesDelete={closeContextMenus}
           onEdgesDelete={closeContextMenus}
+          onEdgesChange={onEdgesChange}
           onSelectionContextMenu={onSelectionContextMenu}
           fitViewOptions={{
             padding: 0.2,

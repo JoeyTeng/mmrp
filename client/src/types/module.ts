@@ -30,8 +30,8 @@ export type ModuleData = {
   name: string;
   moduleClass: string;
   parameters: ModuleParameter[];
-  inputFormats: FormatDefinition[];
-  outputFormats: FormatDefinition[];
+  inputFormats: ModuleFormat[];
+  outputFormats: ModuleFormat[];
 };
 
 export interface ModuleParameter {
@@ -61,6 +61,12 @@ export interface FormatDefinition {
   width?: number;
   height?: number;
   frameRate?: FrameRate; //fps
+}
+export type FormulaMap = Record<string, string>;
+
+export interface ModuleFormat {
+  default: FormatDefinition;
+  formula: FormulaMap;
 }
 
 export interface IOFormat {

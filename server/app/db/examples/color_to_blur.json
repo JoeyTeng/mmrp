@@ -29,8 +29,14 @@
         "input_formats": [],
         "output_formats": [
           {
-            "pixel_format": ["bgr24"],
-            "color_space": ["BT.709 Full"]
+            "default": {
+              "pixel_format": [
+                "bgr24"
+              ],
+              "color_space": [
+                "BT.709 Full"
+              ]
+            }
           }
         ]
       }
@@ -54,7 +60,12 @@
               "constraints": {
                 "type": "select",
                 "default": "RGB",
-                "options": ["YCbCr", "HSV", "Lab", "RGB"],
+                "options": [
+                  "YCbCr",
+                  "HSV",
+                  "Lab",
+                  "RGB"
+                ],
                 "required": true,
                 "description": "Input color space"
               }
@@ -68,7 +79,12 @@
               "constraints": {
                 "type": "select",
                 "default": "RGB",
-                "options": ["YCbCr", "HSV", "Lab", "RGB"],
+                "options": [
+                  "YCbCr",
+                  "HSV",
+                  "Lab",
+                  "RGB"
+                ],
                 "required": true,
                 "description": "Output color space"
               }
@@ -77,14 +93,26 @@
         ],
         "input_formats": [
           {
-            "pixel_format": ["bgr24"],
-            "color_space": ["BT.709 Full"]
+            "default": {
+              "pixel_format": [
+                "bgr24"
+              ],
+              "color_space": [
+                "BT.709 Full"
+              ]
+            }
           }
         ],
         "output_formats": [
           {
-            "pixel_format": ["bgr24"],
-            "color_space": ["BT.709 Full"]
+            "default": {
+              "pixel_format": [
+                "bgr24"
+              ],
+              "color_space": [
+                "BT.709 Full"
+              ]
+            }
           }
         ]
       }
@@ -123,7 +151,11 @@
               "constraints": {
                 "type": "select",
                 "default": "gaussian",
-                "options": ["gaussian", "median", "average"],
+                "options": [
+                  "gaussian",
+                  "median",
+                  "average"
+                ],
                 "required": true,
                 "description": "Blur algorithm type"
               }
@@ -132,14 +164,26 @@
         ],
         "input_formats": [
           {
-            "pixel_format": ["bgr24"],
-            "color_space": ["BT.709 Full"]
+            "default": {
+              "pixel_format": [
+                "bgr24"
+              ],
+              "color_space": [
+                "BT.709 Full"
+              ]
+            }
           }
         ],
         "output_formats": [
           {
-            "pixel_format": ["bgr24"],
-            "color_space": ["BT.709 Full"]
+            "default": {
+              "pixel_format": [
+                "bgr24"
+              ],
+              "color_space": [
+                "BT.709 Full"
+              ]
+            }
           }
         ]
       }
@@ -163,7 +207,10 @@
               "constraints": {
                 "type": "select",
                 "default": "right",
-                "options": ["left", "right"],
+                "options": [
+                  "left",
+                  "right"
+                ],
                 "required": true,
                 "description": "Output Video Player"
               }
@@ -172,8 +219,14 @@
         ],
         "input_formats": [
           {
-            "pixel_format": ["bgr24"],
-            "color_space": ["BT.709 Full"]
+            "default": {
+              "pixel_format": [
+                "bgr24"
+              ],
+              "color_space": [
+                "BT.709 Full"
+              ]
+            }
           }
         ],
         "output_formats": []
