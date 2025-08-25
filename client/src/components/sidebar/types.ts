@@ -18,7 +18,7 @@ export interface SidebarItem {
   action?: () => void;
   panelContent?: ReactNode;
   showArrow?: boolean;
-  showAfterDivider?: boolean;
+  section?: number;
   arrowDirection?: "left" | "right";
   disabled?: boolean;
 }

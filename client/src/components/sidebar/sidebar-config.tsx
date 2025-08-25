@@ -35,12 +35,21 @@ export const getLeftSidebarItems = (
     title: "Import Pipeline",
     icon: <CloudUploadOutlined />,
     action: handleImportPipeline,
+    section: 1,
   },
   {
     id: "pipeline-export",
     title: "Export Pipeline",
     icon: <CloudDownloadOutlined />,
     action: handleExportPipeline,
+    section: 1,
+  },
+  {
+    id: "example-pipelines",
+    title: "Example Pipelines",
+    icon: <LibraryAdd />,
+    panelContent: <ExamplePipelines />,
+    section: 1,
   },
   // Modules
   {
@@ -49,21 +58,14 @@ export const getLeftSidebarItems = (
     icon: <AppsOutlined />,
     panelContent: <Modules />,
     showArrow: true,
-    showAfterDivider: true,
+    section: 2,
   },
   {
     id: "upload",
     title: "Upload Module",
     icon: <UploadFileOutlined />,
     action: () => setUploadOpen(true),
-    showAfterDivider: true,
-  },
-  {
-    id: "example-pipelines",
-    title: "Example Pipelines",
-    icon: <LibraryAdd />,
-    panelContent: <ExamplePipelines />,
-    showAfterDivider: true,
+    section: 2,
   },
 ];
 

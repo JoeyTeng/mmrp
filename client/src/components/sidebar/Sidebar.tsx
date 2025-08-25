@@ -1,8 +1,8 @@
 "use client";
 import { Drawer, List, Divider, Box } from "@mui/material";
-import { SidebarItem } from "./SidebarItem";
+import { SidebarItem as SideBarItemComponent } from "./SidebarItem";
 import { SidebarPanel } from "./SidebarPanel";
-import { SidebarProps } from "./types";
+import { SidebarItem, SidebarProps } from "./types";
 
 export const Sidebar = ({
   anchor = "left",
@@ -16,14 +16,21 @@ export const Sidebar = ({
     onPanelToggle?.(newPanelId);
   };
 
-  const getSectionedItems = () => {
-    return {
-      beforeDivider: items.filter((item) => !item.showAfterDivider),
-      afterDivider: items.filter((item) => item.showAfterDivider),
-    };
-  };
+  const groupItemsBySection = () => {
+    const grouped: Record<number, SidebarItem[]> = {};
 
-  const { beforeDivider, afterDivider } = getSectionedItems();
+    items.forEach((item) => {
+      const section = item.section ?? 0; // default to section 0
+      if (!grouped[section]) grouped[section] = [];
+      grouped[section].push(item);
+    });
+
+    return grouped;
+  };
+  const groupedItems = groupItemsBySection();
+  const sectionKeys = Object.keys(groupedItems)
+    .map(Number)
+    .sort((a, b) => a - b);
 
   return (
     <>
@@ -54,41 +61,27 @@ export const Sidebar = ({
             height: "100%",
           }}
         >
-          <Box className="relative flex-1 my-auto">
-            <List>
-              {/* Items before divider */}
-              {beforeDivider.map((item) => (
-                <SidebarItem
-                  key={item.id}
-                  item={{
-                    ...item,
-                    action: item.action || (() => togglePanel(item.id)),
-                    arrowDirection: openPanelId === item.id ? "right" : "left",
-                  }}
-                  anchor={anchor}
-                />
-              ))}
-            </List>
-          </Box>
+          {sectionKeys.map((sectionKey, index) => (
+            <Box key={sectionKey} className="relative flex-1 my-auto">
+              {/* Divider before all except the first */}
+              {index > 0 && <Divider />}
 
-          <Box className="flex-1 relative my-auto">
-            {/* Divider (only if we have after-divider items) */}
-            {afterDivider.length > 0 && <Divider />}
-            {/* Items after divider */}
-            <List>
-              {afterDivider.map((item) => (
-                <SidebarItem
-                  key={item.id}
-                  item={{
-                    ...item,
-                    action: item.action || (() => togglePanel(item.id)),
-                    arrowDirection: openPanelId === item.id ? "left" : "right",
-                  }}
-                  anchor={anchor}
-                />
-              ))}
-            </List>
-          </Box>
+              <List>
+                {groupedItems[sectionKey].map((item) => (
+                  <SideBarItemComponent
+                    key={item.id}
+                    item={{
+                      ...item,
+                      action: item.action || (() => togglePanel(item.id)),
+                      arrowDirection:
+                        openPanelId === item.id ? "right" : "left",
+                    }}
+                    anchor={anchor}
+                  />
+                ))}
+              </List>
+            </Box>
+          ))}
         </Box>
       </Drawer>
 
