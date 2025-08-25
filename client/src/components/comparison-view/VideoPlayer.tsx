@@ -8,8 +8,10 @@ import React, {
 } from "react";
 import PlayerControls from "./PlayerControls";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
+import { ViewOptions } from "./types";
 
 type Props = {
+  view: ViewOptions;
   videoRefs: React.RefObject<HTMLVideoElement | null>[];
   showSource?: boolean;
   getSourceLabel?: (frame: number) => string;
@@ -24,10 +26,11 @@ export type PlayerHandle = {
 const VideoPlayer = forwardRef<PlayerHandle, Props>(
   (
     {
+      view,
       videoRefs,
       showSource = false,
       getSourceLabel,
-      frameRate = 30,
+      frameRate = 29.97,
       onFullscreen,
     },
     ref,
@@ -37,6 +40,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
     const [isMuted, setIsMuted] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [index, setIndex] = useState(0); // index [0, frames.length) in Side-by-side, [0, 2 * frames.length) in Interleaving frames
 
     const mainVideo = videoRefs[0]?.current;
     const { setCurrentFrame, currentFrame } = useVideoMetrics(); // Frame index in range [0, frames.length)
@@ -45,20 +49,33 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
       handleTimeUpdate,
     }));
 
-    // Pause playback when main video ends
+    // Sync duration and pause state when video metadata or end event fires
     useEffect(() => {
       if (!mainVideo) return;
       const onEnded = () => setIsPlaying(false);
+
+      const handleLoadedMetadata = () => {
+        setDuration(mainVideo.duration || 0);
+      };
+
       mainVideo.addEventListener("ended", onEnded);
+      mainVideo.addEventListener("loadedmetadata", handleLoadedMetadata);
+
       return () => {
         mainVideo.removeEventListener("ended", onEnded);
+        mainVideo.removeEventListener("loadedmetadata", handleLoadedMetadata);
       };
     }, [mainVideo]);
 
     // Update time and corresponding frame based on playback
-    const updateTimeAndFrame = (currentTime: number) => {
-      setCurrentTime(currentTime);
-      setCurrentFrame(Math.floor(currentTime * frameRate));
+    const updateTimeAndFrame = (time: number) => {
+      setCurrentTime(time);
+      setCurrentFrame(
+        view === ViewOptions.Interleaving
+          ? Math.floor(Math.floor(time * frameRate) / 2)
+          : Math.floor(time * frameRate),
+      );
+      setIndex(Math.floor(time * frameRate));
     };
 
     // Handle time update triggered externally
@@ -70,11 +87,27 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
       }
     };
 
+    // Snap playback to the middle of the frame
+    const snapToFrameMiddleTime = (time: number) => {
+      const frameIndex = Math.floor(time * frameRate);
+      const middleTime = frameIndex / frameRate + FRAME_DURATION / 2;
+
+      videoRefs.forEach((ref) => {
+        if (ref.current) {
+          ref.current.currentTime = middleTime;
+        }
+      });
+
+      updateTimeAndFrame(middleTime);
+      return middleTime;
+    };
+
     // Handle play/pause
     const handlePlayPause = () => {
       if (isPlaying) {
         videoRefs.forEach((ref) => ref.current?.pause());
         setIsPlaying(false);
+        snapToFrameMiddleTime(currentTime);
       } else {
         videoRefs.forEach((ref) => {
           const video = ref.current;
@@ -110,31 +143,25 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(
         0,
         Math.min(duration, currentTime + direction * FRAME_DURATION),
       );
-      videoRefs.forEach((ref) => {
-        const video = ref.current;
-        if (video) video.currentTime = nextTime;
-      });
-      updateTimeAndFrame(nextTime);
+      snapToFrameMiddleTime(nextTime);
       setIsPlaying(false);
     };
 
     // Handle slider movement
     const handleSliderChange = (value: number) => {
-      videoRefs.forEach((ref) => {
-        if (ref.current) {
-          ref.current.currentTime = value;
-        }
-      });
-      updateTimeAndFrame(value);
+      snapToFrameMiddleTime(value);
     };
 
-    const totalFrames = Math.floor(duration * frameRate);
-    const sourceLabel = getSourceLabel?.(currentFrame);
+    const totalFrames =
+      view === ViewOptions.Interleaving
+        ? Math.floor(Math.floor(duration * frameRate) / 2)
+        : Math.floor(duration * frameRate);
+    const sourceLabel = getSourceLabel?.(index);
 
     return (
       <PlayerControls
-        currentFrame={currentFrame}
-        totalFrames={totalFrames}
+        currentFrame={currentFrame + 1}
+        totalFrames={totalFrames + 1}
         isPlaying={isPlaying}
         showMute={true}
         isMuted={isMuted}

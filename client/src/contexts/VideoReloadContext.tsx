@@ -7,25 +7,33 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import type { PipelineResponse } from "@/types/pipeline";
+import type { PipelineRequest, PipelineResponse } from "@/types/pipeline";
 import { useVideoMetrics } from "./VideoMetricsContext";
+import { VideoType } from "@/components/comparison-view/types";
 
 type VideoReloadContextType = {
   triggerReload: (res: PipelineResponse) => void;
+  triggerWebSocketConnection: (req: PipelineRequest) => void;
   latestResponse: PipelineResponse | null;
+  latestRequest: PipelineRequest | null;
   isProcessing: boolean;
   setIsProcessing: (value: boolean) => void;
   isProcessingError: boolean;
   setError: (value: boolean) => void;
-  getLatestVideoInfo: (video: "left" | "right") => {
+  getLatestVideoInfo: (video: "left" | "right" | "interleaved") => {
     url: string;
     size: number;
   };
   setLatestVideoInfo: (
-    video: "left" | "right",
+    video: "left" | "right" | "interleaved",
     url: string,
     size?: number,
   ) => void;
+  activeVideoType: VideoType;
+  selectedVideoType: VideoType;
+  setSelectedVideoType: React.Dispatch<React.SetStateAction<VideoType>>;
+  handlePipelineRun: () => void;
+  isPipelineRun: boolean;
 };
 
 const VideoReloadContext = createContext<VideoReloadContextType | undefined>(
@@ -44,17 +52,25 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
   const [latestResponse, setLatestResponse] = useState<PipelineResponse | null>(
     null,
   );
+  const [latestRequest, setLatestRequest] = useState<PipelineRequest | null>(
+    null,
+  );
   const [videoInfo, setVideoInfo] = useState<
-    Record<"left" | "right", { url: string; size: number }>
-  >({ left: { url: "", size: 0 }, right: { url: "", size: 0 } });
+    Record<"left" | "right" | "interleaved", { url: string; size: number }>
+  >({
+    left: { url: "", size: 0 },
+    right: { url: "", size: 0 },
+    interleaved: { url: "", size: 0 },
+  });
+  const [isPipelineRun, setIsPipelineRun] = useState(false);
 
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
-  const getLatestVideoInfo = (video: "right" | "left") => {
+  const getLatestVideoInfo = (video: "right" | "left" | "interleaved") => {
     return videoInfo[video];
   };
   const setLatestVideoInfo = useCallback(
-    (video: "left" | "right", url: string, size?: number) => {
+    (video: "left" | "right" | "interleaved", url: string, size?: number) => {
       setVideoInfo((prev) => {
         const oldUrl = prev[video].url;
         if (oldUrl && oldUrl !== url) {
@@ -65,6 +81,8 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     },
     [],
   );
+  const [selectedVideoType, setSelectedVideoType] = useState(VideoType.Video);
+  const [activeVideoType, setActiveVideoType] = useState(VideoType.Video);
 
   const triggerReload = (res: PipelineResponse) => {
     setLatestResponse(res);
@@ -72,17 +90,34 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     setMetrics(res.metrics);
   };
 
+  const triggerWebSocketConnection = (req: PipelineRequest) => {
+    setLatestRequest(req);
+  };
+
+  const handlePipelineRun = () => {
+    setMetrics([]);
+    setActiveVideoType(selectedVideoType);
+    setIsPipelineRun(true);
+  };
+
   return (
     <VideoReloadContext
       value={{
         triggerReload,
+        triggerWebSocketConnection,
         latestResponse,
+        latestRequest,
         isProcessing,
         setIsProcessing,
         isProcessingError,
         setError,
         getLatestVideoInfo,
         setLatestVideoInfo,
+        activeVideoType,
+        selectedVideoType,
+        setSelectedVideoType,
+        handlePipelineRun,
+        isPipelineRun,
       }}
     >
       {children}
