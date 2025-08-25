@@ -28,6 +28,7 @@ api.include_router(video.router)
 api.include_router(modules.router)
 api.include_router(frame.router)
 api.include_router(binaries.router)
+api.include_router(session.router)
 
 
 @asynccontextmanager
@@ -75,7 +76,7 @@ async def auth_middleware(
     if request.method == "OPTIONS":
         return await call_next(request)
 
-    if request.url.path.startswith("/session"):
+    if request.url.path.startswith("/api/session"):
         return await call_next(request)
 
     session_id = request.headers.get("session_id")
