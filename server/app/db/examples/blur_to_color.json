@@ -28,9 +28,10 @@
         ],
         "input_formats": [],
         "output_formats": [
-          {
+          {"default":{
             "pixel_format": ["bgr24"],
             "color_space": ["BT.709 Full"]
+          }
           }
         ]
       }
@@ -77,15 +78,18 @@
           }
         ],
         "input_formats": [
-          {
+          {"default":{
             "pixel_format": ["bgr24"],
             "color_space": ["BT.709 Full"]
           }
+        }
         ],
         "output_formats": [
           {
+            "default":{
             "pixel_format": ["bgr24"],
             "color_space": ["BT.709 Full"]
+            }
           }
         ]
       }
@@ -131,16 +135,18 @@
           }
         ],
         "input_formats": [
-          {
+          {"default":{
             "pixel_format": ["bgr24"],
             "color_space": ["BT.709 Full"]
           }
+        }
         ],
         "output_formats": [
-          {
+          {"default":{
             "pixel_format": ["bgr24"],
             "color_space": ["BT.709 Full"]
           }
+        }
         ]
       }
     },
@@ -171,10 +177,11 @@
           }
         ],
         "input_formats": [
-          {
+          {"default":{
             "pixel_format": ["bgr24"],
             "color_space": ["BT.709 Full"]
           }
+        }
         ],
         "output_formats": []
       }

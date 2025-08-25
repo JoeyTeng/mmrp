@@ -6,24 +6,28 @@
       "type": "processNode",
       "input_formats": [
         {
-          "pixel_format": [
-            "bgr24"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ],
-          "frame_rate": "29.97"
+          "default": {
+            "pixel_format": [
+              "bgr24"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ],
+            "frame_rate": "29.97"
+          }
         }
       ],
       "output_formats": [
         {
-          "pixel_format": [
-            "bgr24"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ],
-          "frame_rate": "29.97"
+          "default": {
+            "pixel_format": [
+              "bgr24"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ],
+            "frame_rate": "29.97"
+          }
         }
       ],
       "parameters": [

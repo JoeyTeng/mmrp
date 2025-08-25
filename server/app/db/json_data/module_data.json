@@ -6,12 +6,14 @@
       "input_formats": [],
       "output_formats": [
         {
-          "pixel_format": [
-            "bgr24"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ]
+          "default": {
+            "pixel_format": [
+              "bgr24"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ]
+          }
         }
       ],
       "parameters": [
@@ -30,22 +32,26 @@
       "type": "processNode",
       "input_formats": [
         {
-          "pixel_format": [
-            "bgr24"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ]
+          "default": {
+            "pixel_format": [
+              "bgr24"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ]
+          }
         }
       ],
       "output_formats": [
         {
-          "pixel_format": [
-            "bgr24"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ]
+          "default": {
+            "pixel_format": [
+              "bgr24"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ]
+          }
         }
       ],
       "parameters": [
@@ -84,22 +90,26 @@
       "type": "processNode",
       "input_formats": [
         {
-          "pixel_format": [
-            "bgr24"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ]
+          "default": {
+            "pixel_format": [
+              "bgr24"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ]
+          }
         }
       ],
       "output_formats": [
         {
-          "pixel_format": [
-            "bgr24"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ]
+          "default": {
+            "pixel_format": [
+              "bgr24"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ]
+          }
         }
       ],
       "parameters": [
@@ -133,25 +143,33 @@
       "type": "processNode",
       "input_formats": [
         {
-          "pixel_format": [
-            "bgr24"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ]
+          "default": {
+            "pixel_format": [
+              "bgr24"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ]
+          }
         }
       ],
       "output_formats": [
         {
-          "pixel_format": [
-            "bgr24"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ],
-          "width": 32,
-          "height": 1024,
-          "frame_rate": "30"
+          "default": {
+            "pixel_format": [
+              "bgr24"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ],
+            "width": 640,
+            "height": 360,
+            "frame_rate": "30"
+          },
+            "formula":{
+            "width" : "params.width",
+            "height": "params.height"
+          }
         }
       ],
       "parameters": [
@@ -196,12 +214,16 @@
       "type": "outputNode",
       "input_formats": [
         {
-          "pixel_format": [
-            "bgr24"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ]
+          "default": {
+            "pixel_format": [
+              "bgr24"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ],
+            "width": 640,
+            "height": 360
+          }
         }
       ],
       "output_formats": [],
