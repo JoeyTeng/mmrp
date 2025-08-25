@@ -20,7 +20,7 @@
               "constraints": {
                 "type": "select",
                 "default": "example-video.mp4",
-                "options": ["example-video.mp4", "vidyo1_640x360_60.yuv"],
+                "options": ["example-video.mp4", "vidyo1_640x360_60.yuv", "March_640x360_30.yuv", "likai_1280x720_15.yuv", "Gang2_480x270_30.yuv"],
                 "required": true,
                 "description": "Input file path"
               }
