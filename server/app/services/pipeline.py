@@ -20,6 +20,7 @@ from app.utils.shared_functionality import (
     get_video_path,
 )
 from app.schemas.video import VideoMetadata
+from app.modules.generic.binary_module import GenericBinaryModule
 
 EXAMPLES_DIR = Path(__file__).parent.parent / "db/examples"
 WORK_DIR = Path(__file__).parent.parent / "output" / "work"
@@ -155,10 +156,10 @@ def process_yuv_video(
 
     video_cache: dict[str, VideoMetadata] = {source_mod.id: video_metadata}
     for processing_node in processing_nodes:
-        if get_module_class(processing_node) != ModuleName.BINARY:
-            raise ValueError("YUV pipelines only support Binary modules")
         # Process the video through each binary
         module, params = module_map[processing_node.id]
+        if not isinstance(module, GenericBinaryModule):
+            raise ValueError("YUV processing nodes must be binary modules")
         # For now, we assume a single input for each processing node
         assert len(processing_node.source) == 1
         input = video_cache[processing_node.source[0]]
