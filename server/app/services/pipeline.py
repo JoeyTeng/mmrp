@@ -16,6 +16,7 @@ from app.schemas.pipeline import ExamplePipeline
 import json
 from app.utils.shared_functionality import (
     create_filename_base,
+    encode_video,
     get_execution_order,
     get_video_path,
 )
@@ -199,6 +200,16 @@ def process_yuv_video(
         result_mod.process(result_input, params)
 
         outputs.append({"video_player": params["video_player"], "path": file})
+    if len(result_modules) == 1:
+        file_name = Path(source_file).stem
+        original_out_path = (
+            Path(__file__).resolve().parent.parent.parent.parent
+            / "server"
+            / "videos"
+            / f"{file_name}.webm"
+        )
+        encode_video(video_metadata, original_out_path)
+        outputs.append({"video_player": "left", "path": str(original_out_path)})
 
     output_map = {entry["video_player"]: entry["path"] for entry in outputs}
 

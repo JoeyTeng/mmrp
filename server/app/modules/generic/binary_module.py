@@ -113,11 +113,11 @@ class GenericBinaryModule(ModuleBase):
                 value = parameters[name]
 
             # Check if output width/height/fps have been provided and update output metadata
-            if flag == "-wout":
+            if flag == "--wout":
                 input.width = int(value)
-            elif flag == "-hout":
+            elif flag == "--hout":
                 input.height = int(value)
-            elif flag == "-fps":
+            elif flag == "--fps":
                 input.fps = float(value)
 
             # Boolean flags (e.g., --verbose)
