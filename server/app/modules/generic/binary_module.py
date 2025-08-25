@@ -6,7 +6,6 @@ from pathlib import Path
 import platform
 import subprocess
 import json
-from app.utils.shared_functionality import create_filename_base
 from app.schemas.video import VideoMetadata
 
 BASE_DIR = Path(__file__).resolve().parents[3]
@@ -34,10 +33,9 @@ class GenericBinaryModule(ModuleBase):
             f"Processing {self.data.name} with input: {input_data} and parameters: {parameters}"
         )
         in_path = Path(input_data["input"])
-        out_dir = Path(input_data["output"])
+        out_path = Path(input_data["output"])
         if not in_path.exists():
             raise FileNotFoundError(in_path)
-        out_path = out_dir / f"{create_filename_base(self.id)}.yuv"
 
         video_data = VideoMetadata(
             path=in_path,
