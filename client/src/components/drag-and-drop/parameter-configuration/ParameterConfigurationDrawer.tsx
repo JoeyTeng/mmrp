@@ -61,7 +61,7 @@ export default function ParameterConfigurationDrawer({
           | undefined;
         if (!originalNode) return e;
 
-        // Check validity BEFORE the update
+        // Check validity before the update
         const srcBefore = (
           e.source === updated.id ? originalNode : getNode(e.source)
         ) as Node<ModuleData, ModuleType> | undefined;
@@ -80,7 +80,7 @@ export default function ParameterConfigurationDrawer({
           wasValid = compatibleFormats(outsBefore, insBefore);
         }
 
-        // Check validity AFTER the update
+        // Check validity after the update
         const srcAfter = (
           e.source === updated.id ? updated : getNode(e.source)
         ) as Node<ModuleData, ModuleType> | undefined;

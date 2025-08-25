@@ -166,8 +166,8 @@
             "height": 360,
             "frame_rate": "30"
           },
-            "formula":{
-            "width" : "params.width",
+          "formula": {
+            "width": "params.width",
             "height": "params.height"
           }
         }
