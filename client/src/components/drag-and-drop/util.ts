@@ -18,6 +18,15 @@ export function checkPipeline(
     return false;
   }
 
+  // check if there are any invalid edges on the canvas
+  const invalidEdges = edges.some((e) => e.animated === true);
+  if (invalidEdges) {
+    displayError(
+      "Please rectify all invalid connections before submitting the pipeline",
+    );
+    return false;
+  }
+
   //  Find the one source
   const sources: Node[] = nodes.filter((n) => n.type === ModuleType.InputNode);
   if (sources.length !== 1) {
