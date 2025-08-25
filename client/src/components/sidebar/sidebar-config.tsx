@@ -1,6 +1,5 @@
 import {
   QueryStatsOutlined,
-  FilterAltOutlined,
   UploadFileOutlined,
   AppsOutlined,
   CloudDownloadOutlined,
@@ -69,12 +68,6 @@ export const getLeftSidebarItems = (
 ];
 
 export const RIGHT_SIDEBAR_ITEMS: SidebarItem[] = [
-  {
-    id: "filtering",
-    title: "Filtering",
-    icon: <FilterAltOutlined />,
-    action: () => console.log("Filtering clicked"),
-  },
   {
     id: "metrics",
     title: "Video Quality Metrics",
