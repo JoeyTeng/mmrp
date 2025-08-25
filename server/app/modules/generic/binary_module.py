@@ -104,7 +104,7 @@ class GenericBinaryModule(ModuleBase):
 
             # Handle parameters
             if name == "input":
-                value = str(input)
+                value = str(input.path)
             elif name == "output":
                 value = str(output)
             else:
