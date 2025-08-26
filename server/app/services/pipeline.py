@@ -162,20 +162,38 @@ def process_yuv_video(
         module, params = module_map[processing_node.id]
         if not isinstance(module, GenericBinaryModule):
             raise ValueError("YUV processing nodes must be binary modules")
-        # For now, we assume a single input for each processing node
-        assert len(processing_node.source) == 1
-        input = video_cache[processing_node.source[0]]
 
         output_path = WORK_DIR / f"{time.time()}-{uuid.uuid4().hex}.yuv"
-        binary_input: dict[str, Any] = {
-            "input": input.path,
-            "width": input.width,
-            "height": input.height,
-            "fps": input.fps,
-            "output": output_path,
-        }
 
-        video_cache[processing_node.id] = module.process(binary_input, params)
+        # Expect 1 or 2 input sources
+        assert len(processing_node.source) <= 2
+        # Process binary with single input video
+        if len(processing_node.source) == 1:
+            input = video_cache[processing_node.source[0]]
+            binary_input: dict[str, Any] = {
+                "input": input.path,
+                "width": input.width,
+                "height": input.height,
+                "fps": input.fps,
+                "output": output_path,
+            }
+            video_cache[processing_node.id] = module.process(binary_input, params)
+        # Process binary with two input videos
+        elif len(processing_node.source) == 2:
+            input1 = video_cache[processing_node.source[0]]
+            input2 = video_cache[processing_node.source[1]]
+            in1_path = input1.path
+            in2_path = input2.path
+            binary_input: dict[str, Any] = {
+                "input": input1.path,
+                "in1": in1_path if len(processing_node.source) == 2 else None,
+                "in2": in2_path if len(processing_node.source) == 2 else None,
+                "width": input1.width,
+                "height": input1.height,
+                "fps": input1.fps,
+                "output": output_path,
+            }
+            video_cache[processing_node.id] = module.process(binary_input, params)
 
     outputs: list[dict[str, str]] = []
     for result in result_modules:

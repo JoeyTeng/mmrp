@@ -9,6 +9,7 @@ class VideoRequest(BaseModel):
 
 class VideoMetadata(BaseModel):
     path: Path
+    path2: Path | None = None
     width: int
     height: int
     fps: float

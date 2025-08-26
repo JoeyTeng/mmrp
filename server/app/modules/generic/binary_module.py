@@ -37,8 +37,14 @@ class GenericBinaryModule(ModuleBase):
         if not in_path.exists():
             raise FileNotFoundError(in_path)
 
+        in_path2 = None
+        if input_data.get("in1") and input_data.get("in2"):
+            in_path = Path(input_data.get("in1"))
+            in_path2 = Path(input_data.get("in2"))
+
         video_data = VideoMetadata(
             path=in_path,
+            path2=in_path2,
             width=input_data["width"],
             height=input_data["height"],
             fps=input_data["fps"],
@@ -99,8 +105,10 @@ class GenericBinaryModule(ModuleBase):
             required = param.get("required", False)
 
             # Handle parameters
-            if name == "input":
+            if name == "input" or name == "input1":
                 value = str(input.path)
+            elif name == "input2":
+                value = str(input.path2)
             elif name == "output":
                 value = str(output)
             else:
