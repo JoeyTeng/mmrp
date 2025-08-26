@@ -10,35 +10,7 @@
       },
       "data": {
         "name": "Video Source",
-        "module_class": "video_source",
-        "parameters": [
-          {
-            "name": "path",
-            "metadata": {
-              "value": "example-video.mp4",
-              "type": "str",
-              "constraints": {
-                "type": "str",
-                "default": "example-video.mp4",
-                "required": true,
-                "description": "Input file path"
-              }
-            }
-          }
-        ],
-        "input_formats": [],
-        "output_formats": [
-          {
-            "default": {
-              "pixel_format": [
-                "bgr24"
-              ],
-              "color_space": [
-                "BT.709 Full"
-              ]
-            }
-          }
-        ]
+        "module_class": "video_source"
       }
     },
     {
@@ -50,66 +22,7 @@
       },
       "data": {
         "name": "Blur",
-        "module_class": "blur",
-        "parameters": [
-          {
-            "name": "kernel_size",
-            "metadata": {
-              "value": 5,
-              "type": "int",
-              "constraints": {
-                "type": "int",
-                "default": 5,
-                "min": 1,
-                "max": 31,
-                "required": true,
-                "description": "Kernel size (must be odd)"
-              }
-            }
-          },
-          {
-            "name": "method",
-            "metadata": {
-              "value": "gaussian",
-              "type": "select",
-              "constraints": {
-                "type": "select",
-                "default": "gaussian",
-                "options": [
-                  "gaussian",
-                  "median",
-                  "average"
-                ],
-                "required": true,
-                "description": "Blur algorithm type"
-              }
-            }
-          }
-        ],
-        "input_formats": [
-          {
-            "default": {
-              "pixel_format": [
-                "bgr24"
-              ],
-              "color_space": [
-                "BT.709 Full"
-              ]
-            }
-          }
-        ],
-        "output_formats": [
-          {
-            "default": {
-              "pixel_format": [
-                "bgr24"
-              ],
-              "color_space": [
-                "BT.709 Full"
-              ]
-            }
-          }
-        ]
+        "module_class": "blur"
       }
     },
     {
@@ -121,71 +34,7 @@
       },
       "data": {
         "name": "Color",
-        "module_class": "color",
-        "parameters": [
-          {
-            "name": "input_colorspace",
-            "metadata": {
-              "value": "RGB",
-              "type": "select",
-              "constraints": {
-                "type": "select",
-                "default": "RGB",
-                "options": [
-                  "YCbCr",
-                  "HSV",
-                  "Lab",
-                  "RGB"
-                ],
-                "required": true,
-                "description": "Input color space"
-              }
-            }
-          },
-          {
-            "name": "output_colorspace",
-            "metadata": {
-              "value": "Lab",
-              "type": "select",
-              "constraints": {
-                "type": "select",
-                "default": "RGB",
-                "options": [
-                  "YCbCr",
-                  "HSV",
-                  "Lab",
-                  "RGB"
-                ],
-                "required": true,
-                "description": "Output color space"
-              }
-            }
-          }
-        ],
-        "input_formats": [
-          {
-            "default": {
-              "pixel_format": [
-                "bgr24"
-              ],
-              "color_space": [
-                "BT.709 Full"
-              ]
-            }
-          }
-        ],
-        "output_formats": [
-          {
-            "default": {
-              "pixel_format": [
-                "bgr24"
-              ],
-              "color_space": [
-                "BT.709 Full"
-              ]
-            }
-          }
-        ]
+        "module_class": "color"
       }
     },
     {
@@ -197,39 +46,7 @@
       },
       "data": {
         "name": "Video Output",
-        "module_class": "video_output",
-        "parameters": [
-          {
-            "name": "video_player",
-            "metadata": {
-              "value": "right",
-              "type": "select",
-              "constraints": {
-                "type": "select",
-                "default": "right",
-                "options": [
-                  "left",
-                  "right"
-                ],
-                "required": true,
-                "description": "Output Video Player"
-              }
-            }
-          }
-        ],
-        "input_formats": [
-          {
-            "default": {
-              "pixel_format": [
-                "bgr24"
-              ],
-              "color_space": [
-                "BT.709 Full"
-              ]
-            }
-          }
-        ],
-        "output_formats": []
+        "module_class": "video_output"
       }
     }
   ],
@@ -237,23 +54,17 @@
     {
       "id": "e1",
       "source": "n1",
-      "target": "n2",
-      "sourceHandle": "output-0-handle",
-      "targetHandle": "input-0-handle"
+      "target": "n2"
     },
     {
       "id": "e2",
       "source": "n2",
-      "target": "n3",
-      "sourceHandle": "output-0-handle",
-      "targetHandle": "input-0-handle"
+      "target": "n3"
     },
     {
       "id": "e3",
       "source": "n3",
-      "target": "n4",
-      "sourceHandle": "output-0-handle",
-      "targetHandle": "input-0-handle"
+      "target": "n4"
     }
   ]
 }

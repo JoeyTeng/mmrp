@@ -34,7 +34,6 @@ def process_pipeline(request: PipelineRequest):
 @router.get("/examples/", response_model=list[ExamplePipeline])
 def get_pipeline_examples():
     try:
-        examples = list_examples()
+        return list_examples()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
-    return examples
