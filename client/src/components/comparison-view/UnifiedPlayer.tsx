@@ -43,6 +43,7 @@ const UnifiedPlayer = ({
   if (type === VideoType.Video && videoRefs) {
     return (
       <VideoPlayer
+        view={view}
         videoRefs={videoRefs}
         showSource={showSource}
         getSourceLabel={getSourceLabel}

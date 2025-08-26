@@ -43,6 +43,8 @@ import { toast } from "react-toastify/unstyled";
 import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
 import { displayError, handleError } from "@/utils/sharedFunctionality";
 import { usePersistPipeline } from "@/hooks/usePersistPipeline";
+import { VideoType } from "../comparison-view/types";
+import { useFrames } from "@/contexts/FramesContext";
 
 export default function FlowCanvas({
   editingNode,
@@ -62,10 +64,18 @@ export default function FlowCanvas({
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
 
+  const {
+    triggerReload,
+    triggerWebSocketConnection,
+    setIsProcessing,
+    setError,
+    isProcessing,
+    selectedVideoType,
+    handlePipelineRun,
+  } = useVideoReload();
+
   const [hasFocus, setHasFocus] = useState(false);
 
-  const { triggerReload, setIsProcessing, setError, isProcessing } =
-    useVideoReload();
   const { screenToFlowPosition, getNodes, getEdges, setNodes, getNode } =
     useReactFlow<Node<ModuleData, ModuleType>, Edge>();
 
@@ -78,6 +88,7 @@ export default function FlowCanvas({
 
   const [edges, setEdges, onEdgesChange] = useEdgesState(persistedEdges);
 
+  const { resetFrames, isStreamActive } = useFrames();
   const selectNode = useCallback(
     (nodeId: string) => {
       setNodes((nodes) =>
@@ -295,9 +306,18 @@ export default function FlowCanvas({
       try {
         toast.success("Pipeline valid, starting processing");
         setIsProcessing(true);
-        const res = await sendPipelineToBackend(pipeline);
-        setError(false);
-        triggerReload(res);
+        handlePipelineRun();
+        if (selectedVideoType == VideoType.Video) {
+          resetFrames();
+          // Classic backend pipeline processing
+          const res = await sendPipelineToBackend(pipeline);
+          setError(false);
+          triggerReload(res); // Use response to load video
+        } else if (selectedVideoType == VideoType.Stream) {
+          // Stream mode - trigger WS connection using pipeline
+          setError(false);
+          triggerWebSocketConnection(pipeline); // Send pipeline to context for FrameStreamPlayer
+        }
       } catch (err) {
         console.error("Error sending pipeline to backend", err);
         setError(true);
@@ -388,10 +408,12 @@ export default function FlowCanvas({
             <Button
               variant="contained"
               className={
-                isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
+                isProcessing || isStreamActive
+                  ? "bg-gray-200 text-gray-100"
+                  : "bg-primary"
               }
               onClick={onRun}
-              loading={isProcessing}
+              loading={isProcessing || isStreamActive}
             >
               Run
             </Button>
