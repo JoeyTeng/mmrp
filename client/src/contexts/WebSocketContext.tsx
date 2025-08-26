@@ -39,6 +39,14 @@ export const WebSocketProvider = ({
 }) => {
   const wsRef = useRef<WebSocket | null>(null);
 
+  const getWebSocketUrl = () => {
+    if (window.location.hostname === "localhost") {
+      return `${process.env.NEXT_PUBLIC_WS_API_URL}/video`;
+    }
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    return `${protocol}://${window.location.host}/api/ws/video`;
+  };
+
   const createConnection: WebSocketContextType["createConnection"] =
     useCallback((onMessage, onOpen, onError, onClose, initMessage) => {
       const existing = wsRef.current;
@@ -51,7 +59,9 @@ export const WebSocketProvider = ({
         return;
       }
 
-      const url = `${process.env.NEXT_PUBLIC_WS_API_URL}/video`;
+      const url = getWebSocketUrl();
+      console.log({ url });
+
       const ws = new WebSocket(url);
       ws.binaryType = "arraybuffer";
       wsRef.current = ws;
