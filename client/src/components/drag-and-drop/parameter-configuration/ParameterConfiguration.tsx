@@ -6,7 +6,7 @@ import { NumberField } from "@base-ui-components/react/number-field";
 import { ParameterConfigurationProps } from "../types";
 import Fuse from "fuse.js";
 import { ParameterTooltip } from "./ParameterTooltip";
-import { ModuleParameter } from "@/types/module";
+import { ModuleParameter, ParameterConstraint } from "@/types/module";
 
 export default function ParameterConfiguration({
   node,
@@ -32,27 +32,70 @@ export default function ParameterConfiguration({
     return parameters.filter((param) => foundNames.includes(param.name));
   }, [fuse, parameters, searchQuery]);
 
+  const getMinMax = (constraints: ParameterConstraint) => {
+    const min = !isNaN(Number(constraints.min))
+      ? Number(constraints.min)
+      : -Infinity;
+    const max = !isNaN(Number(constraints.max))
+      ? Number(constraints.max)
+      : Infinity;
+    return { min, max };
+  };
+
+  const updateError = (
+    name: string,
+    value: number,
+    min: number,
+    max: number,
+  ) => {
+    const errorMsg =
+      value < min ? `Must be ≥ ${min}` : value > max ? `Must be ≤ ${max}` : "";
+    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+  };
+
   const handleInputNumber = (parameter: ModuleParameter, rawValue: string) => {
     const { metadata, name } = parameter;
     const { constraints } = metadata;
 
-    const min = !isNaN(Number(constraints.min)) ? Number(constraints.min) : 0;
-    const max = !isNaN(Number(constraints.max))
-      ? Number(constraints.max)
-      : Infinity;
-    let newValue = Number(rawValue);
+    const { min, max } = getMinMax(constraints);
+    const newValue = Number(rawValue);
 
-    setErrors((prev) => ({
-      ...prev,
-      [name]:
-        newValue < min
-          ? `Must be ≥ ${min}`
-          : newValue > max
-            ? `Must be ≤ ${max}`
-            : "",
-    }));
-    newValue = Math.max(min, Math.min(max, newValue));
-    onParamChange(name, newValue);
+    updateError(name, newValue, min, max);
+  };
+
+  const onValueChange = (
+    parameter: ModuleParameter,
+    newValue: number | null,
+  ) => {
+    const { metadata, name } = parameter;
+    const { constraints } = metadata;
+    const { min, max } = getMinMax(constraints);
+
+    const isBlank = newValue === null || newValue === undefined;
+
+    if (isBlank) {
+      if (!constraints.required) {
+        // Optional and blank — allow empty
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+        onParamChange(name, null);
+        return;
+      } else {
+        // Required and blank — fallback to default or 0
+        const fallback =
+          constraints.default !== undefined ? Number(constraints.default) : 0;
+        const clampedValue = Math.max(min, Math.min(max, fallback));
+
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+        onParamChange(name, clampedValue);
+        return;
+      }
+    }
+    const parsedValue = Number(newValue);
+    updateError(name, parsedValue, min, max);
+
+    const clampedValue = Math.max(min, Math.min(max, parsedValue));
+    onParamChange(name, clampedValue);
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const renderParamInput = (parameter: ModuleParameter) => {
@@ -70,9 +113,13 @@ export default function ParameterConfiguration({
                 fullWidth
                 size="small"
                 label={name}
-                value={value}
-                onChange={(e) => onParamChange(parameter.name, e.target.value)}
+                value={value ?? ""}
+                onChange={(e) =>
+                  onParamChange(parameter.name, e.target.value || null)
+                }
               >
+                {/* Optional blank entry */}
+                {!constraints.required && <MenuItem value="">—</MenuItem>}
                 {constraints.options &&
                   constraints.options.map((option: string) => (
                     <MenuItem key={`${name}-${option}`} value={String(option)}>
@@ -92,10 +139,18 @@ export default function ParameterConfiguration({
           >
             <Box className={INPUT_SPACING}>
               <NumberField.Root
-                inputMode="numeric"
                 key={name}
                 id={`inputNumber-${name}`}
-                value={Number(value)}
+                value={
+                  value === "" || value === null || value === undefined
+                    ? null
+                    : Number(value)
+                }
+                onValueChange={(newValue) => {
+                  onValueChange(parameter, newValue);
+                }}
+                format={{}}
+                inputMode="numeric"
                 className="flex-1"
               >
                 <NumberField.ScrubArea className="absolute -top-3.5 left-2 z-10 bg-white px-1">
@@ -110,6 +165,9 @@ export default function ParameterConfiguration({
                 <NumberField.Group className="relative">
                   <ParameterTooltip description={constraints.description}>
                     <NumberField.Input
+                      placeholder={
+                        !constraints.required ? "Optional" : undefined
+                      }
                       onChange={(e) =>
                         handleInputNumber(parameter, e.target.value)
                       }
@@ -143,9 +201,16 @@ export default function ParameterConfiguration({
                 fullWidth
                 label={name}
                 size="small"
-                value={String(value)}
-                onChange={(e) => onParamChange(parameter.name, e.target.value)}
+                value={String(value ?? "")}
+                onChange={(e) =>
+                  onParamChange(
+                    parameter.name,
+                    e.target.value === "" ? null : e.target.value,
+                  )
+                }
               >
+                {/* Optional blank */}
+                {!constraints.required && <MenuItem value="">—</MenuItem>}
                 <MenuItem value="true">True</MenuItem>
                 <MenuItem value="false">False</MenuItem>
               </TextField>

@@ -1,4 +1,4 @@
-export type ParamValueType = string | number | boolean;
+export type ParamValueType = string | number | boolean | null;
 export type ParamConstraintsType = "str" | "int" | "select" | "bool";
 export const ALLOWED_FRAME_RATES = [
   "23.976",

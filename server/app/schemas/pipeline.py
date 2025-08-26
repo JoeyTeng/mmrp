@@ -7,7 +7,7 @@ from typing import Any
 
 class PipelineParameter(BaseModel):
     key: str
-    value: int | float | str | bool
+    value: int | float | str | bool | None
 
 
 class PipelineModule(BaseModel):
