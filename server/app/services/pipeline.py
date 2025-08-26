@@ -8,7 +8,7 @@ from app.schemas.pipeline import PipelineModule
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
 from app.services.module_registry import ModuleRegistry
 import uuid
-from app.utils.quality_metrics import compute_metrics
+from app.utils.quality_metrics import compute_metrics, compute_metrics_yuv_luma_series
 from app.schemas.metrics import Metrics
 from app.modules.utils.enums import ModuleName
 from pathlib import Path
@@ -211,8 +211,20 @@ def process_yuv_video(
 
     output_map = {entry["video_player"]: entry["path"] for entry in outputs}
 
+    # Compute metrics
+    metrics: list[Metrics] = []
+    if len(result_modules) == 1:
+        processed = video_cache[result_modules[0].source[0]]
+        metrics = compute_metrics_yuv_luma_series(video_metadata, processed)
+    elif len(result_modules) == 2:
+        a = video_cache[result_modules[0].source[0]]
+        b = video_cache[result_modules[1].source[0]]
+        metrics = compute_metrics_yuv_luma_series(a, b)
+
     return PipelineResponse(
-        left=output_map.get("left", ""), right=output_map.get("right", ""), metrics=[]
+        left=output_map.get("left", ""),
+        right=output_map.get("right", ""),
+        metrics=metrics,
     )
 
 

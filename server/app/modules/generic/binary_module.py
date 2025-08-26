@@ -49,7 +49,7 @@ class GenericBinaryModule(ModuleBase):
         self, frame: np.ndarray, parameters: dict[str, Any]
     ) -> np.ndarray:
         raise NotImplementedError(
-            "Binary module process entire videos, not individual frames"
+            "Binary modules process entire videos, not individual frames"
         )
 
     # Function that executes the binary
@@ -123,7 +123,6 @@ class GenericBinaryModule(ModuleBase):
                 command += [flag, str(value)]
 
         try:
-            print(f"Command: {command}")
             result = subprocess.run(command, check=True, capture_output=True, text=True)
             print("STDOUT:", result.stdout)
         except subprocess.CalledProcessError as e:
