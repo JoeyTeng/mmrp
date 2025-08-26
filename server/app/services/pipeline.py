@@ -152,7 +152,6 @@ def process_yuv_video(
         )
     w, h = int(m.group(1)), int(m.group(2))
     fps = float(m.group(3))
-    print(f"Width of original: {w}, Height of original: {h}, FPS of original: {fps}")
 
     video_metadata = VideoMetadata(path=yuv_path, width=w, height=h, fps=fps)
 
