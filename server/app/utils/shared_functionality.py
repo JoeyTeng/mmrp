@@ -107,6 +107,8 @@ def encode_video(input: VideoMetadata, output_path: Path):
     writer = cv2.VideoWriter(str(output_path), fourcc, fps, (w, h))
     frame_bytes = w * h * 3 // 2  # yuv420p
 
+    print(f"Writing video to {output_path}, width: {w}, height: {h}, fps: {fps}")
+
     with open(input.path, "rb") as in_file:
         while True:
             buf = in_file.read(frame_bytes)
