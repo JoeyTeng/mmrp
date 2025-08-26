@@ -120,6 +120,8 @@ class GenericBinaryModule(ModuleBase):
                 if value:
                     command.append(flag)
             else:
+                if value in ("", None) and not required:
+                    continue
                 command += [flag, str(value)]
 
         try:

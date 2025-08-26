@@ -206,7 +206,9 @@ def process_yuv_video(
             / "videos"
             / f"{file_name}.webm"
         )
-        encode_video(video_metadata, original_out_path)
+        if not original_out_path.exists():
+            encode_video(video_metadata, original_out_path)
+
         outputs.append({"video_player": "left", "path": str(original_out_path)})
 
     output_map = {entry["video_player"]: entry["path"] for entry in outputs}
