@@ -10,6 +10,9 @@ from app.schemas.video import VideoMetadata
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 
+output_width_change_params = {"--wout", "-wout", "-croped_width"}
+output_height_change_params = {"--hout", "-hout", "-croped_height"}
+
 
 class GenericBinaryModule(ModuleBase):
     parameter_model: Any = GenericParameterModel
@@ -108,9 +111,9 @@ class GenericBinaryModule(ModuleBase):
                 value = parameters[name]
 
             # Check if output width/height/fps have been provided and update output metadata
-            if flag == "--wout":
+            if flag in output_width_change_params:
                 input.width = int(value)
-            elif flag == "--hout":
+            elif flag in output_height_change_params:
                 input.height = int(value)
             elif flag == "--fps":
                 input.fps = float(value)
@@ -131,7 +134,7 @@ class GenericBinaryModule(ModuleBase):
             print("Execution failed:")
             print("STDOUT:\n", e.stdout)
             print("STDERR:\n", e.stderr)
-            raise
+            raise ValueError(f"Execution failed: {e.stderr}")
 
         output_metadata = VideoMetadata(
             path=output, width=input.width, height=input.height, fps=input.fps
