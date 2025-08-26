@@ -79,6 +79,7 @@ const SideBySide = ({ type }: Props) => {
     const loadOutputVideos = async () => {
       try {
         setIsLoading(true);
+        setError("");
         if (latestResponse!.left !== "") {
           const leftVideoInfo = await loadVideo(
             latestResponse!.left,
