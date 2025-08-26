@@ -3,6 +3,7 @@ import { NodeAction } from "./NodeContextMenuConfig";
 import { useCallback } from "react";
 import { ModuleData, ModuleType } from "@/types/module";
 import { usePipelineExport } from "@/components/sidebar/util";
+import { v4 as uuidv4 } from "uuid";
 
 export const useNodeActions = (
   onEditNode: (node: Node<ModuleData, ModuleType>) => void,
@@ -40,7 +41,7 @@ export const useNodeActions = (
       );
 
       const duplicatedNodes: Node[] = nodes.map((node) => {
-        const newId = crypto.randomUUID();
+        const newId = uuidv4();
         nodeIdsMap.set(node.id, newId);
         return {
           id: newId,
@@ -59,7 +60,7 @@ export const useNodeActions = (
 
       const duplicatedEdges: Edge[] = edges.map((edge) => ({
         ...edge,
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         source: nodeIdsMap.get(edge.source)!,
         target: nodeIdsMap.get(edge.target)!,
         selected: false,
