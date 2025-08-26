@@ -60,7 +60,6 @@ export const WebSocketProvider = ({
       }
 
       const url = getWebSocketUrl();
-      console.log({ url });
 
       const ws = new WebSocket(url);
       ws.binaryType = "arraybuffer";
