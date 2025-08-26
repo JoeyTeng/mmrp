@@ -18,3 +18,9 @@ export type ParameterConfigurationProps = {
   onParamChange: (key: string, value: ParamValueType) => void;
   searchQuery: string;
 };
+
+export type NodePreset = {
+  name: string;
+  moduleClass: string;
+  parameters: Record<string, ParamValueType>;
+};
