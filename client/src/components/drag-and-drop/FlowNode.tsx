@@ -3,7 +3,7 @@
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { MoreVertOutlined as MenuIcon } from "@mui/icons-material";
 
-import { FormatDefinition, ModuleData, ModuleType } from "@/types/module";
+import { ModuleData, ModuleFormat, ModuleType } from "@/types/module";
 import { Box, IconButton } from "@mui/material";
 import { Tooltip } from "@mui/material";
 
@@ -28,8 +28,9 @@ export default function FlowNode({
       ? parameters.slice(0, MAX_VISIBLE - 1)
       : parameters.slice(0, MAX_VISIBLE);
 
-  function tooltip(format: FormatDefinition) {
-    const { width, height, frameRate, pixelFormat, colorSpace } = format;
+  function tooltip(format: ModuleFormat) {
+    const { width, height, frameRate, pixelFormat, colorSpace } =
+      format.default;
     return [
       width && height && `Resolution: ${width}×${height}`,
       frameRate && `Frame rate: ${frameRate}fps`,
