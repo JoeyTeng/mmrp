@@ -49,6 +49,8 @@ def process_pipeline_frame(
     for mod in ordered_modules:
         mod_id = mod.id
         mod_instance, params = module_map[mod_id]
+        if isinstance(mod_instance, GenericBinaryModule):
+            raise ValueError("Binary modules can't process mp4 videos frame by frame")
 
         input_frames = [frame_cache[src_id] for src_id in mod.source]
         frame_output = mod_instance.process_frame(input_frames[0], params)
