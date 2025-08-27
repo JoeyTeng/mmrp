@@ -36,7 +36,9 @@ export type ModuleData = {
 
 export interface ModuleParameter {
   name: string;
+  flag?: string;
   metadata: ParameterMetadata;
+ 
 }
 
 export interface ParameterMetadata {
@@ -66,7 +68,7 @@ export type FormulaMap = Record<string, string>;
 
 export interface ModuleFormat {
   default: FormatDefinition;
-  formula: FormulaMap;
+  formula?: FormulaMap;
 }
 
 export interface IOFormat {

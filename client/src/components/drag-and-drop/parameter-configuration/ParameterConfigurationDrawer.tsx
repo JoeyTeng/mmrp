@@ -13,8 +13,15 @@ import {
 import ParameterConfiguration from "./ParameterConfiguration";
 import { Box, Button, Divider, InputAdornment, TextField } from "@mui/material";
 import { SearchOutlined } from "@mui/icons-material";
-import { compatibleFormats, evaluateFormula } from "../util";
-import { toast } from "react-toastify/unstyled";
+import {
+  compatibleFormats,
+  evaluateFormula,
+  runFormatPropagation,
+} from "../util";
+import {
+  applyParamSizeOnConnect,
+  recomputeIOFormatsFromParams,
+} from "@/components/util/paramPropogation";
 
 export default function ParameterConfigurationDrawer({
   editingNode,
@@ -29,115 +36,102 @@ export default function ParameterConfigurationDrawer({
   }, [editingNode]);
 
   function updateOutputFormatDefaults(node: Node<ModuleData, ModuleType>) {
-    const params = Object.fromEntries(
-      (node.data.parameters ?? []).map((p) => [
-        p.name,
-        p.metadata?.value ?? p.metadata?.constraints?.default,
-      ]),
-    ) as Record<string, ParamValueType>;
+    // include BOTH name and flag (stripped) so formulas like params.width or params.w work
+    const params: Record<string, ParamValueType> = {};
+    for (const p of node.data.parameters ?? []) {
+      const val = p.metadata?.value ?? p.metadata?.constraints?.default;
+      if (p.name) params[p.name] = val;
+      if (p.flag) params[p.flag.replace(/^--?/, "")] = val; // "-w" -> "w"
+    }
 
     return (node.data.outputFormats ?? []).map((spec) => {
       if (!spec.formula) return spec;
       const nextDefault = { ...spec.default } as Record<string, unknown>;
       for (const [field, expr] of Object.entries(spec.formula)) {
-        const v = evaluateFormula(expr, params);
+        const v = evaluateFormula(String(expr), params);
         if (v !== undefined) nextDefault[field] = v;
       }
       return { ...spec, default: nextDefault as typeof spec.default };
     });
   }
 
-  const { setNodes, getEdges, getNode, setEdges } = useReactFlow();
-  const revalidateEdgesForNode = useCallback(
-    (updated: Node<ModuleData, ModuleType>) => {
-      const es = getEdges();
-      const next = es.map((e) => {
-        // only touch edges connected to this node
-        if (e.source !== updated.id && e.target !== updated.id) return e;
-
-        // Get the original node (before update) to check previous validity
-        const originalNode = getNode(updated.id) as
-          | Node<ModuleData, ModuleType>
-          | undefined;
-        if (!originalNode) return e;
-
-        // Check validity before the update
-        const srcBefore = (
-          e.source === updated.id ? originalNode : getNode(e.source)
-        ) as Node<ModuleData, ModuleType> | undefined;
-        const tgtBefore = (
-          e.target === updated.id ? originalNode : getNode(e.target)
-        ) as Node<ModuleData, ModuleType> | undefined;
-
-        let wasValid = true;
-        if (srcBefore && tgtBefore) {
-          const outsBefore: FormatDefinition[] = (
-            srcBefore.data?.outputFormats ?? []
-          ).map((f) => f.default);
-          const insBefore: FormatDefinition[] = (
-            tgtBefore.data?.inputFormats ?? []
-          ).map((f) => f.default);
-          wasValid = compatibleFormats(outsBefore, insBefore);
-        }
-
-        // Check validity after the update
-        const srcAfter = (
-          e.source === updated.id ? updated : getNode(e.source)
-        ) as Node<ModuleData, ModuleType> | undefined;
-        const tgtAfter = (
-          e.target === updated.id ? updated : getNode(e.target)
-        ) as Node<ModuleData, ModuleType> | undefined;
-        if (!srcAfter || !tgtAfter) return e;
-
-        const outsAfter: FormatDefinition[] = (
-          srcAfter.data?.outputFormats ?? []
-        ).map((f) => f.default);
-        const insAfter: FormatDefinition[] = (
-          tgtAfter.data?.inputFormats ?? []
-        ).map((f) => f.default);
-        const isValidAfter = compatibleFormats(outsAfter, insAfter);
-
-        // Only toast if edge WAS valid but became invalid
-        if (wasValid && !isValidAfter) {
-          const srcName = srcAfter.data?.name ?? srcAfter.id;
-          const tgtName = tgtAfter.data?.name ?? tgtAfter.id;
-          toast.error(
-            `Connection became invalid between ${srcName} and ${tgtName}`,
-          );
-        }
-
-        return {
-          ...e,
-          style: isValidAfter
-            ? undefined
-            : { stroke: "#ef4444", strokeDasharray: "4 4" },
-          animated: !isValidAfter,
-        };
-      });
-
-      setEdges(next);
-    },
-    [getEdges, getNode, setEdges],
-  );
+  const { setNodes, getEdges, setEdges, getNodes } = useReactFlow();
 
   const handleConfirm = useCallback(
     (updatedNode: Node<ModuleData, ModuleType>) => {
-      const nodeWithComputedFormats: Node<ModuleData, ModuleType> = {
+      const edgesNow = getEdges();
+
+      // 1) compute this node's outputs from its params
+      const nodeWithComputedOutputs: Node<ModuleData, ModuleType> = {
         ...updatedNode,
         data: {
           ...updatedNode.data,
           outputFormats: updateOutputFormatDefaults(updatedNode),
         },
       };
-      setNodes((nodes) =>
-        nodes.map((n) =>
-          n.id === nodeWithComputedFormats.id ? nodeWithComputedFormats : n,
-        ),
+
+      // 2) apply into current nodes
+      let workingNodes = (getNodes() as Node<ModuleData, ModuleType>[]).map(
+        (n) =>
+          n.id === nodeWithComputedOutputs.id ? nodeWithComputedOutputs : n,
       );
-      revalidateEdgesForNode(nodeWithComputedFormats);
+
+      // 3) propagate width/height flags to ALL downstream nodes (params only)
+      workingNodes = applyParamSizeOnConnect(
+        workingNodes,
+        edgesNow,
+        nodeWithComputedOutputs.id,
+      );
+
+      // 3.5) make formats reflect params (flags OR names like "width"/"height")
+      workingNodes = workingNodes.map(recomputeIOFormatsFromParams);
+
+      // 4) fill any remaining missing pieces using DFS propagation
+      const { updatedNodes } = runFormatPropagation(
+        workingNodes,
+        edgesNow,
+        nodeWithComputedOutputs.id,
+      );
+
+      // 4.5) recompute formats again after propagation to handle input->output copying
+      const finalNodes = updatedNodes.map(recomputeIOFormatsFromParams);
+
+      // 5) restyle only edges connected to this node using UPDATED nodes
+      const byId = new Map(finalNodes.map((n) => [n.id, n]));
+      const updatedEdges = edgesNow.map((edge) => {
+        if (
+          edge.source !== nodeWithComputedOutputs.id &&
+          edge.target !== nodeWithComputedOutputs.id
+        ) {
+          return edge;
+        }
+        const s = byId.get(edge.source);
+        const t = byId.get(edge.target);
+        if (!s || !t) return edge;
+
+        const outs: FormatDefinition[] = (s.data?.outputFormats ?? []).map(
+          (f) => f.default,
+        );
+        const ins: FormatDefinition[] = (t.data?.inputFormats ?? []).map(
+          (f) => f.default,
+        );
+        const isValid = compatibleFormats(outs, ins);
+
+        return {
+          ...edge,
+          style: isValid
+            ? undefined
+            : { stroke: "#ef4444", strokeDasharray: "4 4" },
+          animated: !isValid,
+        };
+      });
+
+      // 6) commit once
+      setNodes(finalNodes);
+      setEdges(updatedEdges);
       clearEditingNode();
     },
-    [setNodes, clearEditingNode, revalidateEdgesForNode],
+    [getEdges, getNodes, setNodes, setEdges, clearEditingNode],
   );
 
   const handleCancel = () => {

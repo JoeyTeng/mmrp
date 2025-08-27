@@ -89,7 +89,9 @@ export function usePipelineExport() {
   // Export Pipeline
   const handleExportPipeline = useCallback(
     (options?: { nodes: Node[]; edges?: Edge[]; filename?: string }) => {
-      const nodes = options ? options.nodes : getNodes();
+ 
+      const nodes =  options?.nodes ?? getNodes();
+      console.log(options)
       const edges =
         options?.edges && options.edges.length > 0
           ? removeDanglingEdges(options.edges, nodes)

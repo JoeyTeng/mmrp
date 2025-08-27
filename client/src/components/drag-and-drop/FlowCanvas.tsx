@@ -31,7 +31,7 @@ import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useModulesContext } from "@/contexts/ModulesContext";
-import { checkPipeline, compatibleFormats } from "./util";
+import { checkPipeline, compatibleFormats, runFormatPropagation } from "./util";
 import NodeContextMenu, {
   NodeContextMenuHandle,
 } from "./context-menu/NodeContextMenu";
@@ -42,6 +42,10 @@ import { useVideoReload } from "@/contexts/VideoReloadContext";
 import { toast } from "react-toastify/unstyled";
 import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
 import { displayError, handleError } from "@/utils/sharedFunctionality";
+import {
+  propagateSize,
+  recomputeIOFormatsFromParams,
+} from "../util/paramPropogation";
 
 export default function FlowCanvas({
   editingNode,
@@ -66,8 +70,7 @@ export default function FlowCanvas({
 
   const { triggerReload, setIsProcessing, setError, isProcessing } =
     useVideoReload();
-  const { screenToFlowPosition, getNodes, getEdges, setNodes, getNode } =
-    useReactFlow();
+  const { screenToFlowPosition, getNodes, getEdges, setNodes } = useReactFlow();
   const selectNode = useCallback(
     (nodeId: string) => {
       setNodes((nodes) =>
@@ -169,47 +172,82 @@ export default function FlowCanvas({
     event.dataTransfer.dropEffect = "copy";
   }, []);
 
-  const onConnect = (params: Connection) => {
-    const sourceNode = getNode(params.source!) as
-      | Node<ModuleData, ModuleType>
-      | undefined;
-    const targetNode = getNode(params.target!) as
-      | Node<ModuleData, ModuleType>
-      | undefined;
+  const onConnect = useCallback(
+    (params: Connection) => {
+      // 1) snapshot current graph
+      const nodesNow = getNodes() as Node<ModuleData, ModuleType>[];
+      const edgesNow = getEdges();
 
-    if (!sourceNode || !targetNode) return;
+      const sourceNode = nodesNow.find((n) => n.id === params.source);
+      const targetNode = nodesNow.find((n) => n.id === params.target);
+      if (!sourceNode || !targetNode) return;
 
-    // Extract only default values from format expressions
-    const outs: FormatDefinition[] = (sourceNode.data?.outputFormats ?? []).map(
-      (f) => f.default,
-    );
-    const ins: FormatDefinition[] = (targetNode.data?.inputFormats ?? []).map(
-      (f) => f.default,
-    );
+      // 2) build a tentative edge list (no styling yet)
+      const tentativeEdges = addEdge({ ...params }, edgesNow);
 
-    const isValid = compatibleFormats(outs, ins);
+      // 3) propagate width/height from the SOURCE across the tentative graph
+      const nodesAfterSize = propagateSize({
+        nodes: nodesNow,
+        edges: tentativeEdges,
+        startNodeId: params.source!,
+      });
 
-    setEdges((eds) =>
-      addEdge(
+      const nodesAfterRecompute = nodesAfterSize.map(
+        recomputeIOFormatsFromParams,
+      );
+
+      // recompute formats downstream (so defaults/formulas align with new size)
+      const { updatedNodes, reachedEndNodes } = runFormatPropagation(
+        nodesAfterRecompute,
+        tentativeEdges,
+        params.source!,
+      );
+
+      // FINAL: recompute again so input->output copying & param overrides apply to *all* nodes
+      const finalNodes = updatedNodes.map(recomputeIOFormatsFromParams);
+
+      //  re-read source/target from UPDATED nodes and check compatibility
+      const srcAfter = finalNodes.find((n) => n.id === params.source)!;
+      const tgtAfter = finalNodes.find((n) => n.id === params.target)!;
+
+      const outsAfter: FormatDefinition[] = (
+        srcAfter.data?.outputFormats ?? []
+      ).map((f) => f.default);
+      const insAfter: FormatDefinition[] = (
+        tgtAfter.data?.inputFormats ?? []
+      ).map((f) => f.default);
+      const isValidAfter = compatibleFormats(outsAfter, insAfter);
+
+      // commit nodes and styled edge
+      setNodes(finalNodes);
+
+      const styledEdges = addEdge(
         {
           ...params,
-          style: isValid
+          style: isValidAfter
             ? undefined
             : { stroke: "#ef4444", strokeDasharray: "4 4" },
-          animated: !isValid,
+          animated: !isValidAfter,
         },
-        eds,
-      ),
-    );
-
-    if (!isValid) {
-      const sourceName = sourceNode.data?.name ?? sourceNode.id;
-      const targetName = targetNode.data?.name ?? targetNode.id;
-      toast.error(
-        `Output format of "${sourceName}" is not compatible with input format of "${targetName}".`,
+        edgesNow,
       );
-    }
-  };
+      setEdges(styledEdges);
+
+      //  UX feedback
+      if (!isValidAfter) {
+        const sName = srcAfter.data?.name ?? srcAfter.id;
+        const tName = tgtAfter.data?.name ?? tgtAfter.id;
+        toast.error(
+          `Output format of "${sName}" is not compatible with input format of "${tName}".`,
+        );
+      } else if (reachedEndNodes.length > 0) {
+        toast.success(
+          `Propagation complete , fill downstream nodes with size values`,
+        );
+      }
+    },
+    [getNodes, getEdges, setNodes, setEdges],
+  );
 
   const { modules } = useModulesContext();
 
