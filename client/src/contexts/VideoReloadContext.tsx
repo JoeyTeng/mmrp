@@ -94,7 +94,6 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     setLatestResponse(res);
     setCurrentFrame(0);
     setMetrics(res.metrics);
-    console.log(res);
     if (res.interleaved === "") {
       setVideoShapesMismatch(true);
       setView(ViewOptions.SideBySide);
