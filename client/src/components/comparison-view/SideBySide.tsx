@@ -38,6 +38,8 @@ const SideBySide = ({ type }: Props) => {
 
   const { setMetrics, setCurrentFrame } = useVideoMetrics();
 
+  const initialVideo = "example-video.mp4";
+
   // Load initial video
   useEffect(() => {
     setMetrics([]);
@@ -51,11 +53,7 @@ const SideBySide = ({ type }: Props) => {
       try {
         setIsLoading(true);
         setError("");
-        const videoInfo = await loadVideo(
-          "example-video.mp4",
-          false,
-          videoARef,
-        );
+        const videoInfo = await loadVideo(initialVideo, false, videoARef);
         setLatestVideoInfo("left", videoInfo.url, videoInfo.size);
       } catch (e) {
         setError(
@@ -79,10 +77,11 @@ const SideBySide = ({ type }: Props) => {
     const loadOutputVideos = async () => {
       try {
         setIsLoading(true);
+        setError("");
         if (latestResponse!.left !== "") {
           const leftVideoInfo = await loadVideo(
             latestResponse!.left,
-            true,
+            latestResponse!.left !== initialVideo,
             videoARef,
           );
           setLatestVideoInfo("left", leftVideoInfo.url, leftVideoInfo.size);

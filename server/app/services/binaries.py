@@ -2,6 +2,7 @@ import urllib.request
 import json
 import pathlib
 import zipfile
+import shutil
 
 OUTPUT_DIR = pathlib.Path(__file__).resolve().parents[2] / "binaries"
 BINARY_IDS = [
@@ -58,3 +59,20 @@ def download_gist_files() -> pathlib.Path:
 
     print(f"Downloaded and extracted binaries to: {OUTPUT_DIR}")
     return OUTPUT_DIR
+
+
+def sync_binaries(src: str):
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    binaries_path = pathlib.Path(src)
+
+    if not binaries_path.exists():
+        "Skipping syncing of VM binaries"
+        return
+
+    for binary in binaries_path.iterdir():
+        target = OUTPUT_DIR / binary.name
+        if not target.exists() and binary.is_dir():
+            shutil.copytree(binary, target, dirs_exist_ok=False)
+
+    print("Syncing of binaries done!")

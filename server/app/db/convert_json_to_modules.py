@@ -14,24 +14,64 @@ from app.schemas.module import ModuleData, Position
 from app.modules.module import ModuleBase
 from app.services.module_registry import ModuleRegistry
 from app.utils.shared_functionality import string_sanitizer
+from app.services.modules import append_to_mock_data
 
 
 def get_json_folder() -> Path:
     return Path(__file__).parent / "json_data"
 
 
-def get_all_mock_modules() -> list[ModuleBase]:
-    json_folder = get_json_folder()
-    all_modules: list[ModuleBase] = []
+def convert_json(folder: Path) -> list[ModuleBase]:
+    modules: list[ModuleBase] = []
 
-    for json_file in json_folder.glob("*.json"):
+    for json_file in folder.glob("*.json"):
         with json_file.open("r", encoding="utf-8") as f:
             try:
                 json_data: dict[str, Any] = json.load(f)
             except json.JSONDecodeError as e:
                 raise ValueError(f"Error parsing JSON: {str(e)}")
-            modules = json_to_modules(json_data)
-            all_modules.extend(modules)
+            mods = json_to_modules(json_data)
+            modules.extend(mods)
+
+    return modules
+
+
+def load_binary_modules(binaries_dir: Path) -> Path:
+    out_path = Path(__file__).resolve().parent / "json_data" / "binaries"
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    # Save binary config
+    for binary in binaries_dir.iterdir():
+        if not binary.is_dir():
+            continue
+
+        config_path = binary / "Linux-x86_64" / "config.json"
+        if not config_path.exists():
+            continue
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config_data = json.load(f)
+            bin_path = out_path / f"{binary.name}.json"
+            append_to_mock_data(config_data, bin_path)
+        except Exception as e:
+            print(f"Failed to process {config_path}: {e}")
+    return out_path
+
+
+def get_all_mock_modules() -> list[ModuleBase]:
+    json_folder = get_json_folder()
+    all_modules: list[ModuleBase] = []
+
+    all_modules.extend(convert_json(json_folder))
+
+    # If binaries exist, save binaries config in mock_data json
+    # and register these modules alongside the existing ones
+    binaries_dir = Path(__file__).resolve().parents[2] / "binaries"
+    if binaries_dir.exists():
+        # Add data to mock data json
+        binaries_folder = load_binary_modules(binaries_dir)
+        # Read from newly created mock_data
+        all_modules.extend(convert_json(binaries_folder))
 
     return all_modules
 
