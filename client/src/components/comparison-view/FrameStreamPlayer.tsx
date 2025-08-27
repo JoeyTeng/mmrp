@@ -2,10 +2,9 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import PlayerControls from "./PlayerControls";
-import { FrameData, ViewOptions } from "./types";
-import { useWebSocket } from "@/contexts/WebSocketContext";
+import { ViewOptions } from "./types";
 import { useVideoMetrics } from "@/contexts/VideoMetricsContext";
-import { Metrics } from "@/types/metrics";
+import { useFrames } from "@/contexts/FramesContext";
 
 type Props = {
   view: ViewOptions;
@@ -27,18 +26,12 @@ const FrameStreamPlayer = ({
   const playbackTimer = useRef<NodeJS.Timeout | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isUserPaused, setIsUserPaused] = useState(true);
-  const [frames, setFrames] = useState<FrameData[]>([]);
-  const currentFpsRef = useRef(30);
-  const currentMimeRef = useRef("image/webp");
-  const latestMetricsRef = useRef<Partial<Metrics>>({});
-  const [isStreamActive, setIsStreamActive] = useState(false);
-  const [filenames] = useState([
-    "example-video.mp4",
-    "example-video-filter.mp4",
-  ]);
   const hasCalledFirstFrame = useRef(false);
-  const { setMetrics, currentFrame, setCurrentFrame } = useVideoMetrics(); // currentFrame is frame index in range [0, frames.length)
-  const { createConnection, closeConnection } = useWebSocket();
+  const { currentFrame, setCurrentFrame } = useVideoMetrics(); // currentFrame is frame index in range [0, frames.length)
+  const { frames, isStreamActive } = useFrames();
+  const effectiveFrameCount =
+    view === ViewOptions.Interleaving ? frames.length * 2 : frames.length;
+  const [index, setIndex] = useState(0); // index [0, frames.length) in Side-by-side, [0, 2 * frames.length) in Interleaving frames
 
   // Trigger onFirstFrame callback once first frame is received
   useEffect(() => {
@@ -48,101 +41,40 @@ const FrameStreamPlayer = ({
     }
   }, [frames.length, onFirstFrame]);
 
-  // Establish WebSocket connection to receive video frame data
-  useEffect(() => {
-    const expectedFrames = 2;
-    let frameBuffer: Blob[] = [];
-    setMetrics([]);
-    setCurrentFrame(0);
-
-    createConnection(
-      (data) => {
-        if (data instanceof ArrayBuffer) {
-          const blob = new Blob([data], { type: currentMimeRef.current });
-          frameBuffer.push(blob);
-
-          if (frameBuffer.length === expectedFrames) {
-            const commonFrameData = {
-              fps: currentFpsRef.current,
-              mime: currentMimeRef.current,
-            };
-            const metrics = {
-              psnr: latestMetricsRef.current.psnr!,
-              ssim: latestMetricsRef.current.ssim!,
-            };
-
-            if (view === ViewOptions.SideBySide) {
-              const newFrame = {
-                blob: [frameBuffer[0], frameBuffer[1]],
-                ...commonFrameData,
-              };
-
-              setFrames((prev) => [...prev, newFrame]);
-              setMetrics((prev) => [...prev, metrics]);
-            } else {
-              const [original, filtered] = frameBuffer;
-
-              const newFrames = [
-                { blob: [original], ...commonFrameData },
-                { blob: [filtered], ...commonFrameData },
-              ];
-
-              setFrames((prev) => [...prev, ...newFrames]);
-              setMetrics((prev) => [...prev, metrics, metrics]);
-            }
-
-            frameBuffer = [];
-            latestMetricsRef.current = {};
-          }
-        } else {
-          if (data.fps) currentFpsRef.current = data.fps;
-          if (data.mime) currentMimeRef.current = data.mime;
-          if (data.metrics) {
-            latestMetricsRef.current = {
-              psnr: data.metrics.psnr,
-              ssim: data.metrics.ssim,
-            };
-          }
-        }
-      },
-      () => {
-        setIsStreamActive(true);
-      },
-      undefined,
-      () => {
-        setIsStreamActive(false);
-      },
-      { filenames },
-    );
-
-    return () => {
-      closeConnection();
-    };
-  }, [
-    closeConnection,
-    createConnection,
-    filenames,
-    setCurrentFrame,
-    setFrames,
-    setMetrics,
-    view,
-  ]);
-
   // Render frame at given index
   const renderFrame = useCallback(
-    (index: number): void => {
-      if (index >= frames.length) return;
+    (index: number) => {
+      if (index >= effectiveFrameCount) return;
 
-      const frame = frames[index];
+      const blobIndex = view === ViewOptions.Interleaving ? index % 2 : null;
 
-      for (let i = 0; i < canvasRefs.length; i++) {
-        const canvas = canvasRefs[i]?.current;
-        const blob = frame.blob[i]; // Match frame blob to canvas
+      const frame = frames[currentFrame];
+      if (!frame) return;
 
-        if (!canvas || !blob) continue;
+      if (view === ViewOptions.SideBySide) {
+        frame.blob.forEach((blob, i) => {
+          const canvas = canvasRefs[i]?.current;
+          if (!canvas || !blob) return;
 
-        const url = URL.createObjectURL(blob);
+          const img = new Image();
+          const url = URL.createObjectURL(blob);
+          img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx?.clearRect(0, 0, canvas.width, canvas.height);
+            ctx?.drawImage(img, 0, 0);
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
+        });
+      } else {
+        const blob = frame.blob[blobIndex!];
+        const canvas = canvasRefs[0]?.current;
+        if (!canvas || !blob) return;
+
         const img = new Image();
+        const url = URL.createObjectURL(blob);
         img.onload = () => {
           canvas.width = img.width;
           canvas.height = img.height;
@@ -154,7 +86,7 @@ const FrameStreamPlayer = ({
         img.src = url;
       }
     },
-    [frames, canvasRefs],
+    [effectiveFrameCount, view, frames, currentFrame, canvasRefs],
   );
 
   // Handle play/pause
@@ -165,6 +97,7 @@ const FrameStreamPlayer = ({
     } else {
       if (currentFrame >= frames.length - 1 && frames.length > 0) {
         setCurrentFrame(0);
+        setIndex(0);
       }
       setIsPlaying(true);
       setIsUserPaused(false);
@@ -173,15 +106,26 @@ const FrameStreamPlayer = ({
 
   // Step forward/backward by delta frames
   const stepFrame = (delta: number) => {
-    const next = Math.min(Math.max(currentFrame + delta, 0), frames.length - 1);
-    setCurrentFrame(next);
+    const newIndex = Math.min(
+      Math.max(index + delta, 0),
+      effectiveFrameCount - 1,
+    );
+    const newFrameIndex =
+      view === ViewOptions.Interleaving ? Math.floor(newIndex / 2) : newIndex;
+
+    setCurrentFrame(newFrameIndex);
+    setIndex(newIndex);
     setIsPlaying(false);
     setIsUserPaused(true);
   };
 
   // Handle slider movement
   const onSliderChange = (value: number) => {
-    setCurrentFrame(Math.min(value, frames.length - 1));
+    const newFrameIndex =
+      view === ViewOptions.Interleaving ? Math.floor(value / 2) : value;
+
+    setCurrentFrame(newFrameIndex);
+    setIndex(value);
     setIsPlaying(false);
     setIsUserPaused(true);
   };
@@ -196,7 +140,8 @@ const FrameStreamPlayer = ({
       return;
     }
 
-    if (currentFrame >= frames.length - 1) {
+    if (index >= effectiveFrameCount) {
+      setIndex(effectiveFrameCount - 1);
       setIsPlaying(false);
       if (!isStreamActive) {
         setIsUserPaused(true);
@@ -204,15 +149,16 @@ const FrameStreamPlayer = ({
       return;
     }
 
-    // Render current frame
-    renderFrame(currentFrame);
+    renderFrame(index);
 
-    // Schedule next frame
     const fps = frames[currentFrame]?.fps || 30;
     const delay = 1000 / fps;
 
     playbackTimer.current = setTimeout(() => {
-      setCurrentFrame((prev) => prev + 1);
+      setIndex((prev) => prev + 1);
+      setCurrentFrame(
+        view === ViewOptions.Interleaving ? Math.floor(index / 2) : index,
+      );
     }, delay);
 
     return () => {
@@ -226,16 +172,19 @@ const FrameStreamPlayer = ({
     currentFrame,
     frames,
     renderFrame,
+    view,
     isStreamActive,
+    effectiveFrameCount,
     setCurrentFrame,
+    index,
   ]);
 
-  // When currentFrame changes and playback is paused, render frame immediately
+  // When virtualFrame changes and playback is paused, render frame immediately
   useEffect(() => {
     if (!isPlaying && frames.length > 0) {
-      renderFrame(currentFrame);
+      renderFrame(index);
     }
-  }, [currentFrame, isPlaying, frames, renderFrame]);
+  }, [isPlaying, frames, renderFrame, index]);
 
   // Auto-resuming playback
   useEffect(() => {
@@ -244,23 +193,12 @@ const FrameStreamPlayer = ({
     }
   }, [frames, isPlaying, isUserPaused, currentFrame]);
 
-  const sourceLabel = getSourceLabel?.(currentFrame);
-
-  // Frame label in range [1, frames.length]
-  const currentFrameLabel =
-    view === ViewOptions.SideBySide
-      ? currentFrame + 1
-      : Math.ceil((currentFrame + 1) / 2);
-
-  const totalFramesLabel =
-    view === ViewOptions.SideBySide
-      ? frames.length
-      : Math.ceil(frames.length / 2);
+  const sourceLabel = getSourceLabel?.(index);
 
   return (
     <PlayerControls
-      currentFrame={currentFrameLabel}
-      totalFrames={totalFramesLabel}
+      currentFrame={currentFrame + 1}
+      totalFrames={frames.length}
       isPlaying={!isUserPaused}
       showMute={false}
       isMuted={true}
@@ -271,8 +209,8 @@ const FrameStreamPlayer = ({
       onFullscreen={onFullscreen}
       showSource={showSource}
       sourceLabel={sourceLabel}
-      sliderValue={currentFrame}
-      sliderMax={frames.length - 1}
+      sliderValue={index}
+      sliderMax={effectiveFrameCount - 1}
       sliderStep={1}
     />
   );

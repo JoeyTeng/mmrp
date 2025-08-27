@@ -42,9 +42,6 @@ const SideBySide = ({ type }: Props) => {
 
   // Load initial video
   useEffect(() => {
-    setMetrics([]);
-    setCurrentFrame(0);
-
     if (type === VideoType.Stream) {
       return;
     }
@@ -70,6 +67,8 @@ const SideBySide = ({ type }: Props) => {
 
   // When reload is triggered, load processed video(s)
   useEffect(() => {
+    setCurrentFrame(0);
+
     if (type === VideoType.Stream) {
       return;
     }
@@ -107,7 +106,7 @@ const SideBySide = ({ type }: Props) => {
     if (latestResponse != null) {
       loadOutputVideos();
     }
-  }, [latestResponse, setLatestVideoInfo, type]);
+  }, [latestResponse, setCurrentFrame, setLatestVideoInfo, type]);
 
   return (
     <Box
@@ -190,7 +189,7 @@ const SideBySide = ({ type }: Props) => {
 
       {/* Player Controls */}
       <UnifiedPlayer
-        key={`${type}-${ViewOptions.SideBySide}`}
+        key={type}
         view={ViewOptions.SideBySide}
         type={type}
         videoRefs={[videoARef, videoBRef]}

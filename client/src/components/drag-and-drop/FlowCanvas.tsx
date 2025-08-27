@@ -17,19 +17,21 @@ import {
   ControlButton,
   getIncomers,
   SelectionMode,
+  addEdge,
+  useEdgesState,
 } from "@xyflow/react";
 
 import type { Node, Edge } from "@xyflow/react";
 import { v4 as uuidv4 } from "uuid";
 import FlowNode, { FlowNodeProps } from "@/components/drag-and-drop/FlowNode";
 import { FlowCanvasProps } from "./types";
-import { ModuleData, ModuleType } from "@/types/module";
+import { FormatDefinition, ModuleData, ModuleType } from "@/types/module";
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { Box, Button } from "@mui/material";
 import { sendPipelineToBackend } from "@/services/pipelineService";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useModulesContext } from "@/contexts/ModulesContext";
-import { checkPipeline } from "./util";
+import { checkPipeline, compatibleFormats } from "./util";
 import NodeContextMenu, {
   NodeContextMenuHandle,
 } from "./context-menu/NodeContextMenu";
@@ -41,6 +43,8 @@ import { toast } from "react-toastify/unstyled";
 import { useExamplePipelinesContext } from "@/contexts/ExamplePipelinesContext";
 import { displayError, handleError } from "@/utils/sharedFunctionality";
 import { usePersistPipeline } from "@/hooks/usePersistPipeline";
+import { VideoType } from "../comparison-view/types";
+import { useFrames } from "@/contexts/FramesContext";
 
 export default function FlowCanvas({
   editingNode,
@@ -60,11 +64,19 @@ export default function FlowCanvas({
   const nodeContextMenuRef = useRef<NodeContextMenuHandle>(null);
   const canvasContextMenuRef = useRef<CanvasContextMenuHandle>(null);
 
+  const {
+    triggerReload,
+    triggerWebSocketConnection,
+    setIsProcessing,
+    setError,
+    isProcessing,
+    selectedVideoType,
+    handlePipelineRun,
+  } = useVideoReload();
+
   const [hasFocus, setHasFocus] = useState(false);
 
-  const { triggerReload, setIsProcessing, setError, isProcessing } =
-    useVideoReload();
-  const { screenToFlowPosition, getNodes, getEdges, setNodes, setEdges } =
+  const { screenToFlowPosition, getNodes, getEdges, setNodes, getNode } =
     useReactFlow<Node<ModuleData, ModuleType>, Edge>();
 
   const { persistedNodes, persistedEdges } = usePersistPipeline(
@@ -74,6 +86,9 @@ export default function FlowCanvas({
     initialEdges,
   );
 
+  const [edges, setEdges, onEdgesChange] = useEdgesState(persistedEdges);
+
+  const { resetFrames, isStreamActive } = useFrames();
   const selectNode = useCallback(
     (nodeId: string) => {
       setNodes((nodes) =>
@@ -175,6 +190,48 @@ export default function FlowCanvas({
     event.dataTransfer.dropEffect = "copy";
   }, []);
 
+  const onConnect = (params: Connection) => {
+    const sourceNode = getNode(params.source!) as
+      | Node<ModuleData, ModuleType>
+      | undefined;
+    const targetNode = getNode(params.target!) as
+      | Node<ModuleData, ModuleType>
+      | undefined;
+
+    if (!sourceNode || !targetNode) return;
+
+    // Extract only default values from format expressions
+    const outs: FormatDefinition[] = (sourceNode.data?.outputFormats ?? []).map(
+      (f) => f.default,
+    );
+    const ins: FormatDefinition[] = (targetNode.data?.inputFormats ?? []).map(
+      (f) => f.default,
+    );
+
+    const isValid = compatibleFormats(outs, ins);
+
+    setEdges((eds) =>
+      addEdge(
+        {
+          ...params,
+          style: isValid
+            ? undefined
+            : { stroke: "#ef4444", strokeDasharray: "4 4" },
+          animated: !isValid,
+        },
+        eds,
+      ),
+    );
+
+    if (!isValid) {
+      const sourceName = sourceNode.data?.name ?? sourceNode.id;
+      const targetName = targetNode.data?.name ?? targetNode.id;
+      toast.error(
+        `Output format of "${sourceName}" is not compatible with input format of "${targetName}".`,
+      );
+    }
+  };
+
   const { modules } = useModulesContext();
 
   const onDrop = useCallback(
@@ -249,9 +306,18 @@ export default function FlowCanvas({
       try {
         toast.success("Pipeline valid, starting processing");
         setIsProcessing(true);
-        const res = await sendPipelineToBackend(pipeline);
-        setError(false);
-        triggerReload(res);
+        handlePipelineRun();
+        if (selectedVideoType == VideoType.Video) {
+          resetFrames();
+          // Classic backend pipeline processing
+          const res = await sendPipelineToBackend(pipeline);
+          setError(false);
+          triggerReload(res); // Use response to load video
+        } else if (selectedVideoType == VideoType.Stream) {
+          // Stream mode - trigger WS connection using pipeline
+          setError(false);
+          triggerWebSocketConnection(pipeline); // Send pipeline to context for FrameStreamPlayer
+        }
       } catch (err) {
         console.error("Error sending pipeline to backend", err);
         setError(true);
@@ -296,15 +362,17 @@ export default function FlowCanvas({
             !!editingNode || !hasFocus ? [] : ["Delete", "Backspace"]
           }
           defaultNodes={persistedNodes}
-          defaultEdges={persistedEdges}
+          edges={edges}
           isValidConnection={isValidConnection}
           onDragOver={onDragOver}
+          onConnect={onConnect}
           onDrop={onDrop}
           onNodeDoubleClick={onNodeDoubleClickHandler}
           onNodeContextMenu={onNodeContextMenu}
           onPaneContextMenu={onPaneContextMenu}
           onNodesDelete={closeContextMenus}
           onEdgesDelete={closeContextMenus}
+          onEdgesChange={onEdgesChange}
           onSelectionContextMenu={onSelectionContextMenu}
           fitViewOptions={{
             padding: 0.2,
@@ -340,10 +408,12 @@ export default function FlowCanvas({
             <Button
               variant="contained"
               className={
-                isProcessing ? "bg-gray-200 text-gray-100" : "bg-primary"
+                isProcessing || isStreamActive
+                  ? "bg-gray-200 text-gray-100"
+                  : "bg-primary"
               }
               onClick={onRun}
-              loading={isProcessing}
+              loading={isProcessing || isStreamActive}
             >
               Run
             </Button>

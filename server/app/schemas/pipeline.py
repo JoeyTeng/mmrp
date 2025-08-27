@@ -7,7 +7,7 @@ from typing import Any
 
 class PipelineParameter(BaseModel):
     key: str
-    value: int | float | str | bool
+    value: int | float | str | bool | None
 
 
 class PipelineModule(BaseModel):
@@ -25,6 +25,7 @@ class PipelineRequest(BaseModel):
 class PipelineResponse(BaseModel):
     left: str
     right: str
+    interleaved: str
     metrics: list[Metrics]
 
 
@@ -42,14 +43,19 @@ class PipelineNode(BaseModel):
     type: str
     position: dict[str, float]
     data: PipelineNodeData
+    sourcePosition: str
+    targetPosition: str
+    measured: dict[str, Any]
+    selected: bool
+    dragging: bool
 
 
 class PipelineEdge(BaseModel):
     id: str
     source: str
     target: str
-    sourceHandle: str
-    targetHandle: str
+    markerEnd: dict[str, Any]
+    interactionWidth: int
 
 
 class ExamplePipeline(BaseModel):

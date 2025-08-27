@@ -10,11 +10,14 @@ import {
   ListSubheader,
 } from "@mui/material";
 import { MenuOutlined } from "@mui/icons-material";
-import { MenuDropdownProps, VideoType, ViewOptions } from "./types";
+import { MenuDropdownProps, ViewOptions } from "./types";
+import { useVideoReload } from "@/contexts/VideoReloadContext";
 
 const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+  const { isPipelineRun, videoShapesMismatch } = useVideoReload();
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -22,8 +25,8 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
 
   const handleClose = () => setAnchorEl(null);
 
-  const handleSelection = (view: ViewOptions, type: VideoType) => {
-    onSelect({ view, type });
+  const handleSelection = (view: ViewOptions) => {
+    onSelect(view);
     handleClose();
   };
 
@@ -41,16 +44,21 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
         <ListSubheader sx={{ fontSize: "0.875rem", lineHeight: "2" }}>
           Select view:
         </ListSubheader>
-        {Object.values(ViewOptions).map((view) => (
-          <Box key={view}>
-            <MenuItem onClick={() => handleSelection(view, VideoType.Video)}>
-              <ListItemText>{`${view} - Video`}</ListItemText>
+        {Object.values(ViewOptions).map((option) => {
+          const disabled =
+            option === ViewOptions.Interleaving &&
+            (!isPipelineRun || videoShapesMismatch);
+          return (
+            <MenuItem
+              dense
+              key={option}
+              onClick={() => !disabled && handleSelection(option)}
+              disabled={disabled}
+            >
+              <ListItemText>{option}</ListItemText>
             </MenuItem>
-            <MenuItem onClick={() => handleSelection(view, VideoType.Stream)}>
-              <ListItemText>{`${view} - Stream`}</ListItemText>
-            </MenuItem>
-          </Box>
-        ))}
+          );
+        })}
       </Menu>
     </Box>
   );

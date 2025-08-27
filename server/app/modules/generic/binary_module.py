@@ -116,6 +116,8 @@ class GenericBinaryModule(ModuleBase):
                     if required:
                         raise ValueError(f"Missing required parameter: {name}")
                     continue
+                elif parameters[name] is None:
+                    continue
                 value = parameters[name]
 
             # Check if output width/height/fps have been provided and update output metadata

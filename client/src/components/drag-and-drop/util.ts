@@ -1,5 +1,11 @@
 import { Edge, Node } from "@xyflow/react";
-import { ModuleData, ModuleParameter, ModuleType } from "@/types/module";
+import {
+  FormatDefinition,
+  ModuleData,
+  ModuleParameter,
+  ModuleType,
+  ParamValueType,
+} from "@/types/module";
 import { displayError } from "@/utils/sharedFunctionality";
 
 export function checkPipeline(
@@ -9,6 +15,15 @@ export function checkPipeline(
   // no nodes, empty canvas
   if (nodes.length === 0) {
     displayError("Pipeline is empty. Add some modules first.");
+    return false;
+  }
+
+  // check if there are any invalid edges on the canvas
+  const invalidEdges = edges.some((e) => e.animated === true);
+  if (invalidEdges) {
+    displayError(
+      "Please rectify all invalid connections before submitting the pipeline",
+    );
     return false;
   }
 
@@ -108,3 +123,44 @@ export function checkPipeline(
 
   return true;
 }
+
+function intersect(a?: string[], b?: string[]): boolean {
+  if (!a || !b) return true; // treat unspecified as wildcard
+  return a.some((x) => b.includes(x));
+}
+
+function formatsCompatible(o: FormatDefinition, i: FormatDefinition): boolean {
+  if (!intersect(o.pixelFormat, i.pixelFormat)) return false;
+  if (!intersect(o.colorSpace, i.colorSpace)) return false;
+  if (o.frameRate && i.frameRate && o.frameRate !== i.frameRate) return false;
+  if (o.width && i.width && o.width !== i.width) return false;
+  if (o.height && i.height && o.height !== i.height) return false;
+  return true;
+}
+
+export function compatibleFormats(
+  outs: FormatDefinition[] = [],
+  ins: FormatDefinition[] = [],
+): boolean {
+  return outs.some((o) => ins.some((i) => formatsCompatible(o, i)));
+}
+
+export const evaluateFormula = (
+  formula: string,
+  params: Record<string, ParamValueType>,
+): ParamValueType => {
+  try {
+    let expression = formula;
+
+    expression = expression.replace(/params\.(\w+)/g, (match, paramName) => {
+      return params[paramName]?.toString() || "0";
+    });
+
+    const result = new Function(`return ${expression}`)();
+
+    return typeof result === "number" ? Math.round(result) : result;
+  } catch (error) {
+    console.warn("Formula evaluation failed:", formula, error);
+    return formula;
+  }
+};

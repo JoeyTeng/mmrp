@@ -1,16 +1,24 @@
+from copy import deepcopy
+import itertools
 import re
 import time
 import numpy as np
 from typing import Any, Iterator
 from pydantic import ValidationError
 from app.modules.module import ModuleBase
-from app.schemas.pipeline import PipelineModule
+from app.schemas.pipeline import (
+    PipelineEdge,
+    PipelineModule,
+    PipelineNode,
+    PipelineNodeData,
+)
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
 from app.services.module_registry import ModuleRegistry
 import uuid
-from app.utils.quality_metrics import compute_metrics, compute_metrics_yuv_luma_series
+from app.utils.quality_metrics import compute_metrics_yuv_luma_series
 from app.schemas.metrics import Metrics
 from app.modules.utils.enums import ModuleName
+from app.services.frame import compute_frame_metrics
 from pathlib import Path
 from app.schemas.pipeline import ExamplePipeline
 import json
@@ -49,85 +57,133 @@ def process_pipeline_frame(
 
 # Process mp4 videos (bgr colorspace) frame by frame as numpy arrays
 def process_video_frames(
+    shape_mismatch: bool,
     original_video_file: str,
     module_map: dict[str, tuple[ModuleBase, dict[str, Any]]],
     source_mod: PipelineModule,
     result_modules: list[PipelineModule],
     processing_nodes: list[PipelineModule],
 ) -> PipelineResponse:
+    metrics: list[Metrics] = []
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
         source_file,
         fps,
         frame_iter,
     ):
-        # Frame storage of original frames
-        original_frames: list[np.ndarray] = []
-        # Frame storage per result module
-        result_frames: dict[str, list[np.ndarray]] = {
-            mod.id: [] for mod in result_modules
-        }
-
         # Run frames through whole pipeline and return the frames that need to be written
         def base_pipeline_iterator() -> Iterator[tuple[str, np.ndarray]]:
+            nonlocal shape_mismatch
             frame_cache: dict[str, np.ndarray] = {}
             for frame in frame_iter:
-                original_frames.append(frame.copy())
                 frame_cache.clear()
+                original_frame = frame.copy()
                 frame_cache[source_mod.id] = frame
+
                 # Process frames and save them to a frame cache
                 process_pipeline_frame(frame_cache, processing_nodes, module_map)
-                for result_mod in result_modules:
-                    for sid in result_mod.source:
-                        # Yield the result module and the corresponding frames to be written
-                        yield (result_mod.id, frame_cache[sid])
 
-        for mod_id, frame in base_pipeline_iterator():
-            result_frames[mod_id].append(frame)
+                # Compute quality metrics
+                if len(result_modules) == 1:
+                    processed_frame = frame_cache[result_modules[0].source[0]]
+                    if original_frame.shape != processed_frame.shape:
+                        shape_mismatch = True
+                    metrics.append(
+                        compute_frame_metrics(original_frame, processed_frame)
+                    )
+                    yield "original", original_frame
+                    yield result_modules[0].id, processed_frame
+
+                else:
+                    f1 = frame_cache[result_modules[0].source[0]]
+                    f2 = frame_cache[result_modules[1].source[0]]
+                    if f1.shape != f2.shape:
+                        shape_mismatch = True
+                    metrics.append(compute_frame_metrics(f1, f2))
+                    yield result_modules[0].id, f1
+                    yield result_modules[1].id, f2
+
+        # Create as many independent streams as needed
+        num_outputs = len(result_modules) + 1  # + 1 interleaved
+
+        streams = itertools.tee(base_pipeline_iterator(), num_outputs)
+
+        # Assign iterators for result modules
+        output_iters = {}
+        for mod, stream in zip(result_modules, streams):
+            # Pass only the frames for the specific result module
+            def filtered_iter(
+                sid: str, stream: Iterator[tuple[str, np.ndarray]]
+            ) -> Iterator[np.ndarray]:
+                for key, frame in stream:
+                    if key == sid:
+                        yield frame
+
+            output_iters[mod.id] = filtered_iter(mod.id, stream)
+
+        interleaved_source = streams[-1]
+
+        # Interleaved generator
+        def interleaved_iterator() -> Iterator[np.ndarray]:
+            if len(result_modules) == 2:
+                # Split for left/right
+                left_iter, right_iter = itertools.tee(interleaved_source, 2)
+                left_mod, right_mod = None, None
+                for mod in result_modules:
+                    side = module_map[mod.id][1].get("video_player", "")
+                    if side == "left":
+                        left_mod = mod.id
+                    elif side == "right":
+                        right_mod = mod.id
+                if left_mod is None:
+                    left_mod = result_modules[0].id
+                if right_mod is None:
+                    right_mod = result_modules[1].id
+
+                left_frames = (frame for sid, frame in left_iter if sid == left_mod)
+                right_frames = (frame for sid, frame in right_iter if sid == right_mod)
+            else:
+                left_iter, right_iter = itertools.tee(interleaved_source, 2)
+                left_frames = (frame for sid, frame in left_iter if sid == "original")
+                right_frames = (
+                    frame for sid, frame in right_iter if sid == result_modules[0].id
+                )
+
+            for left_frame, right_frame in zip(left_frames, right_frames):
+                yield left_frame
+                yield right_frame
 
         outputs: list[dict[str, str]] = []
-
+        # Write standard result videos
         for result_mod in result_modules:
             mod_instance, params = module_map[result_mod.id]
 
-            # Add output file name to parameters
-            file = f"{create_filename_base(source_file)}.webm"
-            params["path"] = file
+            # Create video file name
+            filename = f"{create_filename_base(source_file)}.webm"
 
+            params["path"] = filename
             params["fps"] = fps
 
-            # Pass only the frames for the specific result module
-            def frame_iter_result() -> Iterator[np.ndarray]:
-                yield from result_frames[result_mod.id]
+            mod_instance.process(output_iters[result_mod.id], params)
+            outputs.append({"video_player": params["video_player"], "path": filename})
 
-            mod_instance.process(frame_iter_result(), params)
-
-            # Return the video player side and video file name
-            outputs.append({"video_player": params["video_player"], "path": file})
+        if not shape_mismatch:
+            interleaved_mod = ModuleRegistry.get_by_spacename(ModuleName.RESULT)
+            filename = f"{create_filename_base(source_file)}.webm"
+            interleaved_params: dict[str, Any] = {
+                "path": filename,
+                "fps": fps,
+                "video_player": "interleaved",
+            }
+            interleaved_mod.process(interleaved_iterator(), interleaved_params)
+            outputs.append(
+                {"video_player": "interleaved", "path": interleaved_params["path"]}
+            )
 
         output_map = {entry["video_player"]: entry["path"] for entry in outputs}
-
-        # Frame-by-frame metrics
-        metrics: list[Metrics] = []
-        if len(result_modules) in (1, 2):
-            if len(result_modules) == 1:
-                frames1 = original_frames
-                frames2 = result_frames[result_modules[0].id]
-                error_msg = "Original and processed frames must match in size for metric comparison"
-            else:
-                frames1 = result_frames[result_modules[0].id]
-                frames2 = result_frames[result_modules[1].id]
-                error_msg = "Result frames must be the same size for metric comparison"
-
-            for frame1, frame2 in zip(frames1, frames2):
-                if frame1.shape != frame2.shape:
-                    metrics.append(Metrics(message=error_msg, psnr=None, ssim=None))
-                else:
-                    m = compute_metrics(frame1, frame2)
-                    metrics.append(m)
-
         response = PipelineResponse(
             left=output_map.get("left", original_video_file),
             right=output_map.get("right", ""),
+            interleaved=output_map.get("interleaved", ""),
             metrics=metrics,
         )
         return response
@@ -245,14 +301,21 @@ def process_yuv_video(
     return PipelineResponse(
         left=output_map.get("left", ""),
         right=output_map.get("right", ""),
+        interleaved="",
         metrics=metrics,
     )
 
 
-# Handle the pipeline request (validation, execution order, processing)
-def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
+# Validate and set up the pipeline
+def prepare_pipeline(
+    request: PipelineRequest,
+) -> tuple[
+    dict[str, tuple[ModuleBase, dict[str, Any]]],
+    PipelineModule,
+    list[PipelineModule],
+    list[PipelineModule],
+]:
     ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
-
     # Validate pipeline structure
     if not ordered_modules:
         raise ValueError("Pipeline is empty")
@@ -310,6 +373,18 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         if m.module_class not in {ModuleName.VIDEO_SOURCE, ModuleName.RESULT}
     ]
 
+    return module_map, source_mod, result_modules, processing_nodes
+
+
+# Handle the pipeline request and process the video
+def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
+    # Prepare ordered modules, module mapping, and processing nodes
+    (module_map, source_mod, result_modules, processing_nodes) = prepare_pipeline(
+        request
+    )
+
+    shape_mismatch = False
+
     video_file = str(module_map[source_mod.id][1].get("path"))
     video_path = get_video_path(video_file)
     ext = video_path.suffix.lower()
@@ -320,33 +395,80 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         )
     else:
         return process_video_frames(
-            video_file, module_map, source_mod, result_modules, processing_nodes
+            shape_mismatch,
+            video_file,
+            module_map,
+            source_mod,
+            result_modules,
+            processing_nodes,
         )
 
 
 def list_examples() -> list[ExamplePipeline]:
     example_pipelines: list[ExamplePipeline] = []
 
-    module_classes = {
-        m.data.module_class
-        for m in ModuleRegistry.get_all().values()
-        if hasattr(m, "data") and hasattr(m.data, "module_class")
-    }
-
     for file in sorted(EXAMPLES_DIR.glob("*.json")):
+        serialized_nodes: list[PipelineNode] = []
         try:
             raw = json.loads(file.read_text())
-            raw["id"] = file.stem
             nodes = raw.get("nodes", [])
+            file_id = file.stem
+            file_name = raw.get("name", file_id)
+            id_map: dict[str, str] = {}
 
-            if not all(
-                node.get("data", {}).get("module_class") in module_classes
-                for node in nodes
-            ):
-                print(f"Skipping {file.name} — unsupported module found")
-                continue
+            for node in nodes:
+                module_class = node["data"]["module_class"]
+                module: ModuleBase = ModuleRegistry.get_by_spacename(module_class)
+                enriched = deepcopy(module)
+                id_map[node["id"]] = enriched.id
 
-            example_pipelines.append(ExamplePipeline.model_validate(raw))
+                serialized_nodes.append(
+                    PipelineNode(
+                        id=enriched.id,
+                        type=enriched.type,
+                        position=node["position"],
+                        data=PipelineNodeData(
+                            name=node["data"]["name"],
+                            module_class=module_class,
+                            parameters=enriched.data.parameters,
+                            input_formats=enriched.data.input_formats,
+                            output_formats=enriched.data.output_formats,
+                        ),
+                        sourcePosition="right",
+                        targetPosition="left",
+                        measured={"width": 160, "height": 80},
+                        selected=False,
+                        dragging=False,
+                    )
+                )
+
+            serialized_edges: list[PipelineEdge] = []
+            raw_edges = raw.get("edges", [])
+            for edge in raw_edges:
+                source_id = id_map[edge["source"]]
+                target_id = id_map[edge["target"]]
+
+                serialized_edges.append(
+                    PipelineEdge(
+                        id=f"xy-edge__{source_id}-{target_id}",
+                        source=source_id,
+                        target=target_id,
+                        markerEnd=edge.get(
+                            "markerEnd",
+                            {"type": "arrowclosed", "width": 20, "height": 20},
+                        ),
+                        interactionWidth=edge.get("interactionWidth", 20),
+                    )
+                )
+
+            example_pipelines.append(
+                ExamplePipeline(
+                    id=file_id,
+                    name=file_name,
+                    nodes=serialized_nodes,
+                    edges=serialized_edges,
+                )
+            )
 
         except json.JSONDecodeError:
             # TODO: replace print with proper logging & structured error response

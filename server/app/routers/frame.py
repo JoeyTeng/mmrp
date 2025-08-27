@@ -1,18 +1,15 @@
-from contextlib import ExitStack
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from pathlib import Path
-import cv2
 import asyncio
 import json
-import numpy as np
-from typing import Optional
-from app.utils.shared_functionality import as_context
-from app.utils.quality_metrics import compute_metrics
 from app.schemas.frame import FrameData
+from app.schemas.pipeline import PipelineRequest
+from app.services.pipeline import (
+    prepare_pipeline,
+    process_pipeline_frame,
+)
+from app.services.frame import compute_frame_metrics, encode_frames, map_frames
 
 router = APIRouter()
-
-cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
 
 
 @router.websocket("/ws/video")
@@ -20,76 +17,55 @@ async def video_feed(websocket: WebSocket) -> None:
     await websocket.accept()
     print("WebSocket connection accepted")
 
-    # Wait for client to specify filenames
     try:
+        # Receive pipeline request JSON
         init_msg: str = await websocket.receive_text()
-        init_data = json.loads(init_msg)
-        filenames: str = init_data.get("filenames")
-    except Exception:
-        await websocket.close()
-        return
+        data = json.loads(init_msg)
+        request: PipelineRequest = PipelineRequest(**data)
 
-    base_path: Path = (
-        Path(__file__).resolve().parent.parent.parent.parent / "server" / "videos"
-    )
-    video_paths: list[Path] = [base_path / name for name in filenames[:2]]
+        # Prepare ordered modules, module mapping, and processing nodes
+        (module_map, source_mod, result_modules, processing_nodes) = prepare_pipeline(
+            request
+        )
 
-    try:
-        with ExitStack() as stack:
-            caps: list[cv2.VideoCapture] = [
-                stack.enter_context(cv2VideoCaptureContext(str(path)))
-                for path in video_paths
-            ]
+        with module_map[source_mod.id][0].process(
+            None, module_map[source_mod.id][1]
+        ) as (
+            _,
+            fps,
+            frame_iter,
+        ):
+            for frame in frame_iter:
+                frame_cache = {source_mod.id: frame}
 
-            if not all(cap.isOpened() for cap in caps):
-                await websocket.close()
-                return
+                # Run the frame through all processing nodes in sequence
+                process_pipeline_frame(frame_cache, processing_nodes, module_map)
 
-            fps: float = caps[0].get(cv2.CAP_PROP_FPS) or 30.0
-            mime_type: str = "image/webp"
+                # Map processed frames to left/right view
+                left_frame, right_frame = map_frames(
+                    frame_cache=frame_cache,
+                    result_modules=result_modules,
+                    module_map=module_map,
+                    source_frame=frame,
+                )
 
-            while all(cap.isOpened() for cap in caps):
-                frames: list[Optional[np.ndarray]] = []
-                raw_frames: list[
-                    np.ndarray
-                ] = []  # Keep originals for metrics computation
-
-                for cap in caps:
-                    ret, frame = cap.read()
-                    if not ret:
-                        return  # Exit if any video ends
-
-                    raw_frames.append(frame)
-
-                    encode_success: bool
-                    buffer: Optional[np.ndarray]
-                    encode_success, buffer = cv2.imencode(
-                        ".webp", frame, [cv2.IMWRITE_WEBP_QUALITY, 100]
-                    )
-                    assert isinstance(buffer, (np.ndarray, type(None)))
-
-                    if not encode_success:
-                        mime_type = "image/png"
-                        encode_success, buffer = cv2.imencode(".png", frame)
-                        assert isinstance(buffer, (np.ndarray, type(None)))
-
-                    if encode_success:
-                        frames.append(buffer)
-                    else:
-                        frames.append(None)
-
-                # Skip sending frames if any encoding failed
-                if any(buf is None for buf in frames):
+                if left_frame is None or right_frame is None:
+                    print("Warning: Missing left or right frame in mapping")
                     continue
 
-                metrics = compute_metrics(raw_frames[0], raw_frames[1])
-                metadata = FrameData(fps=fps, mime=mime_type, metrics=metrics)
+                # Encode frames into bytes and determine MIME type
+                encoded_blobs, mime = encode_frames([left_frame, right_frame])
 
+                # Compute quality metrics
+                metrics = compute_frame_metrics(left_frame, right_frame)
+
+                # Send metadata per frame pair
+                metadata = FrameData(fps=fps, mime=mime, metrics=metrics)
                 await websocket.send_text(metadata.model_dump_json())
 
-                for buf in frames:
-                    if buf is not None:
-                        await websocket.send_bytes(buf.tobytes())
+                # Send both frames
+                for blob in encoded_blobs:
+                    await websocket.send_bytes(blob)
 
                 await asyncio.sleep(0)
 

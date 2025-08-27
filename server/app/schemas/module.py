@@ -3,7 +3,7 @@ from typing import Any
 from app.modules.utils.enums import Color, ColorSpace, FrameRate, PixelFormat
 
 
-class ModuleFormat(BaseModel):
+class FormatDefinition(BaseModel):
     pixel_format: list[PixelFormat] = Field(default_factory=list[PixelFormat])
     color_space: list[ColorSpace] = Field(default_factory=list[ColorSpace])
     color: Color | None = None
@@ -14,6 +14,11 @@ class ModuleFormat(BaseModel):
     frame_rate: FrameRate | None = Field(
         default=None, description="Frame rate of the video format"
     )
+
+
+class ModuleFormat(BaseModel):
+    default: FormatDefinition
+    formula: dict[str, str] | None = None  # mapping like {"width": "params.width"}
 
 
 class Position(BaseModel):

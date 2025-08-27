@@ -1,5 +1,3 @@
-import { Metrics } from "@/types/metrics";
-
 export enum ViewOptions {
   SideBySide = "Side-by-Side",
   Interleaving = "Interleaving Frames",
@@ -10,18 +8,6 @@ export enum VideoType {
   Stream = "Stream of frames",
 }
 
-export type MenuSelection = {
-  view: ViewOptions;
-  type: VideoType;
-};
-
 export interface MenuDropdownProps {
-  onSelect: (view: MenuSelection) => void;
+  onSelect: (view: ViewOptions) => void;
 }
-
-export type FrameData = {
-  blob: Blob[];
-  fps: number;
-  mime: string;
-  metrics?: Metrics;
-};
