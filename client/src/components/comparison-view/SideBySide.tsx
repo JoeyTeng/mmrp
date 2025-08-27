@@ -152,11 +152,11 @@ const SideBySide = ({ type }: Props) => {
         {type === VideoType.Video && (
           <>
             {/* Left Video */}
-            <Box className="w-1/2 flex items-center justify-center bg-black">
+            <Box className="w-1/2 flex items-center justify-center overflow-hidden aspect-video bg-black">
               <Box
                 component="video"
                 ref={videoARef}
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-contain"
                 onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
                 onLoadStart={() => setIsLoading(true)}
                 onCanPlay={() => setIsLoading(false)}
@@ -165,11 +165,11 @@ const SideBySide = ({ type }: Props) => {
             </Box>
             {/* Right Video */}
 
-            <Box className="w-1/2 flex items-center justify-center bg-black">
+            <Box className="w-1/2 flex items-center justify-center overflow-hidden aspect-video bg-black">
               <Box
                 component="video"
                 ref={videoBRef}
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-contain"
                 muted
                 onError={() => setError("Failed to load filtered video")}
               />
@@ -178,19 +178,19 @@ const SideBySide = ({ type }: Props) => {
         )}
         {type === VideoType.Stream && (
           <>
-            <Box className="w-1/2 flex items-center justify-center bg-black">
+            <Box className="w-1/2 flex items-center justify-center overflow-hidden aspect-video bg-black">
               <Box
                 component="canvas"
                 ref={canvasARef}
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-contain"
               />
             </Box>
 
-            <Box className="w-1/2 flex items-center justify-center bg-black">
+            <Box className="w-1/2 flex items-center justify-center overflow-hidden aspect-video bg-black">
               <Box
                 component="canvas"
                 ref={canvasBRef}
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-contain"
               />
             </Box>
           </>

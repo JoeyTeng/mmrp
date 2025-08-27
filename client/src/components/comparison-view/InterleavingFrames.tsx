@@ -115,11 +115,11 @@ const InterleavingFrames = ({ type }: Props) => {
         )}
         {type === VideoType.Video && videoRef && (
           <>
-            <Box className="w-1/2 flex items-center justify-center bg-black">
+            <Box className="w-1/2 flex items-center justify-center overflow-hidden aspect-video bg-black">
               <Box
                 component="video"
                 ref={videoRef}
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-contain"
                 onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
                 onLoadStart={() => setIsLoading(true)}
                 onCanPlay={() => setIsLoading(false)}
@@ -131,11 +131,11 @@ const InterleavingFrames = ({ type }: Props) => {
         )}
         {type === VideoType.Stream && (
           <>
-            <Box className="w-1/2 flex items-center justify-center bg-black">
+            <Box className="w-1/2 flex items-center justify-center overflow-hidden aspect-video bg-black">
               <Box
                 component="canvas"
                 ref={canvasRef}
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-contain"
               />
             </Box>
           </>
