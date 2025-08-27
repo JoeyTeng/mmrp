@@ -19,7 +19,19 @@
               "type": "select",
               "constraints": {
                 "type": "select",
-                "options": ["example-video.mp4", "vidyo1_640x360_60.yuv", "March_640x360_30.yuv", "likai_1280x720_15.yuv", "Gang2_480x270_30.yuv"],
+                "options": [
+                  "example-video.mp4", 
+                  "Gang2_480x270_30.yuv",
+                  "Joy_jump_1280x720_25.yuv",
+                  "likai_640x360_15.yuv",
+                  "likai_1280x720_15.yuv",
+                  "March_320x180_30.yuv",
+                  "March_640x360_30.yuv", 
+                  "TeamMeeting_960x540_30.yuv",
+                  "TeamMeeting_1920x1080_30.yuv",
+                  "vidyo1_640x360_60.yuv", 
+                  "vidyo1_1280x720_60.yuv"
+                ],
                 "default": "example-video.mp4",
                 "required": true,
                 "description": "Input file path"
@@ -30,7 +42,11 @@
         "input_formats": [],
         "output_formats": [
           {
-            "pixel_format": ["bgr24", "yuv420p 8bit", "yuv420p 10bit", "yuv444p 8bit"],
+            "pixel_format": [
+              "bgr24",
+              "yuv420p 8bit",
+              "yuv420p 10bit"
+            ],
             "color_space": ["BT.709 Full"]
           }
         ]
@@ -110,7 +126,7 @@
               "constraints": {
                 "type": "select",
                 "default": "RGB",
-                "options": ["YCbCr", "HSV", "Lab", "RGB"],
+                "options": ["YCrCb", "HSV", "Lab", "RGB"],
                 "required": true,
                 "description": "Input color space"
               }
@@ -173,7 +189,11 @@
         ],
         "input_formats": [
           {
-            "pixel_format": ["bgr24", "yuv420p 8bit", "yuv420p 10bit", "yuv444p 8bit"],
+            "pixel_format": [
+              "bgr24",
+              "yuv420p 8bit",
+              "yuv420p 10bit"
+            ],
             "color_space": ["BT.709 Full"]
           }
         ],
