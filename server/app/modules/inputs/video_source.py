@@ -1,11 +1,12 @@
 import contextlib
-from typing import Any, Iterator, override
+from typing import Any, override
 import cv2
-import numpy as np
 from app.modules.module import ModuleBase
 from app.schemas.module import ModuleFormat, ModuleParameter, VideoSourceParams
 from app.utils.shared_functionality import get_video_path, as_context
 from pathlib import Path
+
+YUV_ROOT = Path("/mnt/t2/seq/camera/WME")
 
 
 class VideoSource(ModuleBase):
@@ -32,13 +33,15 @@ class VideoSource(ModuleBase):
 
     # Process video path
     @override
-    def process(
-        self, input_data: Any, parameters: dict[str, Any]
-    ) -> contextlib.AbstractContextManager[tuple[str, float, Iterator[np.ndarray]]]:
+    def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:
         # Get source file and name
         source_file: str = str(parameters["path"])
         name_without_ext = Path(source_file).stem
         video_path = get_video_path(source_file)
+        ext = video_path.suffix.lower()
+
+        if ext == ".yuv":
+            return YUV_ROOT / source_file
 
         cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
 

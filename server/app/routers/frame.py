@@ -8,6 +8,7 @@ from app.services.pipeline import (
     process_pipeline_frame,
 )
 from app.services.frame import compute_frame_metrics, encode_frames, map_frames
+from app.utils.shared_functionality import get_video_path
 
 router = APIRouter()
 
@@ -27,6 +28,13 @@ async def video_feed(websocket: WebSocket) -> None:
         (module_map, source_mod, result_modules, processing_nodes) = prepare_pipeline(
             request
         )
+
+        video_file = str(module_map[source_mod.id][1].get("path"))
+        video_path = get_video_path(video_file)
+        ext = video_path.suffix.lower()
+
+        if ext == ".yuv":
+            raise ValueError("YUV videos are not supported for WebSocket streaming")
 
         with module_map[source_mod.id][0].process(
             None, module_map[source_mod.id][1]
@@ -72,7 +80,8 @@ async def video_feed(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         print("WebSocket disconnected by the client")
     except Exception as e:
-        print("WebSocket error:", e)
+        await websocket.send_text(json.dumps({"error": str(e)}))
+        print(f"WebSocket error: {e}")
     finally:
         try:
             await websocket.close()

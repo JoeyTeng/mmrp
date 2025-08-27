@@ -283,13 +283,13 @@ export default function FlowCanvas({
         }
         return false;
       };
-      const hasOneIncomingConnection = (src: Node, tgt: Node): boolean => {
-        if (getIncomers(tgt, nodes, edges).length >= 1) {
+      const hasMaxTwoIncomingConnection = (src: Node, tgt: Node): boolean => {
+        if (getIncomers(tgt, nodes, edges).length > 1) {
           return false;
         }
         return true;
       };
-      return !hasCycle(target) && hasOneIncomingConnection(source, target);
+      return !hasCycle(target) && hasMaxTwoIncomingConnection(source, target);
     },
     [getNodes, getEdges],
   );

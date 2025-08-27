@@ -7,9 +7,10 @@ import shutil
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from app.routers import pipeline, video, modules, frame, binaries
+from app.services.binaries import sync_binaries
 from app.db.convert_json_to_modules import get_all_mock_modules
-from app.services.binaries import download_gist_files
 
+SYNC_DIR: str | None = None
 
 api = APIRouter(prefix="/api")
 
@@ -22,10 +23,15 @@ api.include_router(binaries.router)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Download and extract all binaries
+    binaries_dir = Path(__file__).resolve().parent / "binaries"
+
+    global SYNC_DIR
+    if SYNC_DIR:
+        sync_binaries(SYNC_DIR)
+
     # Load a registry of all modules at start up
     get_all_mock_modules()
-    # Download and extract all binaries
-    binaries_dir = download_gist_files()
 
     yield  # Application is running
 
@@ -35,6 +41,13 @@ async def lifespan(app: FastAPI):
         if binaries_dir.exists() and binaries_dir.is_dir():
             print(f"Cleaning up binaries directory: {binaries_dir}")
             shutil.rmtree(binaries_dir)
+        # Clean up temporary binary data
+        json_dir = (
+            Path(__file__).resolve().parent / "app" / "db" / "json_data" / "binaries"
+        )
+        if json_dir.exists() and json_dir.is_dir():
+            print(f"Cleaning up binaries data: {json_dir}")
+            shutil.rmtree(json_dir)
         # Clean up yuv video files
         videos_dir = Path(__file__).resolve().parent / "videos"
         if videos_dir.exists() and videos_dir.is_dir():
@@ -89,7 +102,17 @@ def main():
     parser.add_argument(
         "--workers", type=int, default=1, help=">1 delegates to Uvicorn CLI"
     )
+    parser.add_argument(
+        "--binaries-dir",
+        type=str,
+        help="Path to binaries directory",
+    )
     args = parser.parse_args()
+
+    # Pass the binaries dir into uvicorn via app.state
+    import main as main_module
+
+    main_module.SYNC_DIR = args.binaries_dir
 
     config = uvicorn.Config(
         "main:app",

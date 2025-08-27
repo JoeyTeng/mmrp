@@ -8,6 +8,7 @@ import React, {
   useCallback,
 } from "react";
 import { Metrics } from "@/types/metrics";
+import { displayError } from "@/utils/sharedFunctionality";
 
 export type FrameMessage =
   | {
@@ -74,7 +75,7 @@ export const WebSocketProvider = ({
       };
 
       ws.onerror = (err) => {
-        console.error("WebSocket error:", err);
+        displayError(`WebSocket error: ${err}`);
         onError?.(err);
       };
 
@@ -82,9 +83,14 @@ export const WebSocketProvider = ({
         if (typeof event.data === "string") {
           try {
             const meta = JSON.parse(event.data);
+            if (meta.error) {
+              displayError(`Server error: ${meta.error}`);
+              onError?.(meta.error);
+              return;
+            }
             onMessage(meta);
           } catch (e) {
-            console.error("Invalid metadata JSON", e);
+            displayError(`Invalid metadata JSON. ${e}`);
           }
         } else {
           onMessage(event.data);

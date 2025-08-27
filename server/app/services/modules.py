@@ -4,17 +4,21 @@ import json
 from pydantic import ValidationError
 from app.schemas.module import ModuleData
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 def convert_format(format_entry: dict[str, Any]) -> dict[str, Any]:
     formats = format_entry.get("formats", {})
     allowed_keys = ("pixel_format", "color_space", "width", "height", "frame_rate")
 
-    return {key: formats[key] for key in allowed_keys if key in formats}
+    formats = format_entry.get("formats", format_entry)
+
+    # Collect only the allowed keys
+    inner = {key: formats[key] for key in allowed_keys if key in formats}
+
+    # Always wrap in "default"
+    return {"default": inner}
 
 
-def append_to_mock_data(config_data: Any) -> None:
+def append_to_mock_data(config_data: Any, out_path: Path) -> None:
     # Process input and output formats
     input_formats = [convert_format(f) for f in config_data.get("input_formats", [])]
     output_formats = [convert_format(f) for f in config_data.get("output_formats", [])]
@@ -22,7 +26,6 @@ def append_to_mock_data(config_data: Any) -> None:
     name: str = config_data.get("name", "Unnamed Module")
     # Remove file extension in case the user defined
     executable_name: str = Path(config_data.get("executable", "unnamed-module")).stem
-    output_path = BASE_DIR / "db" / "json_data" / f"{executable_name}.json"
 
     # Build new module
     new_module: dict[str, Any] = {
@@ -62,5 +65,5 @@ def append_to_mock_data(config_data: Any) -> None:
     except ValidationError as e:
         raise ValueError(f"Invalid parameter definition: {e}")
 
-    with output_path.open("w", encoding="utf-8") as f:
+    with out_path.open("w", encoding="utf-8") as f:
         json.dump({"data": [new_module]}, f, indent=2)

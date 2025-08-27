@@ -8,7 +8,9 @@
         {
           "default": {
             "pixel_format": [
-              "bgr24"
+              "bgr24",
+              "yuv420p 8bit",
+              "yuv420p 10bit"
             ],
             "color_space": [
               "BT.709 Full"
@@ -21,6 +23,19 @@
           "name": "path",
           "flag": "-i",
           "type": "str",
+          "options": [
+            "example-video.mp4", 
+            "Gang2_480x270_30.yuv",
+            "Joy_jump_1280x720_25.yuv",
+            "likai_640x360_15.yuv",
+            "likai_1280x720_15.yuv",
+            "March_320x180_30.yuv",
+            "March_640x360_30.yuv", 
+            "TeamMeeting_960x540_30.yuv",
+            "TeamMeeting_1920x1080_30.yuv",
+            "vidyo1_640x360_60.yuv", 
+            "vidyo1_1280x720_60.yuv"
+          ],
           "default": "example-video.mp4",
           "required": true,
           "description": "Input file path"
@@ -216,7 +231,9 @@
         {
           "default": {
             "pixel_format": [
-              "bgr24"
+              "bgr24",
+              "yuv420p 8bit",
+              "yuv420p 10bit"
             ],
             "color_space": [
               "BT.709 Full"
