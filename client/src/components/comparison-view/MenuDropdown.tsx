@@ -17,7 +17,7 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  const { isPipelineRun } = useVideoReload();
+  const { isPipelineRun, videoShapesMismatch } = useVideoReload();
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -26,7 +26,6 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
   const handleClose = () => setAnchorEl(null);
 
   const handleSelection = (view: ViewOptions) => {
-    console.log(isPipelineRun);
     onSelect(view);
     handleClose();
   };
@@ -47,7 +46,8 @@ const MenuDropdown = ({ onSelect }: MenuDropdownProps) => {
         </ListSubheader>
         {Object.values(ViewOptions).map((option) => {
           const disabled =
-            option === ViewOptions.Interleaving && !isPipelineRun;
+            option === ViewOptions.Interleaving &&
+            (!isPipelineRun || videoShapesMismatch);
           return (
             <MenuItem
               dense

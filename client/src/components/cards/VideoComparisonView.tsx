@@ -6,15 +6,15 @@ import MenuDropdown from "@/components/comparison-view/MenuDropdown";
 import { Box, Checkbox, FormControlLabel, Typography } from "@mui/material";
 import { VideoType, ViewOptions } from "@/components/comparison-view/types";
 import { useVideoReload } from "@/contexts/VideoReloadContext";
-import { useState } from "react";
 import { useFrames } from "@/contexts/FramesContext";
 
 const VideoComparisonView = () => {
-  const [view, setView] = useState(ViewOptions.SideBySide);
   const {
     selectedVideoType,
     setSelectedVideoType,
     activeVideoType,
+    view,
+    setView,
     isProcessing,
   } = useVideoReload();
   const { isStreamActive } = useFrames();

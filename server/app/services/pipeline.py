@@ -169,6 +169,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     )
 
     metrics: list[Metrics] = []
+    shape_mismatch = False
 
     with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
         source_file,
@@ -177,6 +178,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     ):
         # Run frames through whole pipeline and return the frames that need to be written
         def base_pipeline_iterator() -> Iterator[tuple[str, np.ndarray]]:
+            nonlocal shape_mismatch
             frame_cache: dict[str, np.ndarray] = {}
             for frame in frame_iter:
                 frame_cache.clear()
@@ -189,6 +191,8 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                 # Compute quality metrics
                 if len(result_modules) == 1:
                     processed_frame = frame_cache[result_modules[0].source[0]]
+                    if original_frame.shape != processed_frame.shape:
+                        shape_mismatch = True
                     metrics.append(
                         compute_frame_metrics(original_frame, processed_frame)
                     )
@@ -198,6 +202,8 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
                 else:
                     f1 = frame_cache[result_modules[0].source[0]]
                     f2 = frame_cache[result_modules[1].source[0]]
+                    if f1.shape != f2.shape:
+                        shape_mismatch = True
                     metrics.append(compute_frame_metrics(f1, f2))
                     yield result_modules[0].id, f1
                     yield result_modules[1].id, f2
@@ -270,23 +276,22 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             mod_instance.process(output_iters[result_mod.id], params)
             outputs.append({"video_player": params["video_player"], "path": filename})
 
-        # Write interleaved video output
-        interleaved_mod = ModuleRegistry.get_by_spacename(ModuleName.RESULT)
-        # Create video file name
-        unique_id = uuid.uuid4()
-        filename_base64 = (
-            base64.urlsafe_b64encode(unique_id.bytes).decode("utf-8").rstrip("=")
-        )
-        filename = f"{source_file}-{filename_base64}.webm"
-        interleaved_params: dict[str, Any] = {
-            "path": filename,
-            "fps": fps,
-            "video_player": "interleaved",
-        }
-        interleaved_mod.process(interleaved_iterator(), interleaved_params)
-        outputs.append(
-            {"video_player": "interleaved", "path": interleaved_params["path"]}
-        )
+        if not shape_mismatch:
+            interleaved_mod = ModuleRegistry.get_by_spacename(ModuleName.RESULT)
+            unique_id = uuid.uuid4()
+            filename_base64 = (
+                base64.urlsafe_b64encode(unique_id.bytes).decode("utf-8").rstrip("=")
+            )
+            filename = f"{source_file}-{filename_base64}.webm"
+            interleaved_params: dict[str, Any] = {
+                "path": filename,
+                "fps": fps,
+                "video_player": "interleaved",
+            }
+            interleaved_mod.process(interleaved_iterator(), interleaved_params)
+            outputs.append(
+                {"video_player": "interleaved", "path": interleaved_params["path"]}
+            )
 
         output_map = {entry["video_player"]: entry["path"] for entry in outputs}
         response = PipelineResponse(
