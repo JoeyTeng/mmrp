@@ -107,12 +107,24 @@ def main():
         type=str,
         help="Path to binaries directory",
     )
+    parser.add_argument(
+        "--yuv-dir",
+        type=Path,
+        help="Path to YUV files directory, default to '/mnt/t2/seq/camera/WME'.",
+        default=Path("/mnt/t2/seq/camera/WME"),
+    )
     args = parser.parse_args()
 
     # Pass the binaries dir into uvicorn via app.state
     import main as main_module
 
     main_module.SYNC_DIR = args.binaries_dir
+    assert isinstance(args.yuv_dir, Path)
+    assert args.yuv_dir.exists(), f"YUV dir does not exist: {args.yuv_dir}"
+    assert args.yuv_dir.is_dir(), f"YUV dir is not a directory: {args.yuv_dir}"
+    import app.modules.inputs.video_source as video_source_module
+
+    video_source_module.YUV_ROOT = args.yuv_dir
 
     config = uvicorn.Config(
         "main:app",

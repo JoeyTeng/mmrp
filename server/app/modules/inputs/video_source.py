@@ -6,7 +6,7 @@ from app.schemas.module import ModuleFormat, ModuleParameter, VideoSourceParams
 from app.utils.shared_functionality import get_video_path, as_context
 from pathlib import Path
 
-YUV_ROOT = Path("/mnt/t2/seq/camera/WME")
+YUV_ROOT: Path | None = None
 
 
 class VideoSource(ModuleBase):
@@ -41,6 +41,7 @@ class VideoSource(ModuleBase):
         ext = video_path.suffix.lower()
 
         if ext == ".yuv":
+            assert YUV_ROOT is not None, "YUV_ROOT is not set"
             return YUV_ROOT / source_file
 
         cv2VideoCaptureContext = as_context(cv2.VideoCapture, lambda cap: cap.release())
