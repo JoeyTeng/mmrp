@@ -4,13 +4,13 @@ import pathlib
 import zipfile
 
 OUTPUT_DIR = pathlib.Path(__file__).resolve().parents[2] / "binaries"
-BINARY_IDS = [
-    "9f3f1d50d2a57344fca7845ca2225b09"  # simple-video-processor-app
+BINARY_IDS: list[str] = [
+    # "9f3f1d50d2a57344fca7845ca2225b09"  # simple-video-processor-app
 ]
 
 
-def download_gist_files() -> pathlib.Path:
-    for gist_id in BINARY_IDS:
+def download_gist_files(binary_ids: list[str] = BINARY_IDS) -> pathlib.Path:
+    for gist_id in binary_ids:
         api_url = f"https://api.github.com/gists/{gist_id}"
 
         try:

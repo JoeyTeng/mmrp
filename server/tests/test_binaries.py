@@ -15,6 +15,11 @@ def gist_response():
     }
 
 
+BINARY_IDS: list[str] = [
+    "9f3f1d50d2a57344fca7845ca2225b09"  # simple-video-processor-app
+]
+
+
 # Simulates a complete successful flow of downloading and extracting binaries
 @patch("app.services.binaries.zipfile.is_zipfile", return_value=True)
 @patch("builtins.open", new_callable=mock_open)
@@ -44,7 +49,7 @@ def test_download_gist_files_success(
     mock_zipfile.return_value.__enter__.return_value = mock_zip_context
 
     # Run the function
-    result_path = download_gist_files()
+    result_path = download_gist_files(BINARY_IDS)
 
     # Assertions
     assert result_path == OUTPUT_DIR
@@ -60,7 +65,7 @@ def test_download_gist_metadata_failure(mock_urlopen: MagicMock) -> None:
 
     # Expect an exception to be raised
     with pytest.raises(Exception, match="Failed to fetch Gist data"):
-        download_gist_files()
+        download_gist_files(BINARY_IDS)
 
 
 # Tests that an empty "files" object in gist raises exception
@@ -76,7 +81,7 @@ def test_download_gist_files_empty_files(mock_urlopen: MagicMock) -> None:
 
     # Expect an exception to be raised
     with pytest.raises(Exception, match="No files found in the Gist"):
-        download_gist_files()
+        download_gist_files(BINARY_IDS)
 
 
 # Tests that file download failure is caught and skipped without crashing
@@ -99,7 +104,7 @@ def test_file_download_error(mock_urlopen: MagicMock) -> None:
     mock_urlopen.side_effect = urlopen_side_effect
 
     # Should not raise, because the file download exception is caught and continued
-    download_gist_files()
+    download_gist_files(BINARY_IDS)
 
 
 # Tests that non-zip files are safely skipped during processing
@@ -125,7 +130,7 @@ def test_non_zip_file_skipped(
     mock_urlopen.side_effect = [metadata_response, file_response]
 
     # Run and verify that non-zip file is skipped without raising an exception
-    download_gist_files()
+    download_gist_files(BINARY_IDS)
 
 
 # Tests that a corrupt zip file raises exception
@@ -154,4 +159,4 @@ def test_bad_zip_file(
 
     # Verify that BadZipFile raises an exception
     with pytest.raises(Exception, match="not a valid zip file"):
-        download_gist_files()
+        download_gist_files(BINARY_IDS)
