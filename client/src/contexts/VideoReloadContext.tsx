@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { PipelineRequest, PipelineResponse } from "@/types/pipeline";
 import { useVideoMetrics } from "./VideoMetricsContext";
-import { VideoType } from "@/components/comparison-view/types";
+import { VideoType, ViewOptions } from "@/components/comparison-view/types";
 
 type VideoReloadContextType = {
   triggerReload: (res: PipelineResponse) => void;
@@ -32,8 +32,12 @@ type VideoReloadContextType = {
   activeVideoType: VideoType;
   selectedVideoType: VideoType;
   setSelectedVideoType: React.Dispatch<React.SetStateAction<VideoType>>;
+  view: ViewOptions;
+  setView: React.Dispatch<React.SetStateAction<ViewOptions>>;
   handlePipelineRun: () => void;
   isPipelineRun: boolean;
+  videoShapesMismatch: boolean;
+  setVideoShapesMismatch: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const VideoReloadContext = createContext<VideoReloadContextType | undefined>(
@@ -81,13 +85,20 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     },
     [],
   );
+  const [view, setView] = useState(ViewOptions.SideBySide);
   const [selectedVideoType, setSelectedVideoType] = useState(VideoType.Video);
   const [activeVideoType, setActiveVideoType] = useState(VideoType.Video);
+  const [videoShapesMismatch, setVideoShapesMismatch] = useState(false);
 
   const triggerReload = (res: PipelineResponse) => {
     setLatestResponse(res);
     setCurrentFrame(0);
     setMetrics(res.metrics);
+    console.log(res);
+    if (res.interleaved === "") {
+      setVideoShapesMismatch(true);
+      setView(ViewOptions.SideBySide);
+    }
   };
 
   const triggerWebSocketConnection = (req: PipelineRequest) => {
@@ -98,6 +109,7 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
     setMetrics([]);
     setActiveVideoType(selectedVideoType);
     setIsPipelineRun(true);
+    setVideoShapesMismatch(false);
   };
 
   return (
@@ -116,8 +128,12 @@ export const VideoReloadProvider = ({ children }: { children: ReactNode }) => {
         activeVideoType,
         selectedVideoType,
         setSelectedVideoType,
+        view,
+        setView,
         handlePipelineRun,
         isPipelineRun,
+        videoShapesMismatch,
+        setVideoShapesMismatch,
       }}
     >
       {children}

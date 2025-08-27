@@ -13,6 +13,7 @@ import { useVideoReload } from "./VideoReloadContext";
 import { useWebSocket } from "./WebSocketContext";
 import { useVideoMetrics } from "./VideoMetricsContext";
 import { Metrics } from "@/types/metrics";
+import { ViewOptions } from "@/components/comparison-view/types";
 
 type FramesContextType = {
   frames: FrameData[];
@@ -28,7 +29,12 @@ export const FramesProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { createConnection, closeConnection } = useWebSocket();
   const { setMetrics, setCurrentFrame } = useVideoMetrics(); // currentFrame is frame index in range [0, frames.length)
-  const { latestRequest } = useVideoReload();
+  const {
+    latestRequest,
+    setView,
+    videoShapesMismatch,
+    setVideoShapesMismatch,
+  } = useVideoReload();
   const [frames, setFrames] = useState<FrameData[]>([]);
 
   const resetFrames = () => setFrames([]);
@@ -46,6 +52,8 @@ export const FramesProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsStreamActive(false);
     hasStarted.current = false;
   }, [closeConnection]);
+
+  const videoShapesMismatchRef = useRef(videoShapesMismatch);
 
   // TODO: Refactor the WebSocket part, to:
   //  - Creation of the WebSocket is done in FlowCanvas when the user submit the pipeline for execution
@@ -65,6 +73,11 @@ export const FramesProvider: React.FC<{ children: React.ReactNode }> = ({
     setFrames([]);
     setCurrentFrame(0);
 
+    const setVideoShapesMismatchSafe = (value: boolean) => {
+      videoShapesMismatchRef.current = value;
+      setVideoShapesMismatch(value);
+    };
+
     createConnection(
       (data) => {
         if (data instanceof ArrayBuffer) {
@@ -82,6 +95,24 @@ export const FramesProvider: React.FC<{ children: React.ReactNode }> = ({
             };
 
             const [original, filtered] = frameBuffer;
+
+            // Only trigger async shape check if not already mismatched
+            if (!videoShapesMismatchRef.current) {
+              (async () => {
+                const [origDims, filtDims] = await Promise.all([
+                  createImageBitmap(original),
+                  createImageBitmap(filtered),
+                ]);
+                if (
+                  origDims.width !== filtDims.width ||
+                  origDims.height !== filtDims.height
+                ) {
+                  setVideoShapesMismatchSafe(true);
+                  setView(ViewOptions.SideBySide);
+                }
+              })();
+            }
+
             const frame: FrameData = {
               blob: [original, filtered],
               ...commonFrameData,
@@ -117,6 +148,8 @@ export const FramesProvider: React.FC<{ children: React.ReactNode }> = ({
     latestRequest,
     setCurrentFrame,
     setMetrics,
+    setVideoShapesMismatch,
+    setView,
     stopStream,
   ]);
 
