@@ -49,6 +49,7 @@ def process_pipeline_frame(
 
 # Process mp4 videos (bgr colorspace) frame by frame as numpy arrays
 def process_video_frames(
+    original_video_file: str,
     module_map: dict[str, tuple[ModuleBase, dict[str, Any]]],
     source_mod: PipelineModule,
     result_modules: list[PipelineModule],
@@ -125,7 +126,7 @@ def process_video_frames(
                     metrics.append(m)
 
         response = PipelineResponse(
-            left=output_map.get("left", ""),
+            left=output_map.get("left", original_video_file),
             right=output_map.get("right", ""),
             metrics=metrics,
         )
@@ -319,7 +320,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         )
     else:
         return process_video_frames(
-            module_map, source_mod, result_modules, processing_nodes
+            video_file, module_map, source_mod, result_modules, processing_nodes
         )
 
 
