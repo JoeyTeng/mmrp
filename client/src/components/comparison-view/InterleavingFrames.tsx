@@ -115,25 +115,29 @@ const InterleavingFrames = ({ type }: Props) => {
         )}
         {type === VideoType.Video && videoRef && (
           <>
-            <Box
-              component="video"
-              ref={videoRef}
-              className={`h-full w-auto object-contain`}
-              onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
-              onLoadStart={() => setIsLoading(true)}
-              onCanPlay={() => setIsLoading(false)}
-              onError={() => setError("Failed to load video")}
-              controls={false}
-            />
+            <Box className="w-1/2 flex items-center justify-center bg-black">
+              <Box
+                component="video"
+                ref={videoRef}
+                className="max-w-full max-h-full object-contain"
+                onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
+                onLoadStart={() => setIsLoading(true)}
+                onCanPlay={() => setIsLoading(false)}
+                onError={() => setError("Failed to load video")}
+                controls={false}
+              />
+            </Box>
           </>
         )}
         {type === VideoType.Stream && (
           <>
-            <Box
-              component="canvas"
-              ref={canvasRef}
-              className={`h-full w-auto object-contain`}
-            />
+            <Box className="w-1/2 flex items-center justify-center bg-black">
+              <Box
+                component="canvas"
+                ref={canvasRef}
+                className="max-w-full max-h-full object-contain"
+              />
+            </Box>
           </>
         )}
       </Box>

@@ -153,37 +153,47 @@ const SideBySide = ({ type }: Props) => {
         {type === VideoType.Video && (
           <>
             {/* Left Video */}
-            <Box
-              component="video"
-              ref={videoARef}
-              className="w-1/2 h-full object-contain"
-              onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
-              onLoadStart={() => setIsLoading(true)}
-              onCanPlay={() => setIsLoading(false)}
-              onError={() => setError("Failed to load original video")}
-            />
+            <Box className="w-1/2 flex items-center justify-center bg-black">
+              <Box
+                component="video"
+                ref={videoARef}
+                className="max-w-full max-h-full object-contain"
+                onTimeUpdate={() => playerRef.current?.handleTimeUpdate()}
+                onLoadStart={() => setIsLoading(true)}
+                onCanPlay={() => setIsLoading(false)}
+                onError={() => setError("Failed to load original video")}
+              />
+            </Box>
             {/* Right Video */}
-            <Box
-              component="video"
-              ref={videoBRef}
-              className="w-1/2 h-full object-contain"
-              muted
-              onError={() => setError("Failed to load filtered video")}
-            />
+
+            <Box className="w-1/2 flex items-center justify-center bg-black">
+              <Box
+                component="video"
+                ref={videoBRef}
+                className="max-w-full max-h-full object-contain"
+                muted
+                onError={() => setError("Failed to load filtered video")}
+              />
+            </Box>
           </>
         )}
         {type === VideoType.Stream && (
           <>
-            <Box
-              component="canvas"
-              ref={canvasARef}
-              className="w-1/2 h-full bg-black object-contain"
-            />
-            <Box
-              component="canvas"
-              ref={canvasBRef}
-              className="w-1/2 h-full bg-black object-contain"
-            />
+            <Box className="w-1/2 flex items-center justify-center bg-black">
+              <Box
+                component="canvas"
+                ref={canvasARef}
+                className="max-w-full max-h-full object-contain"
+              />
+            </Box>
+
+            <Box className="w-1/2 flex items-center justify-center bg-black">
+              <Box
+                component="canvas"
+                ref={canvasBRef}
+                className="max-w-full max-h-full object-contain"
+              />
+            </Box>
           </>
         )}
       </Box>
