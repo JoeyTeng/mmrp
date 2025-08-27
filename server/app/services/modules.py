@@ -9,7 +9,13 @@ def convert_format(format_entry: dict[str, Any]) -> dict[str, Any]:
     formats = format_entry.get("formats", {})
     allowed_keys = ("pixel_format", "color_space", "width", "height", "frame_rate")
 
-    return {key: formats[key] for key in allowed_keys if key in formats}
+    formats = format_entry.get("formats", format_entry)
+
+    # Collect only the allowed keys
+    inner = {key: formats[key] for key in allowed_keys if key in formats}
+
+    # Always wrap in "default"
+    return {"default": inner}
 
 
 def append_to_mock_data(config_data: Any, out_path: Path) -> None:

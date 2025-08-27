@@ -10,6 +10,7 @@ from app.routers import pipeline, video, modules, frame, binaries
 from app.services.binaries import sync_binaries
 from app.db.convert_json_to_modules import get_all_mock_modules
 
+SYNC_DIR: str | None = None
 
 api = APIRouter(prefix="/api")
 
@@ -23,10 +24,11 @@ api.include_router(binaries.router)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Download and extract all binaries
-    # binaries_dir = download_gist_files() # Config file in the gist is outdated, this would load the simple video processor without input and output formats
     binaries_dir = Path(__file__).resolve().parent / "binaries"
 
-    sync_binaries("/home/test/binaries")
+    global SYNC_DIR
+    if SYNC_DIR:
+        sync_binaries(SYNC_DIR)
 
     # Load a registry of all modules at start up
     get_all_mock_modules()
@@ -100,7 +102,17 @@ def main():
     parser.add_argument(
         "--workers", type=int, default=1, help=">1 delegates to Uvicorn CLI"
     )
+    parser.add_argument(
+        "--binaries-dir",
+        type=str,
+        help="Path to binaries directory",
+    )
     args = parser.parse_args()
+
+    # Pass the binaries dir into uvicorn via app.state
+    import main as main_module
+
+    main_module.SYNC_DIR = args.binaries_dir
 
     config = uvicorn.Config(
         "main:app",

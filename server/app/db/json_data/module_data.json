@@ -6,14 +6,16 @@
       "input_formats": [],
       "output_formats": [
         {
-          "pixel_format": [
-            "bgr24",
-            "yuv420p 8bit",
-            "yuv420p 10bit"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ]
+          "default": {
+            "pixel_format": [
+              "bgr24",
+              "yuv420p 8bit",
+              "yuv420p 10bit"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ]
+          }
         }
       ],
       "parameters": [
@@ -227,14 +229,16 @@
       "type": "outputNode",
       "input_formats": [
         {
-          "pixel_format": [
-            "bgr24",
-            "yuv420p 8bit",
-            "yuv420p 10bit"
-          ],
-          "color_space": [
-            "BT.709 Full"
-          ]
+          "default": {
+            "pixel_format": [
+              "bgr24",
+              "yuv420p 8bit",
+              "yuv420p 10bit"
+            ],
+            "color_space": [
+              "BT.709 Full"
+            ]
+          }
         }
       ],
       "output_formats": [],
