@@ -1,7 +1,8 @@
-import { Edge, Node } from "@xyflow/react";
+import { Edge, getOutgoers, Node } from "@xyflow/react";
 import {
   FormatDefinition,
   ModuleData,
+  ModuleFormat,
   ModuleParameter,
   ModuleType,
   ParamValueType,
@@ -163,4 +164,167 @@ export const evaluateFormula = (
     console.warn("Formula evaluation failed:", formula, error);
     return formula;
   }
+};
+
+function getFormatData(format: ModuleFormat): FormatDefinition {
+  const d = format.default || {};
+  return {
+    width: d.width,
+    height: d.height,
+    frameRate: d.frameRate,
+    pixelFormat: Array.isArray(d.pixelFormat)
+      ? d.pixelFormat
+      : d.pixelFormat
+      ? [d.pixelFormat]
+      : [],
+    colorSpace: Array.isArray(d.colorSpace)
+      ? d.colorSpace
+      : d.colorSpace
+      ? [d.colorSpace]
+      : [],
+  };
+}
+
+/** Build a new ModuleFormat, filling missing fields from inherited */
+function buildFormat(
+  base: ModuleFormat | undefined,
+  inherited: FormatDefinition,
+  formula?: string
+): ModuleFormat {
+  const b = base?.default || {};
+  return {
+    default: {
+      width: b.width ?? inherited.width ,
+      height: b.height ?? inherited.height,
+      frameRate: b.frameRate ?? inherited.frameRate ,
+      pixelFormat: b.pixelFormat ?? inherited.pixelFormat ,
+      colorSpace: b.colorSpace ?? inherited.colorSpace ,
+    },
+    // optional metadata you can store; rename/remove if you don't use it
+    formula: formula ?? (base as any)?.formula ?? "inherited",
+  };
+}
+
+/** True if any key piece is missing/empty */
+function isFormatIncomplete(format: ModuleFormat): boolean {
+  const d = format.default || {};
+  return (
+    !d.width ||
+    !d.height ||
+    !d.frameRate ||
+    !Array.isArray(d.pixelFormat) || d.pixelFormat.length === 0 ||
+    !Array.isArray(d.colorSpace) || d.colorSpace.length === 0
+  );
+}
+
+/** DFS that propagates formats downstream */
+export function runFormatPropagation(
+  nodes: Node<ModuleData, ModuleType>[],
+  edges: Edge[],
+  startNodeId?: string
+): {updatedNodes: Node<ModuleData,ModuleType>[], reachedEndNodes:string[]} {
+  const nodeMap = new Map(nodes.map((n) => [n.id, { ...n }]));
+  const visited = new Set<string>();
+  const reachedEndNodes: string[] = [];
+
+  const start =
+    (startNodeId ? nodeMap.get(startNodeId) : undefined) ||
+    nodes.find((n) => n.type === ModuleType.InputNode);
+
+  if (!start) {
+    return { reachedEndNodes, updatedNodes: nodes };
+  }
+
+  const dfs = (nodeId: string, inherited: FormatDefinition = {}) => {
+    if (visited.has(nodeId)) return;
+    visited.add(nodeId);
+
+    const node = nodeMap.get(nodeId);
+    if (!node) return;
+
+    const children = getOutgoers(node, Array.from(nodeMap.values()), edges);
+    const isEnd = node.type === ModuleType.OutputNode || children.length === 0;
+    if (isEnd) reachedEndNodes.push(nodeId);
+
+    const data: ModuleData = { ...(node.data as ModuleData) };
+    let changed = false;
+
+    //fill inputs
+    if (data.inputFormats?.length && node.type !== ModuleType.OutputNode) {
+      data.inputFormats = data.inputFormats.map((fmt, idx) =>
+        isFormatIncomplete(fmt)
+          ? ((changed = true), buildFormat(fmt, inherited, `input-${idx}`))
+          : fmt
+      );
+    }
+  
+    // fill outputs or create one if missing
+    if (data.outputFormats?.length) {
+      data.outputFormats = data.outputFormats.map((fmt, idx) =>
+        isFormatIncomplete(fmt)
+          ? ((changed = true), buildFormat(fmt, inherited, `output-${idx}`))
+          : fmt
+      );
+    } else if (Object.keys(inherited).length && node.type !== ModuleType.InputNode) {
+      data.outputFormats = [buildFormat(undefined, inherited, "auto")];
+      changed = true;
+    }
+
+    if (changed) {
+      nodeMap.set(nodeId, { ...node, data });
+    }
+
+    // pass first output format downstream (contains full arrays)
+    let next: FormatDefinition = inherited;
+    if (data.outputFormats?.length) {
+      next = getFormatData(data.outputFormats[0]);
+    }
+
+    children.forEach((child) => dfs(child.id, next));
+  };
+
+  dfs(start.id);
+
+  return {
+    reachedEndNodes,updatedNodes: Array.from(nodeMap.values()),
+  };
+}
+
+export const updateDownstreamInputFormats = (
+  nodes: Node<ModuleData, ModuleType>[],
+  edges: Edge[],
+  startNodeId: string
+): Node<ModuleData, ModuleType>[] => {
+  
+  return nodes.map(node => {
+    // Find all edges that connect TO this node (making this node a target)
+    const incomingEdges = edges.filter(edge => edge.target === node.id);
+    
+    if (incomingEdges.length === 0) {
+      return node; // No incoming connections, nothing to update
+    }
+    
+    // For each incoming edge, update this node's inputFormats to match the source's outputFormats
+    let updatedNode = { ...node };
+    
+    incomingEdges.forEach(edge => {
+      const sourceNode = nodes.find(n => n.id === edge.source);
+      if (sourceNode && sourceNode.data.outputFormats) {
+        // Update inputFormats to match the connected source's outputFormats
+        updatedNode = {
+          ...updatedNode,
+          data: {
+            ...updatedNode.data,
+            inputFormats: sourceNode.data.outputFormats.map(outputFormat => ({
+              ...outputFormat,
+              // Copy the computed default values from source output to target input
+              default: { ...outputFormat.default }
+            }))
+          }
+        };
+      }
+    });
+    
+    return updatedNode;
+  });
 };

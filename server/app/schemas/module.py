@@ -126,8 +126,13 @@ class ModuleData(BaseModel):
                 constraints=constraint_,
             )
 
-            # Parameter
-            parameter_ = ModuleParameter(name=param_["name"], metadata=metadata_)
+            flag = param_["flag"]
+            if flag is None and isinstance(param_.get("metadata"), dict):
+                flag = param_["metadata"].get("flag")
+
+            parameter_ = ModuleParameter(
+                name=param_["name"], metadata=metadata_, flag=flag
+            )
             enriched_parameters.append(parameter_)
 
         values["parameters"] = enriched_parameters

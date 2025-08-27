@@ -178,7 +178,7 @@
           {
             "default": {
               "pixel_format": [
-                "bgr24"
+                "bgr24","rgb24"
               ],
               "color_space": [
                 "BT.709 Full"
