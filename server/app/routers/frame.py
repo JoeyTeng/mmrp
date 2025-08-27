@@ -80,7 +80,7 @@ async def video_feed(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         print("WebSocket disconnected by the client")
     except Exception as e:
-        raise ValueError("WebSocket error:", e)
+        print("WebSocket error:", e)
     finally:
         try:
             await websocket.close()
