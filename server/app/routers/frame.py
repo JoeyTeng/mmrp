@@ -1,4 +1,4 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import asyncio
 import json
 from app.schemas.frame import FrameData
@@ -80,7 +80,8 @@ async def video_feed(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         print("WebSocket disconnected by the client")
     except Exception as e:
-        raise HTTPException(status_code=422, detail=f"WebSocket error: {e}")
+        await websocket.send_text(json.dumps({"error": str(e)}))
+        print(f"WebSocket error: {e}")
     finally:
         try:
             await websocket.close()

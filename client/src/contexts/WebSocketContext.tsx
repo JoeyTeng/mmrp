@@ -83,6 +83,11 @@ export const WebSocketProvider = ({
         if (typeof event.data === "string") {
           try {
             const meta = JSON.parse(event.data);
+            if (meta.error) {
+              displayError(`Server error: ${meta.error}`);
+              onError?.(meta.error);
+              return;
+            }
             onMessage(meta);
           } catch (e) {
             displayError(`Invalid metadata JSON. ${e}`);
