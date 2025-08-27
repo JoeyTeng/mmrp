@@ -1,10 +1,16 @@
+from copy import deepcopy
 import itertools
 import numpy as np
 from collections import defaultdict, deque
 from typing import Any, Iterator
 from pydantic import ValidationError
 from app.modules.module import ModuleBase
-from app.schemas.pipeline import PipelineModule
+from app.schemas.pipeline import (
+    PipelineEdge,
+    PipelineModule,
+    PipelineNode,
+    PipelineNodeData,
+)
 from app.schemas.pipeline import PipelineRequest, PipelineResponse
 from app.services.module_registry import ModuleRegistry
 import uuid
@@ -295,26 +301,68 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
 def list_examples() -> list[ExamplePipeline]:
     example_pipelines: list[ExamplePipeline] = []
 
-    module_classes = {
-        m.data.module_class
-        for m in ModuleRegistry.get_all().values()
-        if hasattr(m, "data") and hasattr(m.data, "module_class")
-    }
-
     for file in sorted(EXAMPLES_DIR.glob("*.json")):
+        serialized_nodes: list[PipelineNode] = []
         try:
             raw = json.loads(file.read_text())
-            raw["id"] = file.stem
             nodes = raw.get("nodes", [])
+            file_id = file.stem
+            file_name = raw.get("name", file_id)
+            id_map: dict[str, str] = {}
 
-            if not all(
-                node.get("data", {}).get("module_class") in module_classes
-                for node in nodes
-            ):
-                print(f"Skipping {file.name} — unsupported module found")
-                continue
+            for node in nodes:
+                module_class = node["data"]["module_class"]
+                module: ModuleBase = ModuleRegistry.get_by_spacename(module_class)
+                enriched = deepcopy(module)
+                id_map[node["id"]] = enriched.id
 
-            example_pipelines.append(ExamplePipeline.model_validate(raw))
+                serialized_nodes.append(
+                    PipelineNode(
+                        id=enriched.id,
+                        type=enriched.type,
+                        position=node["position"],
+                        data=PipelineNodeData(
+                            name=node["data"]["name"],
+                            module_class=module_class,
+                            parameters=enriched.data.parameters,
+                            input_formats=enriched.data.input_formats,
+                            output_formats=enriched.data.output_formats,
+                        ),
+                        sourcePosition="right",
+                        targetPosition="left",
+                        measured={"width": 160, "height": 80},
+                        selected=False,
+                        dragging=False,
+                    )
+                )
+
+            serialized_edges: list[PipelineEdge] = []
+            raw_edges = raw.get("edges", [])
+            for edge in raw_edges:
+                source_id = id_map[edge["source"]]
+                target_id = id_map[edge["target"]]
+
+                serialized_edges.append(
+                    PipelineEdge(
+                        id=f"xy-edge__{source_id}-{target_id}",
+                        source=source_id,
+                        target=target_id,
+                        markerEnd=edge.get(
+                            "markerEnd",
+                            {"type": "arrowclosed", "width": 20, "height": 20},
+                        ),
+                        interactionWidth=edge.get("interactionWidth", 20),
+                    )
+                )
+
+            example_pipelines.append(
+                ExamplePipeline(
+                    id=file_id,
+                    name=file_name,
+                    nodes=serialized_nodes,
+                    edges=serialized_edges,
+                )
+            )
 
         except json.JSONDecodeError:
             # TODO: replace print with proper logging & structured error response
