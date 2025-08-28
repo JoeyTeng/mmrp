@@ -5,6 +5,17 @@ import cv2
 import re
 import numpy as np
 from app.utils.enums import VideoFormats
+from app.utils.constants import (
+    DATABASE_USER_FOLDER,
+    VIDEOS_FOLDER,
+    INPUTS_FOLDER,
+    OUTPUTS_FOLDER,
+)
+from app.context.session import get_current_session
+
+
+def get_base_dir_path() -> Path:
+    return Path.cwd()
 
 
 def string_sanitizer(raw_name: str) -> str:
@@ -106,3 +117,25 @@ def decode_video(
                 out_file.write(output_frame.tobytes())
 
     return Path(output_path)
+
+
+def get_session_base_path(session_id: str | None) -> Path:
+    if session_id is None:
+        session_id = get_current_session()
+    return Path(DATABASE_USER_FOLDER) / session_id
+
+
+def get_session_videos_path(session_id: str | None) -> Path:
+    return get_session_base_path(session_id) / VIDEOS_FOLDER
+
+
+def get_session_inputs_path(session_id: str | None) -> Path:
+    path = get_session_videos_path(session_id) / INPUTS_FOLDER
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def get_session_outputs_path(session_id: str) -> Path:
+    path = get_session_videos_path(session_id) / OUTPUTS_FOLDER
+    path.mkdir(parents=True, exist_ok=True)
+    return path

@@ -33,7 +33,7 @@ class VideoSource(ModuleBase):
     # Process video path
     @override
     def process(
-        self, input_data: Any, parameters: dict[str, Any]
+        self, input_data: Any, parameters: dict[str, Any], session_id: str
     ) -> contextlib.AbstractContextManager[tuple[str, float, Iterator[np.ndarray]]]:
         # Get source file and name
         source_file: str = str(parameters["path"])

@@ -44,7 +44,9 @@ class ColorModule(ModuleBase):
         )
 
     @override
-    def process(self, input_data: str, parameters: dict[str, Any]) -> None:
+    def process(
+        self, input_data: str, parameters: dict[str, Any], session_id: str
+    ) -> None:
         output_path: str = str(
             Path(__file__).resolve().parent.parent.parent
             / "output"

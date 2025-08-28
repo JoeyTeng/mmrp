@@ -43,7 +43,9 @@ class ModuleBase(BaseModel, ABC):
         pass
 
     @abstractmethod
-    def process(self, input_data: Any, parameters: dict[str, Any]) -> Any:
+    def process(
+        self, input_data: Any, parameters: dict[str, Any], session_id: str
+    ) -> Any:
         pass
 
     @abstractmethod

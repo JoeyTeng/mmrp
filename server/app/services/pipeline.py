@@ -13,6 +13,7 @@ from app.schemas.metrics import Metrics
 from app.modules.utils.enums import ModuleName
 from pathlib import Path
 from app.schemas.pipeline import ExamplePipeline
+from app.context.session import get_current_session
 import json
 
 EXAMPLES_DIR = Path(__file__).parent.parent / "db/examples"
@@ -87,6 +88,8 @@ def get_execution_order(modules: list[PipelineModule]) -> list[PipelineModule]:
 # Handle the pipeline request and process the video
 def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
     ordered_modules: list[PipelineModule] = get_execution_order(request.modules)
+    session_id = get_current_session()
+
     # Validate pipeline structure
     if not ordered_modules:
         raise ValueError("Pipeline is empty")
@@ -144,7 +147,9 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
         if m.module_class not in {ModuleName.VIDEO_SOURCE, ModuleName.RESULT}
     ]
 
-    with module_map[source_mod.id][0].process(None, module_map[source_mod.id][1]) as (
+    with module_map[source_mod.id][0].process(
+        None, module_map[source_mod.id][1], session_id
+    ) as (
         source_file,
         fps,
         frame_iter,
@@ -192,7 +197,7 @@ def handle_pipeline_request(request: PipelineRequest) -> PipelineResponse:
             def frame_iter_result() -> Iterator[np.ndarray]:
                 yield from result_frames[result_mod.id]
 
-            mod_instance.process(frame_iter_result(), params)
+            mod_instance.process(frame_iter_result(), params, session_id)
 
             # Return the video player side and video file name
             outputs.append({"video_player": params["video_player"], "path": filename})

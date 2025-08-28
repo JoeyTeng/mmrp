@@ -2,8 +2,10 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pathlib import Path
 from app.utils.shared_functionality import get_video_path
-from app.utils.constants import VIDEO_TYPES
+from app.utils.constants import OUTPUTS_FOLDER, VIDEO_TYPES, VIDEOS_FOLDER
 from app.schemas.video import VideoRequest
+from app.context.session import get_current_session
+from app.utils.shared_functionality import get_session_base_path
 
 router = APIRouter(
     prefix="/video",
@@ -28,11 +30,13 @@ def get_video(request: VideoRequest):
                 400, detail=f"Unsupported format. Allowed: {list(VIDEO_TYPES.keys())}"
             )
 
+        # Get current session folder
+        session_id = get_current_session()
+        session_base_path: Path = get_session_base_path(session_id)
+
         # Get video path
         if request.output:
-            video_path = (
-                Path(__file__).resolve().parent.parent.parent / "output" / video_name
-            )
+            video_path = session_base_path / VIDEOS_FOLDER / OUTPUTS_FOLDER / video_name
         else:
             video_path = get_video_path(video_name)
 
