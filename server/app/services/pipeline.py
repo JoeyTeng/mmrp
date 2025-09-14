@@ -1,4 +1,6 @@
 import os
+from multiprocessing.queues import Queue
+
 import cv2
 import numpy as np
 from collections import defaultdict, deque
@@ -91,8 +93,8 @@ def get_execution_order(modules: list[PipelineModule]) -> list[PipelineModule]:
 
 
 def _metrics_worker(
-    in_q: mp.Queue[tuple[int, np.ndarray, np.ndarray] | None],
-    out_q: mp.Queue[tuple[int, float | None, float | None]],
+    in_q: Queue[Optional[tuple[int, np.ndarray, np.ndarray]]],
+    out_q: Queue[tuple[int, float | None, float | None]],
 ):
     """
     Background process that computes image quality metrics for frame pairs.
