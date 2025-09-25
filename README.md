@@ -1,43 +1,64 @@
 # Cisco VIPER: VIsual Pipeline EditoR
 
-A Multimedia Research Pipeline Visual Editor and Executor.
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
+A visual, approachable multimedia research pipeline editor & executor. VIPER lets you design processing pipelines graphically, run them locally or remotely, evaluating the results in browser or download for professional investigation, and optionally stream intermediate frames for insight without gluing ad‑hoc scripts together.
 
 ## Overview
 
-Cisco VIPER is a web-based visual pipeline editor and executor for multimedia processing tasks. It allows users to create, edit, and execute complex multimedia processing pipelines using a Web-based graphical interface.
+VIPER offers a browser-based environment to compose directed graphs of video / image processing modules, persist them as JSON, and execute them via a FastAPI backend. Two execution styles are available: efficient batch mode and experimental per‑frame streaming.
 
 ### Client (Frontend)
 
-The client is a React-based web single-page application (SPA) using [React Flow](https://reactflow.dev/) for the visual editor. The basic framework is based on [Next.js](https://nextjs.org/) and [Material UI (MUI)](https://mui.com/). To ensure minimal effort for deployment, the client is built and served as static files using [Static Site Generation (SSG)](https://nextjs.org/docs/app/guides/static-exports).
-
-Pipeline is represented as a directed graph, where nodes represent processing modules and edges represent data flow between modules. Users can drag and drop nodes onto the canvas, connect them with edges, and configure their properties through a user-friendly interface.
-
-Pipeline is serialised to JSON format for submitting to the backend for execution, or for exporting and sharing. Basic verification is performed on the client side.
+React + Next.js (static-site generation (SSG) exported) + React Flow + MUI. Users drag modules (nodes), connect edges, configure parameters, and export/share JSON pipeline definitions. Light client-side validation precedes submission.
 
 ### Server (Backend)
 
-The server is a Python-based backend using [FastAPI](https://fastapi.tiangolo.com/) to provide RESTful APIs for the client. It manages pipeline execution, worker processes, and communication with the client. The server uses [uvicorn](https://www.uvicorn.org/) as the ASGI server for handling requests. In addition, WebSocket is used for real-time communication between the client and server in per-frame pipeline execution mode.
+FastAPI + uvicorn orchestrate execution. WebSocket channels deliver frame-level updates in streaming mode. OpenCV currently powers media I/O; planned migration to PyAV/FFmpeg will broaden codec and performance capabilities. Certain external binary executables as processing modules are supported (non‑streaming).
 
-For now we use OpenCV to read and write video files, and to perform basic image processing tasks. Binary executables to process with binary-files are also supported (but not **streaming mode**). In the future the plan is to change to PyAV/FFmpeg for more comprehensive format support.
+### Execution Modes
 
-### Execution Mode
+1. **Normal (Batch) Mode** – Runs the full pipeline; artifacts become available upon completion (most efficient).
+2. **Streaming Mode (Experimental)** – Executes frame by frame, sending intermediate visuals/metrics over WebSocket for debugging and exploration; slower and not guaranteed to support every module combination.
 
-Two execution modes are supported:
+### High-Level Architecture
 
-1. **Normal Mode**: The entire pipeline is executed on a the input files. After the execution is complete, the output files are made available for review and download. This mode is more efficient since it does not need to encode and transmit intermediate results frame by frame.
-2. **Streaming Mode**: The pipeline is executed on a per-frame basis, with intermediate results transmitted back to the client in real-time. This mode is useful for debugging and visualising the processing steps, but it is less efficient. Please take note that this mode is currently experimental and may not work with all modules and/or all parameter sets. In this mode, WebSocket is used for data transmission instead of normal HTTP.
+```text
+┌───────────┐ JSON (REST) / WebSocket (WS) ┌─────────────┐
+│  Browser  │ ───────────────────────────▶ │ FastAPI API │
+│ (Next.js) │ ◀── whole video + metrics ── │  + Workers  │
+└───────────┘     (HTTP) / frames (WS)     └─────┬───────┘
+     ▲                                           │ executes
+     │ (Static export)                           ▼
+  Built assets                             Module chain
+                            │
+                Video I/O (OpenCV; future PyAV/FFmpeg)
+                            │
+                    Output artifacts / videos
+```
+
+### Technology Stack (Concise)
+
+| Layer | Tech | Notes |
+|-------|------|-------|
+| UI | Next.js (SSG), React, React Flow, MUI | Visual graph editing |
+| State | React State, Context, React Flow | Pipelines, modules, metrics |
+| Backend | FastAPI + uvicorn | REST + WebSocket |
+| Media | OpenCV (current) | Processing + I/O (planned PyAV/FFmpeg) |
+| Packaging | uv, npm | Python dependency management |
+| Scripts | Bash (`setup.sh`, `run.sh`) | Convenience automation |
 
 ## Build Instructions
 
 ### Prerequisites
 
 * Node.js (v22 or later)
-* NPM (v10 or later); you may also use yarn or pnpm if preferred. Note that by default the scripts use npm commands.
+* NPM (v10 or later). `yarn` / `pnpm` also fine (scripts assume npm)
 * uv (v0.7 or later)
 
 ---
 
-For convenience, a shell script is included; you can use it to set up the environment and build the client.
+Quick setup script (installs dependencies and builds static client):
 
 ```bash
 bash scripts/setup.sh
@@ -45,31 +66,65 @@ bash scripts/setup.sh
 
 ## Execution Instructions
 
-For convenience, a shell script is included; you can use it to start the server.
+Convenience script:
 
 ```bash
 bash scripts/run.sh
 ```
 
-This command accepts multiple arguments that are passed to the Python script. You can run `bash scripts/run.sh --help` to see the options.
+View available options:
 
-A example command to run the server with 4 workers, on port 8002, with a specified YUV directory and binaries directory:
+```bash
+bash scripts/run.sh --help
+```
+
+Example (4 workers, custom port):
 
 ```bash
 scripts/run.sh --worker 4 --port 8002
 ```
 
-If you see any failures, please ensure that you have the prerequisites installed, that the project is built as shown in the previous section, and that you are using the correct versions.
+Output videos and intermediate artifacts are written under `server/output/` (adjustable in future configuration). FastAPI interactive docs: `http://localhost:<port>/docs`.
 
-## Development setup
+### Using Streaming Mode
 
-Please install the precommit hooks for automatic linting and formatting:
+Enabling streaming in the UI triggers a WebSocket session for frame-wise updates. If frames appear missing, verify each module's streaming support.
+
+## Development Setup
+
+Install dependencies (client + server):
 
 ```bash
 cd client
-npm install  # or use yarn/pnpm depends on your personal preference
+npm install  # or yarn / pnpm
+cd ../server
+uv sync
 ```
+
+Suggested:
+
+```bash
+# Client
+cd client && npm run lint && npm run format && npm run test:unit && npm run build
+
+# Server
+cd ../server/ && uv run ruff check && uv run ruff format && uv run pyright -p .
+```
+
+Pre-commit hooks for both client and server with `husky` should be done when you do `npm install` in `/client`.
 
 ## Documentation
 
-Please refer to the [documentation](docs/) for more details on how to use and extend VIPER.
+See the [docs/](docs/) directory for deeper usage and extension notes. Selected entry points:
+
+* How to create an example pipeline: `docs/how-to-create-an-example-pipeline.md`
+* Runtime API reference: FastAPI auto docs at `/docs`
+
+## Community & Governance
+
+* License: Apache 2.0 (see `LICENSE`)
+* Issue tracking: GitHub Issues (bug reports, feature requests, module ideas)
+* [`CONTRIBUTING.md`](CONTRIBUTING.md) & [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) to formalize workflows & expectations
+* Security: Please report sensitive vulnerabilities privately (channel to be defined)
+
+We value respectful, constructive collaboration.
