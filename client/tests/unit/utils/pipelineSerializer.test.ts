@@ -1,3 +1,7 @@
+// Copyright 2025 Cisco Systems, Inc. and its affiliates
+//
+// SPDX-License-Identifier: Apache-2.0
+
 import { dumpPipelineToJson } from "@/utils/pipelineSerializer";
 import { makeNode } from "../helpers/helpers";
 import type { Edge } from "@xyflow/react";
