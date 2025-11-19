@@ -1,3 +1,7 @@
+# Copyright 2025 Cisco Systems, Inc. and its affiliates
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import argparse
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
