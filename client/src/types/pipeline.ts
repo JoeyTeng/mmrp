@@ -1,3 +1,7 @@
+// Copyright 2025 Cisco Systems, Inc. and its affiliates
+//
+// SPDX-License-Identifier: Apache-2.0
+
 import { ParamValueType } from "@/types/module";
 import { Metrics } from "./metrics";
 import { Edge } from "@xyflow/react";

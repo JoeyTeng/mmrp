@@ -1,3 +1,7 @@
+// Copyright 2025 Cisco Systems, Inc. and its affiliates
+//
+// SPDX-License-Identifier: Apache-2.0
+
 import { Paper, Typography, IconButton, Box } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { SidebarPanelProps } from "./types";

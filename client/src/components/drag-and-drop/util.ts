@@ -1,3 +1,7 @@
+// Copyright 2025 Cisco Systems, Inc. and its affiliates
+//
+// SPDX-License-Identifier: Apache-2.0
+
 import { Edge, Node } from "@xyflow/react";
 import { ModuleData, ModuleParameter, ModuleType } from "@/types/module";
 import { displayError } from "@/utils/sharedFunctionality";
