@@ -1,3 +1,7 @@
+// Copyright 2025 Cisco Systems, Inc. and its affiliates
+//
+// SPDX-License-Identifier: Apache-2.0
+
 "use client";
 import { Metrics } from "@/types/metrics";
 import React, { createContext, useContext, useState } from "react";

@@ -1,3 +1,7 @@
+// Copyright 2025 Cisco Systems, Inc. and its affiliates
+//
+// SPDX-License-Identifier: Apache-2.0
+
 import { Box, Divider, InputAdornment, Stack, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
 import { useModulesContext } from "@/contexts/ModulesContext";

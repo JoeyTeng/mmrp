@@ -1,64 +1,107 @@
-# Cisco VIPER: VIsual Pipeline EditoR
+# MMRP: Multimedia Research Pipeline
 
-## Contributors
+[![Contributor-Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-fbab2c.svg)](CODE_OF_CONDUCT.md)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.md)
+[![Maintainer](https://img.shields.io/badge/Maintainer-Cisco-00bceb.svg)](https://opensource.cisco.com)
 
-Fredrik Pihl, Hongyu Teng, Everly Precia Suresh Kumar, Romy Sophia Richter, Ana Georgieska, Brandon Alexander and Frank Cruz.
+MMRP (Multimedia Research Pipeline) is a visual pipeline editor designed for building and experimenting with multimedia processing workflows. It provides an intuitive drag-and-drop interface for creating complex video processing pipelines with real-time preview and comparison capabilities.
 
-## Contribution
+## About The Project
 
-### Client
+MMRP enables researchers and developers to:
 
-Please install the precommit hooks for automatic linting and formatting:
+- **Visually design** multimedia processing pipelines using a node-based editor
+- **Compare video outputs** side-by-side with multiple viewing modes (split-screen, interleaving, unified player)
+- **Analyze quality metrics** including PSNR, SSIM, MSE, and VMAF
+- **Export and share** pipeline configurations for reproducibility
+- **Process frames** through customizable transformation modules
 
-```bash
-cd client
-npm install
-```
+The project consists of a React/Next.js frontend providing the visual editor interface and a FastAPI backend handling video processing, pipeline execution, and quality metric calculations.
 
-## How to Run
+## Getting Started
 
-### Frontend
+To get a local copy up and running, follow these steps.
 
-```sh
-cd client
-npm install
-npm run build
-npm run start
-```
+### Prerequisites
 
-### Backend
+- **Node.js** (v20 or higher) and npm
+- **Python** (v3.13 or higher)
+- **uv** (Python package manager) - Install via:
+  ```sh
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
 
-```sh
-cd server
+### Installation
 
-uv run uvicorn main:app --reload
-```
+1. Clone the repository
+   ```sh
+   git clone https://github.com/JoeyTeng/mmrp.git
+   cd mmrp
+   ```
 
-### Scripts
+2. Set up the frontend
+   ```sh
+   cd client
+   npm install
+   npm run build
+   ```
 
-There are also two scripts that can be used for deployment. You can deploy the server in the VM, the project is already installed there (inside test/mmrp).
+3. Set up the backend
+   ```sh
+   cd ../server
+   uv sync
+   ```
 
-#### Preparing the environment
-This will install all dependencies and build the client.
+### Quick Start with Scripts
 
+For streamlined deployment, use the provided scripts:
+
+#### Preparing the Environment
+Install all dependencies and build the client:
 ```sh
 ./scripts/setup.sh
 ```
 
-#### Starting the server
-This will run the server. Once the server is deployed, you can run the application on `http://<VM_IP>:8000/` as long as you are connected to the VPN. You can also pass command line arguments to the script (for example `--workers 2`).
-
+#### Starting the Server
+Run the server (supports command-line arguments like `--workers 2`):
 ```sh
 ./scripts/run.sh
 ```
 
-## Creating your own example pipeline configurations
+The application will be available at `http://localhost:8000/`
 
-### Convert from Exported JSON
-Draw the needed example configuration on the canvas and export it. When you export, the JSON contains extra frontend data that needs to be removed. To convert to Target JSON for storing in the backend, follow the steps below:
+## Usage
 
-#### 1. Remove wrapper metadata
+### Running the Application
 
+#### Frontend Development Mode
+```sh
+cd client
+npm run dev
+```
+Access the development server at `http://localhost:3000/`
+
+#### Backend Development Mode
+```sh
+cd server
+uv run uvicorn main:app --reload
+```
+The API will be available at `http://localhost:8000/`
+
+#### Production Deployment
+```sh
+cd client
+npm run build
+npm run start
+```
+
+### Creating Pipeline Configurations
+
+#### Exporting Pipelines
+
+Draw your pipeline configuration on the canvas and export it. The exported JSON needs conversion to the backend format:
+
+**Exported JSON format:**
 ```json
 {
   "metadata": { "version": "1.0", "timestamp": "" },
@@ -66,8 +109,7 @@ Draw the needed example configuration on the canvas and export it. When you expo
 }
 ```
 
-**Target JSON**:
-
+**Target backend format:**
 ```json
 {
   "name": "My Pipeline",
@@ -76,33 +118,91 @@ Draw the needed example configuration on the canvas and export it. When you expo
 }
 ```
 
-#### 2. Rename keys (camelCase -> snake\_case)
+#### Conversion Steps
 
-Convert field names:
+1. **Remove wrapper metadata** - Extract the `nodes` and `edges` from the `data` field
+2. **Rename keys** (camelCase → snake_case):
+   - `moduleClass` → `module_class`
+   - `inputFormats` → `input_formats`
+   - `outputFormats` → `output_formats`
+   - `pixelFormat` → `pixel_format`
+   - `colorSpace` → `color_space`
+3. **Drop UI-only fields** - Remove frontend-specific properties like `measured`, `flag`, `options` (outside `constraints`)
+4. **Clean up edges** - Ensure edges only contain:
+   ```json
+   {
+     "id": "e1-e2",
+     "source": "n1",
+     "target": "n2",
+     "sourceHandle": "output-0-handle",
+     "targetHandle": "input-0-handle"
+   }
+   ```
 
-* `moduleClass` -> `module_class`
-* `inputFormats` -> `input_formats`
-* `outputFormats` -> `output_formats`
-* `pixelFormat` -> `pixel_format`
-* `colorSpace` -> `color_space`  
-and so on.
+### Video Comparison Features
 
-#### 3. Drop UI-only fields
+- **Side-by-Side View**: Compare two video streams simultaneously
+- **Interleaving Frames**: Alternate between frames from different sources
+- **Unified Player**: View multiple outputs in a single player
+- **Quality Metrics**: Real-time PSNR, SSIM, MSE, and VMAF calculations
 
-Remove properties that are frontend-only, e.g.:
+## Development
 
-* `measured`, `flag`, `options` (outside `constraints`), etc.
+### Frontend
 
-#### 4. Edges
+The frontend uses:
+- **Next.js 15** with React 19
+- **TypeScript** for type safety
+- **Material-UI** and **Tailwind CSS** for styling
+- **React Flow** for the node-based editor
+- **Jest** for unit testing
 
-Ensure edges expose the following keys and remove other excess keys:
-
-```json
-{
-  "id": "e1-e2",
-  "source": "n1",
-  "target": "n2",
-  "sourceHandle": "output-0-handle",
-  "targetHandle": "input-0-handle"
-}
+Install pre-commit hooks for automatic linting and formatting:
+```sh
+cd client
+npm install
 ```
+
+Run tests:
+```sh
+npm run test:unit
+npm run coverage:unit
+```
+
+### Backend
+
+The backend uses:
+- **FastAPI** for the REST API
+- **OpenCV** for video processing
+- **NumPy** and **scikit-image** for image operations
+- **Pydantic** for data validation
+- **pytest** for testing
+
+Run tests:
+```sh
+cd server
+uv run pytest
+uv run pytest --cov
+```
+
+## Roadmap
+
+See the [open issues](https://github.com/JoeyTeng/mmrp/issues) for a list of proposed features and known issues.
+
+## Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**. 
+
+For detailed contributing guidelines, please see [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## License
+
+Distributed under the Apache License 2.0. See [LICENSE.md](LICENSE.md) for more information.
+
+## Acknowledgements
+
+**Contributors:** Fredrik Pihl, Hongyu Teng, Everly Precia Suresh Kumar, Romy Sophia Richter, Ana Georgieska, Brandon Alexander, and Frank Cruz.
+
+## Contact
+
+Project Link: [https://github.com/JoeyTeng/mmrp](https://github.com/JoeyTeng/mmrp)

@@ -1,3 +1,9 @@
+/*
+ * Copyright 2025 Cisco Systems, Inc. and its affiliates
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 @layer theme, base, mui, components, utilities;
 @import "tailwindcss";
 @import "@xyflow/react/dist/style.css";
