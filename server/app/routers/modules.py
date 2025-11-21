@@ -1,3 +1,7 @@
+# Copyright 2025 Cisco Systems, Inc. and its affiliates
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from fastapi import HTTPException, UploadFile, APIRouter, File
 import json
 from pathlib import Path

@@ -1,3 +1,7 @@
+# Copyright 2025 Cisco Systems, Inc. and its affiliates
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import json
 from typing import Any
 from unittest.mock import patch, MagicMock, mock_open

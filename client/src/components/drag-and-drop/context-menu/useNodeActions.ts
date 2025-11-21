@@ -1,3 +1,7 @@
+// Copyright 2025 Cisco Systems, Inc. and its affiliates
+//
+// SPDX-License-Identifier: Apache-2.0
+
 import { useReactFlow, Node, Edge, getConnectedEdges } from "@xyflow/react";
 import { NodeAction } from "./NodeContextMenuConfig";
 import { useCallback } from "react";

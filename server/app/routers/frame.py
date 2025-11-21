@@ -1,3 +1,7 @@
+# Copyright 2025 Cisco Systems, Inc. and its affiliates
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from contextlib import ExitStack
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pathlib import Path
