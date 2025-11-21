@@ -1,6 +1,8 @@
 # Cisco VIPER: VIsual Pipeline EditoR
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Contributor-Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-fbab2c.svg)](CODE_OF_CONDUCT.md)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Maintainer](https://img.shields.io/badge/Maintainer-Cisco-00bceb.svg)](https://opensource.cisco.com)
 
 A visual, approachable multimedia research pipeline editor & executor. VIPER lets you design processing pipelines graphically, run them locally or remotely, evaluating the results in browser or download for professional investigation, and optionally stream intermediate frames for insight without gluing ad‑hoc scripts together.
 
@@ -122,9 +124,9 @@ See the [docs/](docs/) directory for deeper usage and extension notes. Selected 
 
 ## Community & Governance
 
-* License: Apache 2.0 (see `LICENSE`)
-* Issue tracking: GitHub Issues (bug reports, feature requests, module ideas)
-* [`CONTRIBUTING.md`](CONTRIBUTING.md) & [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) to formalize workflows & expectations
-* Security: Please report sensitive vulnerabilities privately (channel to be defined)
+* License: Apache 2.0 (see [`LICENSE`](LICENSE))
+* We use GitHub Issues for all proposals, feature requests, discussions, and bug reports.
+* [`DEVELOPMENT.md`](DEVELOPMENT.md) & [`CONTRIBUTING.md`](CONTRIBUTING.md) & [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) to formalize workflows & expectations
+* Security: Please report sensitive vulnerabilities privately by emailing `oss-security@cisco.com`. For more details, see [`SECURITY.md`](SECURITY.md).
 
 We value respectful, constructive collaboration.
