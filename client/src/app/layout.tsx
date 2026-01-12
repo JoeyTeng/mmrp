@@ -8,7 +8,7 @@ import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import Loading from "@/components/layout/Loading";
 
 export const metadata = {
-  title: "Cisco VIPER",
+  title: "Multimedia Research Pipeline",
 };
 
 export default function RootLayout({

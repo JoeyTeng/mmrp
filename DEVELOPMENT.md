@@ -1,4 +1,4 @@
-# Contributing to Cisco VIPER
+# Contributing to Multimedia Research Pipeline (MMRP)
 
 Thanks for your interest in contributing! This guide helps you get productive quickly and ensure changes are consistent and high‑quality.
 

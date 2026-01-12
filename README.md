@@ -1,14 +1,14 @@
-# Cisco VIPER: VIsual Pipeline EditoR
+# Multimedia Research Pipeline (MMRP)
 
 [![Contributor-Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-fbab2c.svg)](CODE_OF_CONDUCT.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Maintainer](https://img.shields.io/badge/Maintainer-Cisco-00bceb.svg)](https://opensource.cisco.com)
 
-A visual, approachable multimedia research pipeline editor & executor. VIPER lets you design processing pipelines graphically, run them locally or remotely, evaluating the results in browser or download for professional investigation, and optionally stream intermediate frames for insight without gluing ad‑hoc scripts together.
+A visual, approachable multimedia research pipeline editor & executor. MMRP lets you design processing pipelines graphically, run them locally or remotely, evaluating the results in browser or download for professional investigation, and optionally stream intermediate frames for insight without gluing ad‑hoc scripts together.
 
 ## Overview
 
-VIPER offers a browser-based environment to compose directed graphs of video / image processing modules, persist them as JSON, and execute them via a FastAPI backend. Two execution styles are available: efficient batch mode and experimental per‑frame streaming.
+MMRP offers a browser-based environment to compose directed graphs of video / image processing modules, persist them as JSON, and execute them via a FastAPI backend. Two execution styles are available: efficient batch mode and experimental per‑frame streaming.
 
 ### Client (Frontend)
 
