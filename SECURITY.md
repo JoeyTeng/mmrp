@@ -1,17 +1,18 @@
 # Security Policies and Procedures
 
 This document outlines security procedures and general policies for the
-`mmrp` project.
+`multimedia-research-pipeline` project.
 
-- [Reporting a Bug](#reporting-a-bug)
-- [Disclosure Policy](#disclosure-policy)
-- [Comments on this Policy](#comments-on-this-policy)
+- [Security Policies and Procedures](#security-policies-and-procedures)
+  - [Reporting a Bug](#reporting-a-bug)
+  - [Disclosure Policy](#disclosure-policy)
+  - [Comments on this Policy](#comments-on-this-policy)
 
 ## Reporting a Bug
 
-The `mmrp` team and community take all security bugs in
-`mmrp` seriously. Thank you for improving the security of
-`mmrp`. We appreciate your efforts and responsible disclosure and
+The `multimedia-research-pipeline` team and community take all security bugs in
+`multimedia-research-pipeline` seriously. Thank you for improving the security of
+`multimedia-research-pipeline`. We appreciate your efforts and responsible disclosure and
 will make every effort to acknowledge your contributions.
 
 Report security bugs by emailing `oss-security@cisco.com`.
